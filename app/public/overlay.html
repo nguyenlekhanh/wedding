@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tiệc Cưới Online • Đám Cưới Livestream</title>
+  <link rel="stylesheet" href="/overlay.css">
+  <link rel="preload" as="image" href="/assets/couple_standing.png">
+  <link rel="preload" as="image" href="/assets/couple_kissing.png">
+  <link rel="preload" as="image" href="/assets/guest_1.png">
+  <link rel="preload" as="image" href="/assets/guest_2.png">
+  <link rel="preload" as="image" href="/assets/guest_3.png">
+  <link rel="preload" as="image" href="/assets/guest_4.png">
+  <link rel="preload" as="image" href="/assets/guest_5.png">
+  <link rel="preload" as="image" href="/assets/guest_6.png">
+  <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+  <div id="frame">
+    <!-- KHUNG CẢNH HỘI TRƯỜNG TIỆC CƯỚI -->
+    <div id="scene">
+      <img class="stage-bg" src="/assets/wedding_stage_bg.jpg" alt="Hội trường tiệc cưới lãng mạn">
+
+      <!-- LỚP ÁNH SÁNG ĐÈN CHÙM & VÒM HOA CHUYỂN ĐỘNG -->
+      <div class="chandelier-glow-layer"></div>
+      <div class="stage-heart-glow"></div>
+
+      <!-- KHU VỰC SÂN KHẤU: CÔ DÂU & CHÚ RỂ -->
+      <div id="wedding-stage">
+        <div id="couple-wrapper">
+          <!-- VƯƠNG MIỆN & TRẠNG THÁI CHÚ RỂ HIỆN TẠI -->
+          <div id="groom-status-tag" class="groom-crown-tag">
+            <span>👑 CHÚ RỂ HỶ SỰ</span>
+          </div>
+
+          <!-- BANNER NGHI THỨC & BÁO ĐỘNG HỶ SỰ TẬP TRUNG -->
+          <div id="ceremony-alert-banner" class="ceremony-alert" hidden>
+            <div class="ceremony-sparkles">✨ 💍 ✨</div>
+            <strong id="ceremony-title">🎉 NGHI THỨC CẮT BÁNH CƯỚI!</strong>
+            <span id="ceremony-subtitle">Chúc đôi uyên ương trăm năm viên mãn!</span>
+          </div>
+
+          <div id="couple-hearts"></div>
+          <div id="couple-sprite" class="couple-idle"></div>
+          
+          <div id="couple-label">
+            <span id="groom-name">Tuấn Anh</span>
+            <i class="heart-pulse">💕</i>
+            <span id="bride-name">Mai Vy</span>
+          </div>
+          <div id="stage-fx"></div>
+        </div>
+      </div>
+
+      <!-- KHU VỰC KHÁCH MỜI DỰ TIỆC (BÀN TIỆC 2 BÊN) -->
+      <div id="guests-container"></div>
+
+      <!-- NHÂN VẬT DÂNG PHONG BÌ ĐI LÊN THẢM ĐỎ -->
+      <div id="procession-actor" class="guest-walker" hidden>
+        <div class="actor-shadow"></div>
+        <div class="actor-sprite"></div>
+        <div class="actor-gift-badge">
+          <span class="actor-gift-icon">💌</span>
+          <b class="actor-gift-name">Mừng phong bì</b>
+        </div>
+        <div class="actor-label">
+          <span class="actor-name"></span>
+        </div>
+      </div>
+
+      <!-- BẢNG TÔN VINH DÂNG QUÀ / MỪNG CƯỚI -->
+      <div id="celebration-card" aria-live="polite">
+        <div class="celeb-ornament">✧ CHÚC MỪNG HỶ SỰ ✧</div>
+        <strong id="celeb-donor"></strong>
+        <p id="celeb-gift"></p>
+        <span id="celeb-wish"></span>
+      </div>
+    </div>
+
+    <!-- HIỆU ỨNG RƠI: CÁNH HOA HỒNG, BONG BÓNG, TIM, PHÁO HOA -->
+    <div id="petals"></div>
+    <div id="bubbles-layer"></div>
+    <div id="hearts-layer"></div>
+    <div id="fireworks-layer"></div>
+
+    <!-- HEADER: THANH CHỈ SỐ & MỤC TIÊU TIỆC CƯỚI -->
+    <header id="wedding-header">
+      <div class="header-main-row">
+        <div class="wedding-title-badge">
+          <span class="live-pulse-dot"></span>
+          <h1 id="wedding-title">TIỆC CƯỚI ONLINE</h1>
+          <span class="bell-icon">🔔</span>
+        </div>
+        <div class="wedding-metrics">
+          <div class="metric-item">
+            <span class="metric-icon">👥</span>
+            <b id="stat-guests">119 khách</b>
+            <small id="stat-outside">+21 ngoài</small>
+          </div>
+          <div class="metric-item">
+            <span class="metric-icon">💌</span>
+            <b id="stat-envelopes">588 phong bì</b>
+          </div>
+          <div class="metric-item">
+            <span class="metric-icon">✨</span>
+            <b id="stat-wishes">175 lời chúc</b>
+          </div>
+        </div>
+      </div>
+
+      <!-- HAI THANH TIẾN ĐỘ MỤC TIÊU (MƯA HOA HỒNG & CẮT BÁNH CƯỚI) -->
+      <div class="wedding-goals-row">
+        <div class="goal-pill goal-rose">
+          <span class="goal-icon">🌹</span>
+          <span class="goal-text" id="goal-rose-label">Mưa hoa hồng</span>
+          <div class="goal-bar"><div class="goal-fill" id="goal-rose-fill" style="width: 66%;"></div></div>
+          <b class="goal-numbers" id="goal-rose-num">1670/2532</b>
+        </div>
+        <div class="goal-pill goal-cake">
+          <span class="goal-icon">🎂</span>
+          <span class="goal-text" id="goal-cake-label">Cắt bánh cưới</span>
+          <div class="goal-bar"><div class="goal-fill" id="goal-cake-fill" style="width: 60%;"></div></div>
+          <b class="goal-numbers" id="goal-cake-num">60.3K/100K</b>
+        </div>
+      </div>
+
+      <!-- HUY HIỆU NHẠC NỀN CƯỚI YOUTUBE ĐANG PHÁT -->
+      <div id="bgm-badge" class="bgm-badge">
+        <span class="music-disc">💿</span>
+        <div class="bgm-info">
+          <small>NHẠC NỀN CƯỚI</small>
+          <b id="bgm-title-text">Hòa Tấu Đám Cưới Lãng Mạn</b>
+        </div>
+      </div>
+    </header>
+
+    <!-- CÁC THẺ GIAO DIỆN BÊN TRÁI: CÁCH CHƠI & SỔ MỪNG CƯỚI -->
+    <div class="left-widgets">
+      <!-- THẺ CÁCH CHƠI -->
+      <div class="widget-card how-to-play">
+        <div class="widget-header">
+          <span>🎎</span> <b>CÁCH CHƠI ĐÁM CƯỚI</b>
+        </div>
+        <ul class="guide-list">
+          <li><i>💬</i> <span><b>Cmt</b> → vào dự tiệc</span></li>
+          <li><i>🎉</i> <span><b>chúc mừng</b> → gửi lời chúc</span></li>
+          <li><i>🍻</i> <span><b>dzô</b> → cụng ly</span></li>
+          <li><i>💃</i> <span><b>nhảy</b> → quẩy tưng bừng</span></li>
+          <li><i>💋</i> <span><b>hôn đi</b> → cô dâu chú rể hôn</span></li>
+          <li><i>👑</i> <span><b>Tặng 10+ xu</b> → <b class="gold-text">LÀM CHÚ RỂ!</b></span></li>
+        </ul>
+      </div>
+
+      <!-- THẺ SỔ MỪNG CƯỚI (TOP GIVERS) -->
+      <div class="widget-card wedding-registry">
+        <div class="widget-header">
+          <span>📋</span> <b>SỔ MỪNG CƯỚI</b>
+        </div>
+        <div id="registry-list"></div>
+      </div>
+    </div>
+
+    <!-- MENU QUÀ TẶNG BÊN PHẢI (MATCHING DEMO) -->
+    <aside id="gift-guide-panel">
+      <div class="gift-menu-title">
+        <span>🎁</span> <b>TẶNG QUÀ HỶ SỰ</b>
+      </div>
+      <div class="gift-guide-list">
+        <div class="gift-guide-item highlight-cmt">
+          <div class="guide-icon">💬</div>
+          <div class="guide-info">
+            <b>BÌNH LUẬN</b>
+            <span>Vào dự tiệc · gõ "dzô"</span>
+          </div>
+        </div>
+        <div class="gift-guide-item">
+          <div class="guide-icon">🌹</div>
+          <div class="guide-info">
+            <b>MỪNG PHONG BÌ</b>
+            <span>Hoa hồng · 1 xu</span>
+          </div>
+        </div>
+        <div class="gift-guide-item">
+          <div class="guide-icon">🍑</div>
+          <div class="guide-info">
+            <b>MỪNG CHỈ VÀNG</b>
+            <span>Peach · 5 xu</span>
+          </div>
+        </div>
+        <div class="gift-guide-item highlight-marry">
+          <div class="guide-icon">👑</div>
+          <div class="guide-info">
+            <b>LÀM CHÚ RỂ MỚI</b>
+            <span>Nhẫn cưới · 10+ xu</span>
+          </div>
+        </div>
+        <div class="gift-guide-item">
+          <div class="guide-icon">🎷</div>
+          <div class="guide-info">
+            <b>GÓP VUI NHẢY MÚA</b>
+            <span>Groove Clarinet · 10 xu</span>
+          </div>
+        </div>
+        <div class="gift-guide-item">
+          <div class="guide-icon">🍻</div>
+          <div class="guide-info">
+            <b>ĐÃI RƯỢU BÀN</b>
+            <span>Làm tốt lắm · 1 xu</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- FOOTER MÀN HÌNH LIVE: BĂNG RÔN & LIVE BADGE -->
+    <footer id="live-footer">
+      <div class="footer-live-badge">
+        <i class="live-dot"></i> Đang LIVE
+      </div>
+      <div class="footer-toast-container">
+        <div id="footer-toast" class="footer-toast">
+          <span class="toast-avatar" id="toast-avatar">👰</span>
+          <span class="toast-text" id="toast-text">Chào mừng quý quan khách đã đến chung vui cùng gia đình! 💕</span>
+        </div>
+      </div>
+    </footer>
+    <!-- SLOT ẨN PHÁT NHẠC NỀN YOUTUBE IFRAME -->
+    <div id="yt-player-slot"></div>
+  </div>
+
+  <script type="module" src="/overlay.js"></script>
+</body>
+</html>

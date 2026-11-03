@@ -1,0 +1,1066 @@
+@import url('/fonts/typography.css');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0d0705;
+  font-family: 'An Nhien Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#frame {
+  position: absolute;
+  width: 1080px;
+  height: 1920px;
+  transform-origin: top left;
+  overflow: hidden;
+  background: #140906;
+  color: #fff4e0;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* ========================================================
+   HỘI TRƯỜNG & SÂN KHẤU CƯỚI CHUYỂN ĐỘNG
+   ======================================================== */
+#scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.stage-bg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  object-fit: cover;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  filter: contrast(1.04) brightness(1.02);
+}
+
+/* HIỆU ỨNG ÁNH SÁNG ĐÈN CHÙM LUNG LINH */
+.chandelier-glow-layer {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 860px;
+  height: 420px;
+  background: radial-gradient(ellipse at 50% 35%, rgba(255, 235, 175, 0.32), rgba(255, 195, 95, 0.14), transparent 72%);
+  pointer-events: none;
+  animation: chandelier-shimmer 3.2s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+}
+
+@keyframes chandelier-shimmer {
+  0% { opacity: 0.65; transform: translateX(-50%) scale(0.98); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1.02); }
+}
+
+/* ÁNH SÁNG TRÁI TIM SÂN KHẤU DẬP DỜN LÃNG MẠN */
+.stage-heart-glow {
+  position: absolute;
+  top: 680px;
+  left: 540px;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 540px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 60, 110, 0.26), rgba(255, 30, 80, 0.08), transparent 72%);
+  pointer-events: none;
+  animation: heart-glow-pulse 2.8s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+}
+
+@keyframes heart-glow-pulse {
+  0% { transform: translate(-50%, -50%) scale(0.96); opacity: 0.55; }
+  100% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.95; }
+}
+
+/* ========================================================
+   CÔ DÂU & CHÚ RỂ TRÊN SÂN KHẤU
+   ======================================================== */
+#wedding-stage {
+  position: absolute;
+  top: 960px;
+  left: 540px;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  pointer-events: none;
+}
+
+#couple-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* VƯƠNG MIỆN CHÚ RỂ */
+.groom-crown-tag {
+  background: linear-gradient(135deg, #ffd700, #ff9e00);
+  border: 1.5px solid #ffffff;
+  border-radius: 14px;
+  padding: 3px 14px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #3d1b00;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+  animation: crown-float 2s ease-in-out infinite alternate;
+}
+
+.groom-crown-tag.crown-flash {
+  animation: crown-victory 0.5s ease-in-out infinite alternate;
+  box-shadow: 0 0 24px #ffd700, 0 0 40px #ff0055;
+}
+
+@keyframes crown-victory {
+  from { transform: scale(1) translateY(0); filter: brightness(1.2); }
+  to { transform: scale(1.18) translateY(-8px); filter: brightness(1.6); }
+}
+
+@keyframes crown-float {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+
+/* BÁNH CƯỚI & NGƯỜI YÊU CŨ / PHỤ RỂ TRÊN SÂN KHẤU */
+.stage-cake {
+  position: absolute;
+  left: -75px;
+  bottom: 45px;
+  font-size: 62px;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.7));
+  animation: cake-sway 2.8s ease-in-out infinite alternate;
+  transform-origin: 50% 100%;
+}
+
+.stage-cake.cake-cutting {
+  animation: cake-cut-bounce 0.4s ease-in-out 6 alternate;
+}
+
+@keyframes cake-sway {
+  from { transform: translateY(0) scale(1) rotate(-1deg); }
+  to { transform: translateY(-4px) scale(1.04) rotate(1deg); }
+}
+
+@keyframes cake-cut-bounce {
+  from { transform: scale(1) rotate(-3deg); filter: brightness(1.2); }
+  to { transform: scale(1.15) rotate(3deg); filter: brightness(1.5) drop-shadow(0 0 16px gold); }
+}
+
+.crying-groom {
+  position: absolute;
+  right: -60px;
+  bottom: 50px;
+  font-size: 42px;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7));
+  animation: crying-sob 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes crying-sob {
+  0% { transform: scale(1) translateY(0) rotate(0deg); }
+  50% { transform: scale(1.1) translateY(-3px) rotate(-4deg); }
+  100% { transform: scale(0.95) translateY(2px) rotate(4deg); }
+}
+
+/* ========================================================
+   BANNER NGHI THỨC & BÁO ĐỘNG HỶ SỰ TẬP TRUNG TO RÕ
+   ======================================================== */
+.ceremony-alert {
+  position: absolute;
+  top: -105px;
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+  background: linear-gradient(135deg, rgba(217, 4, 41, 0.98), rgba(144, 12, 63, 0.98));
+  border: 3px solid #ffd700;
+  border-radius: 24px;
+  padding: 12px 28px;
+  box-shadow: 0 10px 36px rgba(217, 4, 41, 0.8), 0 0 25px #ffd700;
+  white-space: nowrap;
+  z-index: 65;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  animation: ceremony-pop 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes ceremony-pop {
+  0% { transform: translateX(-50%) scale(0.6) translateY(20px); opacity: 0; }
+  60% { transform: translateX(-50%) scale(1.08) translateY(-4px); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
+}
+
+.ceremony-sparkles {
+  font-size: 15px;
+  letter-spacing: 4px;
+  color: #fff3c4;
+}
+
+.ceremony-alert strong {
+  font-size: 22px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 215, 0, 0.6);
+  letter-spacing: 0.5px;
+}
+
+.ceremony-alert span {
+  font-size: 14px;
+  font-weight: 750;
+  color: #ffe5ec;
+  font-style: italic;
+}
+
+/* Các kiểu banner theo từng nghi thức tiệc cưới */
+.ceremony-alert.type-cake {
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.98), rgba(186, 24, 27, 0.98));
+  border-color: #ffd700;
+}
+.ceremony-alert.type-champagne {
+  background: linear-gradient(135deg, rgba(162, 59, 114, 0.98), rgba(241, 91, 181, 0.98));
+  border-color: #ffeaa7;
+}
+.ceremony-alert.type-cheers {
+  background: linear-gradient(135deg, rgba(220, 47, 2, 0.98), rgba(208, 0, 0, 0.98));
+  border-color: #ffb703;
+}
+.ceremony-alert.type-dance {
+  background: linear-gradient(135deg, rgba(114, 9, 183, 0.98), rgba(67, 97, 238, 0.98));
+  border-color: #4cc9f0;
+}
+.ceremony-alert.type-petal {
+  background: linear-gradient(135deg, rgba(255, 77, 109, 0.98), rgba(201, 24, 74, 0.98));
+  border-color: #ffffff;
+}
+.ceremony-alert.type-marry {
+  background: linear-gradient(135deg, rgba(255, 30, 86, 0.98), rgba(217, 4, 41, 0.98));
+  border-color: #ffd700;
+  box-shadow: 0 10px 40px rgba(255, 30, 86, 0.9), 0 0 35px #ffd700;
+}
+
+/* ========================================================
+   BGM BADGE: ĐĨA NHẠC XOAY & TÊN BÀI HÁT
+   ======================================================== */
+.bgm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  background: rgba(18, 10, 8, 0.88);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 20px;
+  padding: 4px 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.music-disc {
+  font-size: 16px;
+  animation: disc-spin 3s linear infinite;
+  display: inline-block;
+}
+
+@keyframes disc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.bgm-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.bgm-info small {
+  font-size: 9px;
+  color: #ffbe53;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.bgm-info b {
+  font-size: 12px;
+  color: #ffffff;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#yt-player-slot {
+  position: fixed;
+  bottom: -200px;
+  left: -200px;
+  width: 100px;
+  height: 100px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#couple-sprite {
+  width: 255px;
+  height: 280px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.65));
+}
+
+.couple-idle {
+  background-image: url('/assets/couple_standing.png');
+  animation: couple-breathe 4.5s ease-in-out infinite;
+}
+
+.couple-kissing {
+  background-image: url('/assets/couple_kissing.png') !important;
+  animation: couple-kiss-bounce 0.8s ease-in-out infinite alternate !important;
+  filter: drop-shadow(0 14px 24px rgba(230, 50, 90, 0.8)) !important;
+}
+
+@keyframes couple-breathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.02) translateY(-4px); }
+}
+
+@keyframes couple-kiss-bounce {
+  from { transform: scale(1.04) rotate(-1.5deg); }
+  to { transform: scale(1.08) rotate(1.5deg); }
+}
+
+#couple-label {
+  margin-top: -6px;
+  background: linear-gradient(135deg, rgba(35, 14, 18, 0.94), rgba(65, 20, 28, 0.94));
+  border: 2px solid #ffbe53;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 230, 160, 0.4);
+  border-radius: 20px;
+  padding: 5px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff6de;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+}
+
+.heart-pulse {
+  display: inline-block;
+  animation: pulse-heart 1.2s ease-in-out infinite;
+  font-style: normal;
+}
+
+@keyframes pulse-heart {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+}
+
+/* ========================================================
+   KHÁCH DỰ TIỆC (LÀM TO HƠN, RÕ NÉT, HÀI HƯỚC)
+   ======================================================== */
+#guests-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wedding-guest {
+  position: absolute;
+  width: 135px;
+  height: 175px;
+  transform-origin: 50% 100%;
+  will-change: transform, left, top;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.65));
+  transition: opacity 0.4s ease;
+  animation: guest-idle-sway 3.6s ease-in-out infinite alternate;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes guest-idle-sway {
+  0% { transform: scale(var(--scale, 1)) rotate(-0.8deg); }
+  100% { transform: scale(var(--scale, 1)) rotate(0.8deg) translateY(-3px); }
+}
+
+.guest-sprite {
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+}
+
+/* Khách nhún nhảy */
+.wedding-guest.dancing .guest-sprite {
+  animation: guest-dance 0.38s ease-in-out infinite alternate;
+}
+
+@keyframes guest-dance {
+  from { transform: translateY(0) rotate(-3.5deg) scale(1); }
+  to { transform: translateY(-16px) rotate(3.5deg) scale(1.06); }
+}
+
+/* Khách cụng ly dzô */
+.wedding-guest.cheering .guest-sprite {
+  animation: guest-cheer 0.55s ease-in-out 3;
+}
+
+@keyframes guest-cheer {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.15) translateY(-12px); filter: brightness(1.25); }
+}
+
+/* Nhãn tên khách mời pill vàng nổi bật theo mẫu TikTok Live (Image 4) */
+.guest-name-badge {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(180deg, #fff2be 0%, #ffd04b 100%);
+  border: 1.5px solid #8c5305;
+  border-radius: 14px;
+  padding: 2px 8px;
+  color: #3b1b02;
+  font-size: 13px;
+  font-weight: 850;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+  max-width: 175px;
+  line-height: 1.25;
+}
+
+.guest-name-badge .badge-av {
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 50%;
+  padding: 1px 3px;
+}
+
+.guest-name-badge .badge-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 85px;
+}
+
+.guest-status-tag {
+  font-size: 10px;
+  font-weight: 850;
+  color: #d90429;
+  background: rgba(255, 255, 255, 0.65);
+  padding: 1px 5px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+/* Bong bóng chat bình luận trắng chữ đen chuẩn Live TikTok (Image 4) */
+.wedding-chat-bubble {
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  border: 2px solid #ffbe53;
+  border-radius: 14px;
+  padding: 6px 14px;
+  color: #1a0f0d;
+  font-size: 17px;
+  font-weight: 850;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+  z-index: 55;
+  animation: bubble-pop 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.wedding-chat-bubble:after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0;
+  border-style: solid;
+  border-color: #ffbe53 transparent transparent;
+}
+
+@keyframes bubble-pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.6) translateY(12px); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+}
+
+/* ========================================================
+   NHÂN VẬT DÂNG PHONG BÌ ĐI LÊN THẢM ĐỎ
+   ======================================================== */
+.guest-walker {
+  position: absolute;
+  width: 145px;
+  height: 185px;
+  transform-origin: 50% 100%;
+  z-index: 35;
+  pointer-events: none;
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.75));
+}
+
+.guest-walker .actor-sprite {
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+}
+
+.guest-walker.walking .actor-sprite {
+  animation: walk-stride 0.30s ease-in-out infinite alternate;
+}
+
+@keyframes walk-stride {
+  from { transform: translateY(0) rotate(-2deg); }
+  to { transform: translateY(-9px) rotate(2deg); }
+}
+
+.actor-gift-badge {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #e62244, #a6122d);
+  border: 2px solid #ffd777;
+  border-radius: 18px;
+  padding: 5px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff9e6;
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+}
+
+.actor-label {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 10, 6, 0.94);
+  border: 1.5px solid #ffbe53;
+  border-radius: 12px;
+  padding: 2px 12px;
+  color: #fff6de;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* BẢNG TÔN VINH HỶ SỰ */
+#celebration-card {
+  position: absolute;
+  top: 740px;
+  left: 170px;
+  right: 170px;
+  background: linear-gradient(135deg, rgba(50, 12, 20, 0.96), rgba(85, 18, 34, 0.96));
+  border: 2.5px solid #ffc95e;
+  border-radius: 20px;
+  padding: 18px 24px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(230, 40, 80, 0.45);
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+#celebration-card.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.celeb-ornament {
+  font-size: 14px;
+  letter-spacing: 4px;
+  color: #ffda82;
+  margin-bottom: 4px;
+  font-weight: 800;
+}
+
+#celeb-donor {
+  display: block;
+  font-size: 30px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+#celeb-gift {
+  font-size: 21px;
+  font-weight: 800;
+  color: #ffd677;
+  margin: 5px 0 7px;
+}
+
+#celeb-wish {
+  font-size: 17px;
+  color: #ffe6eb;
+  font-style: italic;
+  display: block;
+  line-height: 1.35;
+}
+
+/* ========================================================
+   HEADER & CHỈ SỐ LIVE & MỤC TIÊU ĐÁM CƯỚI
+   ======================================================== */
+#wedding-header {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  right: 28px;
+  z-index: 45;
+  pointer-events: none;
+}
+
+.header-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wedding-title-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(160, 20, 40, 0.94), rgba(100, 10, 24, 0.94));
+  border: 1.5px solid #ffbe53;
+  border-radius: 14px;
+  padding: 6px 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+
+.live-pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff334b;
+  box-shadow: 0 0 10px #ff334b;
+  animation: pulse-dot 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-dot {
+  from { opacity: 0.6; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1.3); }
+}
+
+#wedding-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff9e8;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.wedding-metrics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 10, 6, 0.90);
+  border: 1px solid rgba(255, 200, 100, 0.4);
+  border-radius: 12px;
+  padding: 5px 14px;
+}
+
+.metric-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 750;
+  color: #fff2d4;
+  white-space: nowrap;
+}
+
+.metric-item small {
+  color: #ffb356;
+  font-size: 11px;
+}
+
+/* THANH TIẾN ĐỘ GOALS */
+.wedding-goals-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.goal-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 12, 14, 0.92);
+  border: 1.5px solid #d4a754;
+  border-radius: 20px;
+  padding: 4px 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.goal-text {
+  font-size: 12px;
+  font-weight: 750;
+  color: #ffe8b8;
+  white-space: nowrap;
+}
+
+.goal-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.goal-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+.goal-rose .goal-fill {
+  background: linear-gradient(90deg, #ff4d6d, #ff758f);
+}
+
+.goal-cake .goal-fill {
+  background: linear-gradient(90deg, #ffb703, #fb8500);
+}
+
+.goal-numbers {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* ========================================================
+   CÁC THẺ GIAO DIỆN BÊN TRÁI: CÁCH CHƠI & SỔ MỪNG CƯỚI
+   ======================================================== */
+.left-widgets {
+  position: absolute;
+  top: 160px;
+  left: 28px;
+  width: 255px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.widget-card {
+  background: rgba(20, 10, 8, 0.92);
+  border: 1.5px solid #d4a754;
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65);
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(212, 167, 84, 0.35);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  color: #ffd87d;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.guide-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.guide-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #f7e6c9;
+}
+
+.guide-list li i {
+  font-style: normal;
+  font-size: 15px;
+}
+
+.guide-list li b {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.gold-text {
+  color: #ffd700 !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+/* SỔ MỪNG CƯỚI (TOP GIVERS) */
+.registry-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reg-rank {
+  width: 20px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.reg-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff0d0;
+}
+
+.reg-score {
+  color: #ffcf68;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* ========================================================
+   MENU QUÀ TẶNG BÊN PHẢI (MATCHING DEMO)
+   ======================================================== */
+#gift-guide-panel {
+  position: absolute;
+  top: 250px;
+  right: 28px;
+  width: 220px;
+  background: rgba(22, 10, 12, 0.92);
+  border: 1.5px solid #d4a754;
+  border-radius: 16px;
+  padding: 12px 14px;
+  z-index: 40;
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+}
+
+.gift-menu-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffd87d;
+  font-size: 14px;
+  font-weight: 800;
+  border-bottom: 1px solid rgba(212, 167, 84, 0.35);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.gift-guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gift-guide-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(45, 18, 22, 0.85);
+  border: 1px solid rgba(255, 200, 120, 0.3);
+  border-radius: 10px;
+  padding: 5px 8px;
+}
+
+.gift-guide-item.highlight-cmt {
+  background: linear-gradient(135deg, rgba(220, 40, 75, 0.9), rgba(150, 20, 45, 0.9));
+  border-color: #ffd677;
+}
+
+.gift-guide-item.highlight-marry {
+  background: linear-gradient(135deg, rgba(240, 160, 20, 0.9), rgba(180, 90, 10, 0.9));
+  border-color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 200, 50, 0.5);
+  animation: pulse-marry 1.5s infinite alternate;
+}
+
+@keyframes pulse-marry {
+  from { transform: scale(1); }
+  to { transform: scale(1.03); }
+}
+
+.guide-icon {
+  font-size: 20px;
+  width: 26px;
+  text-align: center;
+}
+
+.guide-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.guide-info b {
+  font-size: 12px;
+  font-weight: 750;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.guide-info span {
+  font-size: 10px;
+  color: #fce1b8;
+  white-space: nowrap;
+}
+
+/* ========================================================
+   FOOTER: LIVE BADGE & TOAST NOTIFICATION
+   ======================================================== */
+#live-footer {
+  position: absolute;
+  bottom: 24px;
+  left: 28px;
+  right: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 45;
+  pointer-events: none;
+}
+
+.footer-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ff2b42;
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(255, 43, 66, 0.4);
+}
+
+.footer-live-badge .live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: pulse-dot 1s infinite alternate;
+}
+
+.footer-toast-container {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.footer-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(140, 18, 38, 0.94), rgba(90, 10, 24, 0.94));
+  border: 1.5px solid #ffbe53;
+  border-radius: 20px;
+  padding: 6px 16px;
+  color: #fff6de;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  max-width: 620px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: toast-glow 3s infinite alternate;
+}
+
+@keyframes toast-glow {
+  from { border-color: #ffbe53; }
+  to { border-color: #ff6088; box-shadow: 0 4px 18px rgba(255, 60, 100, 0.4); }
+}
+
+/* ========================================================
+   HIỆU ỨNG RƠI: CÁNH HOA HỒNG, BONG BÓNG, TIM, PHÁO HOA
+   ======================================================== */
+#petals, #bubbles-layer, #hearts-layer, #fireworks-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.falling-rose-petal {
+  position: absolute;
+  top: -40px;
+  width: 22px;
+  height: 22px;
+  background: radial-gradient(ellipse at 35% 35%, #ff4d6d 0%, #c9184a 70%, #800f2f 100%);
+  border-radius: 80% 0 80% 0;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
+  animation: rose-fall linear forwards;
+  opacity: 0.85;
+}
+
+@keyframes rose-fall {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.9; }
+  100% { transform: translate3d(var(--drift, 100px), 2000px, 0) rotate(var(--turn, 400deg)); opacity: 0.2; }
+}
+
+.floating-bubble {
+  position: absolute;
+  bottom: -50px;
+  width: var(--size, 28px);
+  height: var(--size, 28px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.75), rgba(255, 180, 200, 0.25) 60%, rgba(180, 220, 255, 0.4) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.8), 0 2px 8px rgba(255, 150, 180, 0.3);
+  animation: bubble-float linear forwards;
+  pointer-events: none;
+}
+
+@keyframes bubble-float {
+  0% { transform: translate3d(0, 0, 0) scale(0.8); opacity: 0.85; }
+  50% { transform: translate3d(var(--drift, 40px), -1000px, 0) scale(1.1); opacity: 0.9; }
+  100% { transform: translate3d(calc(var(--drift, 40px) * -1), -2000px, 0) scale(0.9); opacity: 0; }
+}
+
+.flying-heart {
+  position: absolute;
+  font-size: 28px;
+  animation: heart-float 2.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  pointer-events: none;
+}
+
+@keyframes heart-float {
+  0% { opacity: 1; transform: scale(0.6) translateY(0); }
+  50% { opacity: 0.9; transform: scale(1.35) translateY(-130px) rotate(-12deg); }
+  100% { opacity: 0; transform: scale(0.9) translateY(-280px) rotate(18deg); }
+}
