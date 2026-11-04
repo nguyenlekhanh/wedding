@@ -26,3 +26,12 @@ data/tarot-history.json
 
 # Local backup of the removed café music collection
 backups/
+
+# Kokoro TTS (model ~120MB, generated audio)
+app/node_modules/
+app/tts/models/
+app/tts/cache/
+app/tts-install.log
+app/tts-check.log
+app/tts-bench.log
+app/tts-e2e.log

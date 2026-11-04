@@ -101,7 +101,8 @@ function updateBgmState(bgmConfig) {
         }
       }
       if (bgmConfig.volume !== undefined) {
-        ytPlayer.setVolume(Number(bgmConfig.volume));
+        // While the MC speaks the BGM stays ducked, even if the admin edits volume mid-sentence.
+        ytPlayer.setVolume(mcIsSpeaking() ? 0 : Number(bgmConfig.volume));
       }
       if (bgmConfig.enabled === false || bgmConfig.playing === false) {
         ytPlayer.pauseVideo();
@@ -187,7 +188,25 @@ function playFanfare() {
   });
 }
 
-// Voice Synthesizer - Cute Female MC Voice
+// Voice Synthesizer - FALLBACK MC voice.
+// Kokoro is the primary voice; this only runs when the server reports that the
+// local engine is unavailable (tts-fallback) or the engine is explicitly 'browser'.
+let cachedVoices = [];
+function refreshVoices() {
+  try { cachedVoices = speechSynthesis.getVoices() || []; } catch (e) { cachedVoices = []; }
+}
+if ('speechSynthesis' in window) {
+  refreshVoices();
+  try { speechSynthesis.addEventListener('voiceschanged', refreshVoices); } catch (e) {}
+}
+
+function pickEnglishVoice() {
+  if (!cachedVoices.length) refreshVoices();
+  return cachedVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('en') && /natural|neural|aria|jenny|samantha|zira|female/i.test(v.name))
+    || cachedVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('en'))
+    || null;
+}
+
 async function speakThankYou(text) {
   if (!('speechSynthesis' in window)) return;
   const cfg = currentState?.config || {};
@@ -195,15 +214,14 @@ async function speakThankYou(text) {
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    const voices = speechSynthesis.getVoices();
-    // English overlay: prefer an English voice, then any English voice, then any voice at all.
-    const enVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en') && /female|aria|jenny|zira|samantha|natural/i.test(v.name))
-      || voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en'))
-      || voices[0];
-    if (enVoice) u.voice = enVoice;
-    u.rate = Number(cfg.voiceRate) || 1.08;
-    u.pitch = Number(cfg.voicePitch) || 1.25;
-    u.volume = Number(cfg.volume) || 0.95;
+    const voice = pickEnglishVoice();
+    if (voice) u.voice = voice;
+    u.rate = Number(cfg.voiceRate) || 0.98;
+    // Pitch is clamped to neutral: the old 1.25 was the main cause of the
+    // "chipmunk" sound. Kokoro has no pitch control at all, so keep parity.
+    u.pitch = 1.0;
+    u.volume = Number(cfg.ttsVolume ?? cfg.volume) || 0.95;
+    u.onerror = (e) => console.warn('[MC] browser speech error:', e?.error || e);
     speechSynthesis.speak(u);
   } catch (e) {}
 }
@@ -373,6 +391,9 @@ function renderState(state) {
   const cfg = state.config || {};
   const stats = state.stats || {};
   const goals = state.goals || {};
+
+  // Turning the MC off must also silence anything already queued.
+  if (cfg.speech === false) clearMcQueue();
 
   // Couple names
   if ($('#groom-name')) $('#groom-name').textContent = cfg.groom || 'Tuấn Anh';
@@ -737,21 +758,13 @@ async function processOfferingQueue() {
   card?.classList.add('show');
   showToast(`💌 ${item.name} just sent ${item.gift} ×${item.count}! A hundred years of happiness! 💕`);
 
-  // Cute MC Voice Announcement
+  // MC voice announcement is produced by the server (Kokoro) and arrives over SSE
+  // as a `tts` event, so the audio is a real media element (OBS-capturable) instead
+  // of Web Speech. If the server cannot synthesise, it sends `tts-fallback` and the
+  // browser voice in speakThankYou() takes over.
   const cfg = currentState?.config || {};
-  let thankMsg = item.funnyMessage;
-  if (!thankMsg) {
-    thankMsg = cfg.thanksTemplate || 'Thank you {name} for the wedding gift!';
-    thankMsg = thankMsg
-      .replace('{name}', item.name)
-      .replace('{gift}', item.gift)
-      .replace('{count}', item.count)
-      .replace('{groom}', cfg.groom || 'the groom')
-      .replace('{bride}', cfg.bride || 'the bride');
-  }
-
-  if (cfg.speech !== false) {
-    speakThankYou(thankMsg);
+  if (cfg.speech === false) {
+    clearMcQueue();
   }
 
   await new Promise(r => setTimeout(r, 4800));
@@ -774,6 +787,128 @@ async function processOfferingQueue() {
     setTimeout(processOfferingQueue, 400);
   }
 }
+
+// ========================================================
+// MC VOICE PLAYBACK (Kokoro WAV)
+// Priority queue + BGM ducking + graceful failure.
+// ========================================================
+const mcQueue = [];
+let mcCurrent = null;
+
+function mcEl() { return document.getElementById('mc-audio'); }
+function mcIsSpeaking() { return !!mcCurrent; }
+
+function mcVolume() {
+  const v = Number(currentState?.config?.ttsVolume ?? currentState?.config?.volume ?? 0.95);
+  return Math.min(1, Math.max(0, Number.isFinite(v) ? v : 0.95));
+}
+
+// Lower the YouTube BGM while the MC talks, then restore the admin's volume.
+function duckBgm(ducked) {
+  if (currentState?.config?.ttsDuckBgm === false) return;
+  if (!isYtReady || !ytPlayer || typeof ytPlayer.setVolume !== 'function') return;
+  try {
+    const base = Number(currentState?.config?.bgm?.volume ?? 20);
+    ytPlayer.setVolume(ducked ? 0 : base);
+  } catch (e) {}
+}
+
+function clearMcQueue() {
+  mcQueue.length = 0;
+  const el = mcEl();
+  if (mcCurrent) {
+    mcCurrent.finished = true;
+    clearTimeout(mcCurrent.watchdog);
+    mcCurrent = null;
+  }
+  try { el.pause(); } catch (e) {}
+  duckBgm(false);
+}
+
+function playNextMc() {
+  if (mcCurrent) return;
+  const item = mcQueue.shift();
+  if (!item) { duckBgm(false); return; }
+
+  const el = mcEl();
+  if (!el) return;
+
+  const entry = { item, finished: false };
+  mcCurrent = entry;
+
+  const done = () => {
+    if (entry.finished) return;
+    entry.finished = true;
+    clearTimeout(entry.watchdog);
+    if (mcCurrent === entry) mcCurrent = null;
+    if (mcCurrent) return;            // a pre-empting line already owns the element
+    if (mcQueue.length) playNextMc();
+    else duckBgm(false);
+  };
+
+  el.onended = done;
+  el.onerror = () => { console.warn('[MC] audio failed:', item.url); done(); };
+  el.volume = mcVolume();
+  el.src = item.url;
+  duckBgm(true);
+
+  // Watchdog: never let a stuck element silence the MC forever.
+  const guardMs = Math.max(2000, Number(item.durationMs) || 9000) + 3000;
+  entry.watchdog = setTimeout(done, guardMs);
+
+  const p = el.play();
+  if (p && typeof p.catch === 'function') {
+    p.catch(err => { console.warn('[MC] playback blocked:', err && err.message); done(); });
+  }
+}
+
+function enqueueMcSpeech(item) {
+  if (!item || !item.url) return;
+  if (item.id && (mcQueue.some(q => q.id === item.id) || (mcCurrent && mcCurrent.item.id === item.id))) return;
+
+  mcQueue.push(item);
+  // Highest priority first; equal priority keeps arrival order.
+  mcQueue.sort((a, b) => (Number(b.priority) || 0) - (Number(a.priority) || 0));
+
+  if (mcCurrent) {
+    const incoming = Number(item.priority) || 0;
+    const playing = Number(mcCurrent.item.priority) || 0;
+    if (incoming <= playing) return;   // important line keeps playing; this one waits
+
+    // Pre-empt: stop the lower-priority line, drop it from the element.
+    const el = mcEl();
+    const prev = mcCurrent;
+    prev.finished = true;
+    clearTimeout(prev.watchdog);
+    mcCurrent = null;
+    try { el.pause(); } catch (e) {}
+  }
+
+  playNextMc();
+}
+
+// Read-only diagnostics for the operator (and for automated checks).
+// Mirrors the queue + BGM duck state without changing any behaviour.
+window.__weddingMC = () => {
+  const el = mcEl();
+  let bgmVolume = null;
+  try { bgmVolume = (isYtReady && ytPlayer && ytPlayer.getVolume) ? ytPlayer.getVolume() : null; } catch (e) {}
+  return {
+    speaking: !!mcCurrent,
+    playingId: mcCurrent ? mcCurrent.item.id : null,
+    playingPriority: mcCurrent ? mcCurrent.item.priority : null,
+    queued: mcQueue.map(q => ({ id: q.id, priority: q.priority, kind: q.kind || null })),
+    element: el ? {
+      src: el.currentSrc || el.src,
+      currentTime: Number(el.currentTime.toFixed(2)),
+      duration: Number.isFinite(el.duration) ? Number(el.duration.toFixed(2)) : null,
+      paused: el.paused,
+      volume: el.volume
+    } : null,
+    bgmVolume,
+    duckEnabled: currentState?.config?.ttsDuckBgm !== false
+  };
+};
 
 // Connect SSE events
 const realtime = new WeddingRealtime();
@@ -824,5 +959,21 @@ realtime.addEventListener('focus', e => {
   try {
     const d = JSON.parse(e.data);
     queueOffering(d);
+  } catch (err) {}
+});
+
+// Kokoro MC audio is ready (server-generated WAV)
+realtime.addEventListener('tts', e => {
+  try {
+    const d = JSON.parse(e.data);
+    enqueueMcSpeech(d);
+  } catch (err) {}
+});
+
+// Kokoro unavailable / engine set to 'browser': use the browser voice
+realtime.addEventListener('tts-fallback', e => {
+  try {
+    const d = JSON.parse(e.data);
+    if (d && d.text) speakThankYou(d.text);
   } catch (err) {}
 });

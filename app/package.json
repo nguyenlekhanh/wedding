@@ -1,0 +1,15 @@
+{
+  "name": "tieccuoi-live",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TiecCuoiLive - TikTok LIVE wedding overlay with local Kokoro-82M MC voice",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs",
+    "tts:download": "node tts/download-model.mjs",
+    "tts:check": "node tts/check-tts.mjs"
+  },
+  "dependencies": {
+    "kokoro-js": "^1.2.1"
+  }
+}

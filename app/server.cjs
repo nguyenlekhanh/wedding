@@ -3,9 +3,18 @@ const fs = require('node:fs');
 const path = require('node:path');
 const https = require('node:https');
 const EventEmitter = require('node:events');
+const { TtsService } = require('./tts/tts-service.cjs');
 
 const PORT = Number(process.env.PORT) || 3003;
 const STATE_FILE = path.join(__dirname, 'wedding_state.json');
+
+// ---------------------------------------------------------------
+// LOCAL MC VOICE (Kokoro-82M). Runs in its own worker thread, offline.
+// ---------------------------------------------------------------
+const tts = new TtsService({
+  cacheDir: path.join(__dirname, 'tts', 'cache'),
+  modelDir: path.join(__dirname, 'tts', 'models')
+});
 
 // Default initial state with Marriage Auction & Funny Teasing Voice
 const defaultState = {
@@ -20,11 +29,16 @@ const defaultState = {
     showFireworks: true,
     showBubbles: true,
     speech: true,
+    ttsEngine: "kokoro",      // 'kokoro' = local Kokoro-82M | 'browser' = Web Speech fallback
+    ttsVoice: "af_heart",     // Kokoro voice id
+    ttsSpeed: 0.98,           // natural, unhurried MC pace
+    ttsVolume: 0.95,          // overlay audio element volume
+    ttsDuckBgm: true,         // lower the YouTube BGM while the MC speaks
     voice: "en-US-AriaNeural",
     speechMode: "browser",
-    volume: 0.9,
-    voicePitch: 1.25,
-    voiceRate: 1.08,
+    volume: 0.95,
+    voicePitch: 1.0,          // browser fallback only: no pitch distortion
+    voiceRate: 0.98,
     soundEffects: true,
     enableMarryAuction: true,
     minCoinsToMarry: 10,
@@ -166,6 +180,48 @@ function broadcast(event, data) {
       clients.delete(client);
     }
   }
+}
+
+// ---------------------------------------------------------------
+// MC ANNOUNCEMENTS
+// Priority: crown transfer (10) > gift thank-you (5) > ambient (1).
+// Generation never blocks this thread: the worker does the inference.
+// ---------------------------------------------------------------
+const SPEECH_PRIORITY = { marry: 10, gift: 5, ambient: 1 };
+
+function announce(text, priority = SPEECH_PRIORITY.gift, meta = {}) {
+  if (state.config.speech === false) return null;
+  const clean = tts.normalize(text);
+  if (!clean) return null;
+
+  // Explicit opt-out: let the overlay use the browser voice instead.
+  if ((state.config.ttsEngine || 'kokoro') === 'browser') {
+    broadcast('tts-fallback', { text: clean, priority, ...meta });
+    return null;
+  }
+
+  const id = `mc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return tts.speak({
+    text: clean,
+    voice: state.config.ttsVoice || 'af_heart',
+    speed: Number(state.config.ttsSpeed) || Number(state.config.voiceRate) || 0.98
+  }).then((result) => {
+    broadcast('tts', {
+      id,
+      url: result.url,
+      text: clean,
+      priority,
+      durationMs: result.durationMs,
+      cached: result.cached,
+      ...meta
+    });
+    return result;
+  }).catch((err) => {
+    // Kokoro is verified first; if it fails we still want the MC to be heard.
+    console.error('[TTS] Kokoro failed, falling back to browser voice:', err.message);
+    broadcast('tts-fallback', { text: clean, priority, error: err.message, ...meta });
+    return null;
+  });
 }
 
 // ========================================================
@@ -333,6 +389,15 @@ function processGiftEvent(giftData) {
   };
 
   broadcast('focus', offeringEvent);
+
+  // MC voice: the crown announcement outranks an ordinary thank-you.
+  announce(funnyMessage, becameGroom ? SPEECH_PRIORITY.marry : SPEECH_PRIORITY.gift, {
+    kind: becameGroom ? 'marry' : 'gift',
+    name,
+    gift,
+    count
+  });
+
   if (becameGroom) {
     broadcast('action', {
       action: 'marry',
@@ -681,10 +746,13 @@ const server = http.createServer(async (req, res) => {
   // 4. Update Config
   if (pathname === '/api/config' && req.method === 'POST') {
     const data = await readJson();
+    // The dashboard historically posted { config: {...} }; that used to be stored
+    // as a nested, dead state.config.config. Accept both shapes, store flat.
+    const patch = (data && typeof data.config === 'object' && data.config !== null) ? data.config : data;
     state.config = {
       ...state.config,
-      ...data,
-      bgm: { ...state.config.bgm, ...(data.bgm || {}) }
+      ...patch,
+      bgm: { ...state.config.bgm, ...((patch && patch.bgm) || {}) }
     };
     persistState();
     broadcast('state', state);
@@ -697,6 +765,10 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/action' && req.method === 'POST') {
     const data = await readJson();
     broadcast('action', data);
+    // A manually triggered crown transfer is announced at top priority.
+    if (data && data.action === 'marry') {
+      announce(data.text || 'A new groom has taken the crown!', SPEECH_PRIORITY.marry, { kind: 'marry' });
+    }
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ ok: true, action: data }));
     return;
@@ -872,6 +944,90 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 13b. KOKORO TTS: status
+  if (pathname === '/api/tts/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify({
+      ...tts.status(),
+      voice: state.config.ttsVoice || 'af_heart',
+      speed: Number(state.config.ttsSpeed) || 0.98,
+      enabled: state.config.speech !== false,
+      engineSelected: state.config.ttsEngine || 'kokoro'
+    }));
+    return;
+  }
+
+  // 13c. KOKORO TTS: preview (dashboard test button)
+  if (pathname === '/api/tts/preview' && req.method === 'POST') {
+    const data = await readJson();
+    const text = tts.normalize(data.text || state.config.thanksTemplate || 'Welcome to the wedding!');
+    const voice = data.voice || state.config.ttsVoice || 'af_heart';
+    const speed = Number(data.speed) || Number(state.config.ttsSpeed) || 0.98;
+    if (!text) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Nội dung đọc thử đang trống' }));
+      return;
+    }
+    try {
+      const result = await tts.speak({ text, voice, speed });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        ok: true,
+        url: result.url,
+        text: result.text,
+        voice,
+        speed,
+        cached: result.cached,
+        durationMs: result.durationMs
+      }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message || 'Không tạo được giọng đọc' }));
+    }
+    return;
+  }
+
+  // 13d. KOKORO TTS: generated WAV files (SHA-1 named, immutable)
+  if (pathname.startsWith('/api/tts/audio/') && req.method === 'GET') {
+    const name = path.basename(decodeURIComponent(pathname.slice('/api/tts/audio/'.length)));
+    if (!/^[a-f0-9]{40}\.wav$/.test(name)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Tên tệp âm thanh không hợp lệ' }));
+      return;
+    }
+    const file = path.join(__dirname, 'tts', 'cache', name);
+    fs.stat(file, (err, stats) => {
+      if (err || !stats.isFile()) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Không tìm thấy tệp âm thanh' }));
+        return;
+      }
+      res.writeHead(200, {
+        'Content-Type': 'audio/wav',
+        'Content-Length': stats.size,
+        'Cache-Control': 'public, max-age=604800, immutable'
+      });
+      fs.createReadStream(file).pipe(res);
+    });
+    return;
+  }
+
+  // 13e. KOKORO TTS: clear the audio cache
+  if (pathname === '/api/tts/cache' && req.method === 'DELETE') {
+    let removed = 0;
+    try {
+      for (const f of fs.readdirSync(path.join(__dirname, 'tts', 'cache'))) {
+        if (f.endsWith('.wav')) {
+          fs.unlinkSync(path.join(__dirname, 'tts', 'cache', f));
+          removed++;
+        }
+      }
+    } catch (e) {}
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, removed }));
+    return;
+  }
+
   // 14. Serve Static Files from public/
   let filePath = path.join(__dirname, 'public', pathname === '/' ? 'index.html' : pathname);
   if (!filePath.startsWith(path.join(__dirname, 'public'))) {
@@ -898,4 +1054,8 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Tiệc Cưới Online Server running on http://localhost:${PORT}`);
+  // Pre-load the Kokoro model in the worker so the first gift is not the slow one.
+  setTimeout(() => {
+    try { tts.warm(); } catch (e) { console.error('[TTS] warm-up failed:', e.message); }
+  }, 2500);
 });

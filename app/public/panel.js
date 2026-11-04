@@ -143,47 +143,161 @@ $('#btn-save-goals')?.addEventListener('click', async () => {
   alert('Đã lưu mục tiêu quà tặng thành công!');
 });
 
-// Save Voice Settings
+// Save Voice Settings (Kokoro + browser fallback).
+// Payload is sent flat so the server stores it on config itself (the old nested
+// { config: {...} } shape was being written to a dead state.config.config).
 $('#btn-save-voice')?.addEventListener('click', async () => {
   const speech = $('#cfg-speech-enabled')?.value === 'true';
   const funnyVoiceEnabled = $('#cfg-funny-voice')?.value === 'true';
-  const voicePitch = Number($('#cfg-voice-pitch')?.value) || 1.25;
-  const voiceRate = Number($('#cfg-voice-rate')?.value) || 1.08;
+  const voicePitch = Number($('#cfg-voice-pitch')?.value) || 1.0;
+  const speed = Number($('#cfg-voice-rate')?.value) || 0.98;
   const volume = Number($('#cfg-volume')?.value) || 0.95;
+  const ttsVoice = $('#cfg-tts-voice')?.value || 'af_heart';
   const thanksTemplate = $('#cfg-thanks-template')?.value?.trim();
 
-  await fetch('/api/config', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ config: { speech, funnyVoiceEnabled, voicePitch, voiceRate, volume, thanksTemplate } })
-  });
-  alert('Đã lưu cấu hình giọng đọc AI MC thành công!');
+  try {
+    const res = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        speech,
+        funnyVoiceEnabled,
+        voicePitch,
+        voiceRate: speed,
+        ttsSpeed: speed,
+        volume,
+        ttsVolume: volume,
+        ttsVoice,
+        thanksTemplate
+      })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    alert('Đã lưu cấu hình giọng đọc AI MC thành công!');
+  } catch (err) {
+    alert('Lưu cấu hình giọng đọc thất bại: ' + err.message);
+  }
 });
 
-// Test Voice
-$('#btn-test-voice')?.addEventListener('click', () => {
-  const tpl = $('#cfg-thanks-template')?.value || 'Cảm ơn bạn {name} đã mừng cưới!';
-  const groom = $('#cfg-groom')?.value || 'chú rể';
-  const bride = $('#cfg-bride')?.value || 'cô dâu';
+// Giọng trình duyệt dự phòng (chỉ dùng khi Kokoro lỗi hoặc bị tắt)
+function speakWithBrowser(text) {
+  if (!('speechSynthesis' in window)) {
+    alert('Trình duyệt không hỗ trợ Web Speech');
+    return;
+  }
+  const u = new SpeechSynthesisUtterance(text);
+  const voices = speechSynthesis.getVoices() || [];
+  const en = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en')) || voices[0];
+  if (en) u.voice = en;
+  u.pitch = 1.0;
+  u.rate = Number($('#cfg-voice-rate')?.value) || 0.98;
+  speechSynthesis.speak(u);
+}
+
+// Test Voice - dùng đúng giọng/tốc độ/âm lượng sẽ dùng khi LIVE
+$('#btn-test-voice')?.addEventListener('click', async () => {
+  const tpl = $('#cfg-thanks-template')?.value || 'Thank you {name} for the wedding gift!';
+  const groom = $('#cfg-groom')?.value || 'the groom';
+  const bride = $('#cfg-bride')?.value || 'the bride';
   const text = tpl
-    .replace('{name}', 'Đại gia Hoàng Long')
-    .replace('{gift}', 'nhẫn cưới hỷ sự')
+    .replace('{name}', 'Minh Thư')
+    .replace('{gift}', 'Wedding Envelope')
     .replace('{count}', '1')
     .replace('{groom}', groom)
     .replace('{bride}', bride);
 
-  if ('speechSynthesis' in window) {
-    const u = new SpeechSynthesisUtterance(text);
-    const voices = speechSynthesis.getVoices();
-    const vi = voices.find(v => (v.name.includes('HoaiMy') || v.lang.startsWith('vi')) && (v.name.includes('Female') || v.name.includes('HoaiMy') || !v.name.includes('Nam'))) || voices.find(v => v.lang.toLowerCase().startsWith('vi')) || voices[0];
-    if (vi) u.voice = vi;
-    u.pitch = Number($('#cfg-voice-pitch')?.value) || 1.25;
-    u.rate = Number($('#cfg-voice-rate')?.value) || 1.08;
-    speechSynthesis.speak(u);
-  } else {
-    alert('Trình duyệt không hỗ trợ Web Speech');
+  const btn = $('#btn-test-voice');
+  const label = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang tạo giọng...'; }
+
+  try {
+    const res = await fetch('/api/tts/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        voice: $('#cfg-tts-voice')?.value || 'af_heart',
+        speed: Number($('#cfg-voice-rate')?.value) || 0.98
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.url) throw new Error(data.error || ('HTTP ' + res.status));
+    const audio = new Audio(data.url);
+    audio.volume = Number($('#cfg-volume')?.value) || 0.95;
+    await audio.play();
+  } catch (err) {
+    speakWithBrowser(text);
+    alert('Không tạo được giọng Kokoro (' + err.message + ').\nĐã đọc thử bằng giọng trình duyệt để bạn vẫn nghe được mẫu câu.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
   }
 });
+
+// ========================================================
+// KOKORO TTS PANEL (chèn bằng JS để index.html giữ nguyên)
+// ========================================================
+let currentTtsVoice = 'af_heart';
+
+async function refreshTtsStatus() {
+  const line = document.getElementById('tts-status-line');
+  const sel = document.getElementById('cfg-tts-voice');
+  try {
+    const res = await fetch('/api/tts/status');
+    const st = await res.json();
+    if (sel && !sel.options.length && Array.isArray(st.voices)) {
+      sel.innerHTML = st.voices
+        .map(v => `<option value="${v.id}">${v.label}</option>`)
+        .join('');
+      sel.value = currentTtsVoice || 'af_heart';
+    }
+    if (line) {
+      const cache = st.cache ? `${st.cache.files} tệp` : '0 tệp';
+      const stateText = st.ready
+        ? '✅ Sẵn sàng'
+        : (st.loading ? '⏳ Đang nạp mô hình...' : (st.error ? '❌ Lỗi' : '💤 Chưa nạp'));
+      line.textContent = `Kokoro: ${stateText} · Mô hình: ${st.model} (${st.dtype}) · Cache: ${cache}`
+        + (st.lastLatencyMs ? ` · Lần tạo gần nhất: ${st.lastLatencyMs} ms` : '')
+        + (st.error ? ` · ${st.error}` : '');
+    }
+  } catch (err) {
+    if (line) line.textContent = '❌ Không đọc được trạng thái TTS (server chưa chạy?)';
+  }
+}
+
+function initTtsUi() {
+  const card = document.querySelector('#tab-voice .card-panel');
+  if (!card) return;
+
+  // The old pitch slider only ever made the browser voice sound worse, and Kokoro
+  // has no pitch control, so the control is retired rather than left lying.
+  const pitch = document.getElementById('cfg-voice-pitch');
+  if (pitch) {
+    const group = pitch.closest('.form-group');
+    if (group) group.style.display = 'none';
+  }
+
+  if (!document.getElementById('tts-kokoro-block')) {
+    const block = document.createElement('div');
+    block.id = 'tts-kokoro-block';
+    block.className = 'form-grid';
+    block.style.marginTop = '14px';
+    block.innerHTML = `
+      <div class="form-group full-width">
+        <label>Giọng MC Kokoro (AI chạy offline trên máy):</label>
+        <select id="cfg-tts-voice"></select>
+        <small class="hint-text" id="tts-status-line">Đang kiểm tra trạng thái TTS...</small>
+      </div>
+    `;
+    const footer = card.querySelector('.panel-footer');
+    if (footer) card.insertBefore(block, footer);
+    else card.append(block);
+  }
+
+  refreshTtsStatus();
+  setInterval(refreshTtsStatus, 5000);
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initTtsUi);
+else initTtsUi();
 
 // Reset Session
 $('#btn-reset-session')?.addEventListener('click', async () => {
@@ -307,6 +421,8 @@ function renderAdminState(state) {
     if ($('#cfg-goal-rose') && goals.rose) $('#cfg-goal-rose').value = goals.rose.target;
     if ($('#cfg-goal-cake') && goals.cake) $('#cfg-goal-cake').value = goals.cake.target;
     if ($('#cfg-thanks-template') && cfg.thanksTemplate) $('#cfg-thanks-template').value = cfg.thanksTemplate;
+    if (cfg.ttsVoice) currentTtsVoice = cfg.ttsVoice;
+    if ($('#cfg-tts-voice') && cfg.ttsVoice) $('#cfg-tts-voice').value = cfg.ttsVoice;
     if (cfg.bgm) {
       if ($('#cfg-bgm-url') && cfg.bgm.youtubeUrl) $('#cfg-bgm-url').value = cfg.bgm.youtubeUrl;
       if ($('#cfg-bgm-title') && cfg.bgm.title) $('#cfg-bgm-title').value = cfg.bgm.title;

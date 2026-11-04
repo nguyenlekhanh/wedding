@@ -10,11 +10,16 @@
     "showFireworks": true,
     "showBubbles": true,
     "speech": true,
+    "ttsEngine": "kokoro",
+    "ttsVoice": "af_heart",
+    "ttsSpeed": 0.98,
+    "ttsVolume": 0.95,
+    "ttsDuckBgm": true,
     "voice": "en-US-AriaNeural",
     "speechMode": "browser",
-    "volume": 0.9,
-    "voicePitch": 1.25,
-    "voiceRate": 1.08,
+    "volume": 0.95,
+    "voicePitch": 1,
+    "voiceRate": 0.98,
     "soundEffects": true,
     "enableMarryAuction": true,
     "minCoinsToMarry": 10,
@@ -113,7 +118,38 @@
     }
   },
   "people": [],
-  "scores": {},
+  "scores": {
+    "donor-1": {
+      "id": "donor-1",
+      "name": "HOÀNG LONG",
+      "total": 7400000,
+      "avatar": ""
+    },
+    "donor-2": {
+      "id": "donor-2",
+      "name": "Xoan Nguyễn",
+      "total": 360000,
+      "avatar": ""
+    },
+    "donor-3": {
+      "id": "donor-3",
+      "name": "Minh Thư",
+      "total": 120000,
+      "avatar": ""
+    },
+    "donor-4": {
+      "id": "donor-4",
+      "name": "Vũ Hằng",
+      "total": 60200,
+      "avatar": ""
+    },
+    "donor-5": {
+      "id": "donor-5",
+      "name": "Phương Thảo",
+      "total": 60000,
+      "avatar": ""
+    }
+  },
   "recentGivers": [],
   "status": {
     "state": "offline",
