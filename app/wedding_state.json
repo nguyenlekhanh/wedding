@@ -1,6 +1,6 @@
 {
   "config": {
-    "groom": "Mike",
+    "groom": "Sam",
     "bride": "Jennife",
     "title": "WEDDING LIVE",
     "slogan": "A Hundred Years of Happiness",
@@ -100,9 +100,9 @@
     }
   },
   "stats": {
-    "guests": 1,
+    "guests": 8,
     "outside": 21,
-    "envelopes": 0,
+    "envelopes": 7,
     "wishes": 0
   },
   "goals": {
@@ -112,45 +112,178 @@
       "label": "Rose rain"
     },
     "cake": {
-      "current": 0,
+      "current": 30800,
       "target": 100000,
       "label": "Cake cutting"
     }
   },
-  "people": [],
+  "people": [
+    {
+      "id": "tik-demo-giver-1793760639450",
+      "name": "Sam",
+      "avatar": "",
+      "sprite": 5,
+      "table": 0,
+      "seat": 0,
+      "statusTag": "👑 Big Spender"
+    },
+    {
+      "id": "tik-demo-giver-1793760655762",
+      "name": "Michael",
+      "avatar": "",
+      "sprite": 1,
+      "table": 0,
+      "seat": 1,
+      "statusTag": "👑 Big Spender"
+    },
+    {
+      "id": "tik-demo-giver-1793760670956",
+      "name": "Quinn",
+      "avatar": "",
+      "sprite": 4,
+      "table": 1,
+      "seat": 0,
+      "statusTag": "👑 Big Spender"
+    },
+    {
+      "id": "tik-demo-giver-1793760690226",
+      "name": "Taylor",
+      "avatar": "",
+      "sprite": 0,
+      "table": 1,
+      "seat": 1,
+      "statusTag": "👑 Big Spender"
+    },
+    {
+      "id": "tik-demo-giver-1793760708604",
+      "name": "Sam",
+      "avatar": "",
+      "sprite": 4,
+      "table": 2,
+      "seat": 0,
+      "statusTag": "👑 Big Spender"
+    },
+    {
+      "id": "tik-demo-giver-1793760717746",
+      "name": "Casey",
+      "avatar": "",
+      "sprite": 1,
+      "table": 2,
+      "seat": 1,
+      "statusTag": "👑 Big Spender"
+    },
+    {
+      "id": "tik-demo-giver-1793760728055",
+      "name": "Daniel",
+      "avatar": "",
+      "sprite": 0,
+      "table": 3,
+      "seat": 0,
+      "statusTag": "👑 Big Spender"
+    }
+  ],
   "scores": {
-    "donor-1": {
-      "id": "donor-1",
-      "name": "HOÀNG LONG",
-      "total": 7400000,
+    "tik-demo-giver-1793760639450": {
+      "id": "tik-demo-giver-1793760639450",
+      "name": "Sam",
+      "total": 1,
       "avatar": ""
     },
-    "donor-2": {
-      "id": "donor-2",
-      "name": "Xoan Nguyễn",
-      "total": 360000,
+    "tik-demo-giver-1793760655762": {
+      "id": "tik-demo-giver-1793760655762",
+      "name": "Michael",
+      "total": 5,
       "avatar": ""
     },
-    "donor-3": {
-      "id": "donor-3",
-      "name": "Minh Thư",
-      "total": 120000,
+    "tik-demo-giver-1793760670956": {
+      "id": "tik-demo-giver-1793760670956",
+      "name": "Quinn",
+      "total": 100,
       "avatar": ""
     },
-    "donor-4": {
-      "id": "donor-4",
-      "name": "Vũ Hằng",
-      "total": 60200,
+    "tik-demo-giver-1793760690226": {
+      "id": "tik-demo-giver-1793760690226",
+      "name": "Taylor",
+      "total": 100,
       "avatar": ""
     },
-    "donor-5": {
-      "id": "donor-5",
-      "name": "Phương Thảo",
-      "total": 60000,
+    "tik-demo-giver-1793760708604": {
+      "id": "tik-demo-giver-1793760708604",
+      "name": "Sam",
+      "total": 100,
+      "avatar": ""
+    },
+    "tik-demo-giver-1793760717746": {
+      "id": "tik-demo-giver-1793760717746",
+      "name": "Casey",
+      "total": 1,
+      "avatar": ""
+    },
+    "tik-demo-giver-1793760728055": {
+      "id": "tik-demo-giver-1793760728055",
+      "name": "Daniel",
+      "total": 1,
       "avatar": ""
     }
   },
-  "recentGivers": [],
+  "recentGivers": [
+    {
+      "id": "tik-demo-giver-1793760728055",
+      "name": "Daniel",
+      "gift": "Wedding Gift Money",
+      "count": 1,
+      "diamonds": 1,
+      "total": 1
+    },
+    {
+      "id": "tik-demo-giver-1793760717746",
+      "name": "Casey",
+      "gift": "Wedding Gift Money",
+      "count": 1,
+      "diamonds": 1,
+      "total": 1
+    },
+    {
+      "id": "tik-demo-giver-1793760708604",
+      "name": "Sam",
+      "gift": "Diamond Wedding Ring",
+      "count": 1,
+      "diamonds": 100,
+      "total": 100
+    },
+    {
+      "id": "tik-demo-giver-1793760690226",
+      "name": "Taylor",
+      "gift": "Diamond Wedding Ring",
+      "count": 1,
+      "diamonds": 100,
+      "total": 100
+    },
+    {
+      "id": "tik-demo-giver-1793760670956",
+      "name": "Quinn",
+      "gift": "Diamond Wedding Ring",
+      "count": 1,
+      "diamonds": 100,
+      "total": 100
+    },
+    {
+      "id": "tik-demo-giver-1793760655762",
+      "name": "Michael",
+      "gift": "A Gift of Gold",
+      "count": 1,
+      "diamonds": 5,
+      "total": 5
+    },
+    {
+      "id": "tik-demo-giver-1793760639450",
+      "name": "Sam",
+      "gift": "Wedding Gift Money",
+      "count": 1,
+      "diamonds": 1,
+      "total": 1
+    }
+  ],
   "status": {
     "state": "offline",
     "message": "Chưa kết nối. Hãy mở TikFinity Desktop trên máy này.",

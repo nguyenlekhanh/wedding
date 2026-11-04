@@ -71,7 +71,7 @@ $('#btn-action-petal')?.addEventListener('click', () => sendAction('petal'));
 $('#btn-send-sim-comment')?.addEventListener('click', async () => {
   const input = $('#sim-comment-input');
   const comment = input?.value?.trim() || 'Chúc mừng trăm năm hạnh phúc! 🎉';
-  const names = ['Ngọc Hân', 'Hoàng Long', 'Minh Thư', 'Tuệ An', 'Anh Dũng', 'Kim Ngân', 'Thanh Tùng'];
+  const names = ['Quinn', 'Sam', 'Ibeth', 'Taylor', 'Daniel', 'Casey', 'Michael'];
   const name = names[Math.floor(Math.random() * names.length)];
 
   await fetch('/api/demo', {
@@ -96,7 +96,7 @@ $$('.btn-gift').forEach(btn => {
     const gift = btn.dataset.gift;
     const count = Number(btn.dataset.count) || 1;
     const diamonds = Number(btn.dataset.coins) || 1;
-    const donors = ['Phương Thảo', 'Văn Hùng', 'Hoàng Long', 'Hồng Hạnh', 'Thành Đạt', 'Mai Linh'];
+    const donors = ['Quinn', 'Daniel', 'Sam', 'Taylor', 'Michael', 'Casey'];
     const name = donors[Math.floor(Math.random() * donors.length)];
 
     await fetch('/api/demo', {
@@ -109,10 +109,10 @@ $$('.btn-gift').forEach(btn => {
 
 // Save Couple Info
 $('#btn-save-couple')?.addEventListener('click', async () => {
-  const groom = $('#cfg-groom')?.value?.trim() || 'Tuấn Anh';
-  const bride = $('#cfg-bride')?.value?.trim() || 'Mai Vy';
-  const title = $('#cfg-title')?.value?.trim() || 'TIỆC CƯỚI ONLINE';
-  const slogan = $('#cfg-slogan')?.value?.trim() || 'Trăm Năm Hạnh Phúc';
+  const groom = $('#cfg-groom')?.value?.trim() || 'Sam';
+  const bride = $('#cfg-bride')?.value?.trim() || 'Jennifer';
+  const title = $('#cfg-title')?.value?.trim() || 'WEDDING ONLINE';
+  const slogan = $('#cfg-slogan')?.value?.trim() || 'A Lifetime of Happiness';
   const date = $('#cfg-date')?.value || '2026-11-03';
   const enableMarryAuction = $('#cfg-marry-auction')?.value === 'true';
   const minCoinsToMarry = Number($('#cfg-min-marry')?.value) || 10;
@@ -199,7 +199,7 @@ $('#btn-test-voice')?.addEventListener('click', async () => {
   const groom = $('#cfg-groom')?.value || 'the groom';
   const bride = $('#cfg-bride')?.value || 'the bride';
   const text = tpl
-    .replace('{name}', 'Minh Thư')
+    .replace('{name}', 'Ibeth')
     .replace('{gift}', 'Wedding Envelope')
     .replace('{count}', '1')
     .replace('{groom}', groom)

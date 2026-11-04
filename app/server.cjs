@@ -91,43 +91,43 @@ const defaultState = {
   },
   people: [
     // Phía bên trái (12 khách ngồi 4 hàng)
-    { id: 'guest-1', name: 'Minh Thư', avatar: '', sprite: 4, table: 0, seat: 0, statusTag: '💍 Sending love' },
-    { id: 'guest-2', name: 'Nhà Đẹp Huy', avatar: '', sprite: 1, table: 1, seat: 1, statusTag: '🍗 Feasting' },
+    { id: 'guest-1', name: 'Ibeth', avatar: '', sprite: 4, table: 0, seat: 0, statusTag: '💍 Sending love' },
+    { id: 'guest-2', name: 'Daniel ', avatar: '', sprite: 1, table: 1, seat: 1, statusTag: '🍗 Feasting' },
     { id: 'guest-3', name: 'Jamie', avatar: '', sprite: 2, table: 2, seat: 2, statusTag: '🍻 Bottoms up' },
-    { id: 'guest-4', name: 'Linh', avatar: '', sprite: 5, table: 3, seat: 0, statusTag: '💃 Dancing' },
-    { id: 'guest-5', name: 'Em Bông', avatar: '', sprite: 3, table: 4, seat: 1, statusTag: '👀 Here for the drama' },
-    { id: 'guest-6', name: 'Quang Nhật', avatar: '', sprite: 0, table: 5, seat: 2, statusTag: '🥂 Cheers' },
-    { id: 'guest-7', name: 'Ánh Ngọc', avatar: '', sprite: 4, table: 6, seat: 0, statusTag: '✨ Perfect pair' },
-    { id: 'guest-8', name: 'Mymy', avatar: '', sprite: 5, table: 7, seat: 1, statusTag: '💖 Blessings' },
-    { id: 'guest-9', name: 'Thanh Tùng', avatar: '', sprite: 2, table: 8, seat: 2, statusTag: '🍻 100% Cheers' },
-    { id: 'guest-10', name: 'Tuệ An', avatar: '', sprite: 3, table: 9, seat: 0, statusTag: '🌸 So sweet' },
-    { id: 'guest-11', name: 'Mai Linh', avatar: '', sprite: 4, table: 10, seat: 1, statusTag: '👰 Catching the bouquet' },
-    { id: 'guest-12', name: 'Hồng Hạnh', avatar: '', sprite: 0, table: 11, seat: 2, statusTag: '🎉 So happy' },
+    { id: 'guest-4', name: 'Ashley', avatar: '', sprite: 5, table: 3, seat: 0, statusTag: '💃 Dancing' },
+    { id: 'guest-5', name: 'Alex', avatar: '', sprite: 3, table: 4, seat: 1, statusTag: '👀 Here for the drama' },
+    { id: 'guest-6', name: 'Oliver', avatar: '', sprite: 0, table: 5, seat: 2, statusTag: '🥂 Cheers' },
+    { id: 'guest-7', name: 'Casey', avatar: '', sprite: 4, table: 6, seat: 0, statusTag: '✨ Perfect pair' },
+    { id: 'guest-8', name: 'Riley', avatar: '', sprite: 5, table: 7, seat: 1, statusTag: '💖 Blessings' },
+    { id: 'guest-9', name: 'Samuel', avatar: '', sprite: 2, table: 8, seat: 2, statusTag: '🍻 100% Cheers' },
+    { id: 'guest-10', name: 'Morgan', avatar: '', sprite: 3, table: 9, seat: 0, statusTag: '🌸 So sweet' },
+    { id: 'guest-11', name: 'Quinn', avatar: '', sprite: 4, table: 10, seat: 1, statusTag: '👰 Catching the bouquet' },
+    { id: 'guest-12', name: 'Alex', avatar: '', sprite: 0, table: 11, seat: 2, statusTag: '🎉 So happy' },
 
     // Phía bên phải (12 khách ngồi 4 hàng)
-    { id: 'guest-13', name: 'Quốc Bảo', avatar: '', sprite: 1, table: 12, seat: 0, statusTag: '🍾 Popping bottles' },
-    { id: 'guest-14', name: 'Khánh Vy', avatar: '', sprite: 5, table: 13, seat: 1, statusTag: '💍 Sending love' },
-    { id: 'guest-15', name: 'Văn Đức', avatar: '', sprite: 2, table: 14, seat: 2, statusTag: '🍻 1 2 3 Cheers' },
-    { id: 'guest-16', name: 'Hoàng Yến', avatar: '', sprite: 4, table: 15, seat: 0, statusTag: '✨ Hundred-year wishes' },
-    { id: 'guest-17', name: 'Tấn Phát', avatar: '', sprite: 0, table: 16, seat: 1, statusTag: '🍗 Chicken feast' },
-    { id: 'guest-18', name: 'Ngọc Trân', avatar: '', sprite: 3, table: 17, seat: 2, statusTag: '💖 Gorgeous' },
-    { id: 'guest-19', name: 'Gia Hưng', avatar: '', sprite: 1, table: 18, seat: 0, statusTag: '💃 Dancing all night' },
-    { id: 'guest-20', name: 'Bảo Nam', avatar: '', sprite: 2, table: 19, seat: 1, statusTag: '👑 Next in line' },
-    { id: 'guest-21', name: 'Diệu Nhi', avatar: '', sprite: 5, table: 20, seat: 2, statusTag: '💐 Waiting for the bouquet' },
+    { id: 'guest-13', name: 'Paul', avatar: '', sprite: 1, table: 12, seat: 0, statusTag: '🍾 Popping bottles' },
+    { id: 'guest-14', name: 'Alexander', avatar: '', sprite: 5, table: 13, seat: 1, statusTag: '💍 Sending love' },
+    { id: 'guest-15', name: 'Charles', avatar: '', sprite: 2, table: 14, seat: 2, statusTag: '🍻 1 2 3 Cheers' },
+    { id: 'guest-16', name: 'Alex', avatar: '', sprite: 4, table: 15, seat: 0, statusTag: '✨ Hundred-year wishes' },
+    { id: 'guest-17', name: 'Oliver', avatar: '', sprite: 0, table: 16, seat: 1, statusTag: '🍗 Chicken feast' },
+    { id: 'guest-18', name: 'Paul', avatar: '', sprite: 3, table: 17, seat: 2, statusTag: '💖 Gorgeous' },
+    { id: 'guest-19', name: 'Alexander', avatar: '', sprite: 1, table: 18, seat: 0, statusTag: '💃 Dancing all night' },
+    { id: 'guest-20', name: 'Samuel', avatar: '', sprite: 2, table: 19, seat: 1, statusTag: '👑 Next in line' },
+    { id: 'guest-21', name: 'Morgan', avatar: '', sprite: 5, table: 20, seat: 2, statusTag: '💐 Waiting for the bouquet' },
     { id: 'guest-22', name: 'Hải Đăng', avatar: '', sprite: 0, table: 21, seat: 0, statusTag: '🍻 Drink it all' },
     { id: 'guest-23', name: 'Trúc Ly', avatar: '', sprite: 4, table: 22, seat: 1, statusTag: '🎉 Absolutely radiant' },
     { id: 'guest-24', name: 'Đức Quân', avatar: '', sprite: 1, table: 23, seat: 2, statusTag: '👑 Big Spender' }
   ],
   scores: {
-    'donor-1': { id: 'donor-1', name: 'HOÀNG LONG', total: 7400000, avatar: '' },
-    'donor-2': { id: 'donor-2', name: 'Xoan Nguyễn', total: 360000, avatar: '' },
-    'donor-3': { id: 'donor-3', name: 'Minh Thư', total: 120000, avatar: '' },
-    'donor-4': { id: 'donor-4', name: 'Vũ Hằng', total: 60200, avatar: '' },
-    'donor-5': { id: 'donor-5', name: 'Phương Thảo', total: 60000, avatar: '' }
+    'donor-1': { id: 'donor-1', name: 'Sam', total: 7400000, avatar: '' },
+    'donor-2': { id: 'donor-2', name: 'Casey', total: 360000, avatar: '' },
+    'donor-3': { id: 'donor-3', name: 'Ibeth', total: 120000, avatar: '' },
+    'donor-4': { id: 'donor-4', name: 'Quinn', total: 60200, avatar: '' },
+    'donor-5': { id: 'donor-5', name: 'Taylor', total: 60000, avatar: '' }
   },
   recentGivers: [
-    { id: 'donor-1', name: 'HOÀNG LONG', gift: 'Diamond Ring', count: 1, diamonds: 500 },
-    { id: 'donor-2', name: 'Xoan Nguyễn', gift: 'Gift of Gold', count: 5, diamonds: 25 }
+    { id: 'donor-1', name: 'Sam', gift: 'Diamond Ring', count: 1, diamonds: 500 },
+    { id: 'donor-2', name: 'Taylor', gift: 'Gift of Gold', count: 5, diamonds: 25 }
   ],
   status: {
     state: 'offline', // 'offline' | 'connecting' | 'waiting' | 'connected' | 'error'

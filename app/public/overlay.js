@@ -477,8 +477,8 @@ function triggerCheers(initiator = '') {
     g.classList.add('cheering');
     setTimeout(() => g.classList.remove('cheering'), 2500);
   });
-  showCeremonyBanner('🍻 1 2 3 CHEERS! THE WHOLE HALL RAISES A GLASS! 🥂', `${initiator ? initiator + ' says: ' : ''}Bottoms up — a hundred years of happiness to the bride and groom!`, 'cheers');
-  showToast(`🥂 ${initiator ? initiator + ' says: ' : ''}1 2 3 CHEERS! Raise your glass to the bride and groom! 🍻`);
+  showCeremonyBanner('🍻 CHEEEEEEERS! THE WHOLE HALL RAISES A GLASS! 🥂', `${initiator ? initiator + ' says: ' : ''}Bottoms up — a hundred years of happiness to the bride and groom!`, 'cheers');
+  showToast(`🥂 ${initiator ? initiator + ' says: ' : ''} CHEEEEEERS! Raise your glass to the bride and groom! 🍻`);
 }
 
 // 3. Nghi thức Khách cùng nhảy múa
