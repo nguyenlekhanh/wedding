@@ -1064,3 +1064,63 @@ html, body {
   50% { opacity: 0.9; transform: scale(1.35) translateY(-130px) rotate(-12deg); }
   100% { opacity: 0; transform: scale(0.9) translateY(-280px) rotate(18deg); }
 }
+
+/* ========================================================
+   ENGLISH OVERLAY SAFEGUARDS
+   Long English strings and long supporter names must wrap or
+   ellipsize instead of overflowing. No animation timing is
+   changed here - only overflow/wrapping behaviour.
+   ======================================================== */
+.ceremony-alert {
+  white-space: normal;
+  width: max-content;
+  max-width: 880px;
+}
+
+#couple-label {
+  max-width: 660px;
+}
+
+#couple-label span {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#celeb-donor,
+#celeb-gift,
+#celeb-wish {
+  overflow-wrap: anywhere;
+}
+
+.actor-label {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.guide-info b,
+.guide-info span {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wedding-chat-bubble {
+  max-width: 400px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.wedding-chat-bubble .chat-bubble-translation {
+  display: block;
+  white-space: normal;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.25);
+  font-size: 14px;
+  font-weight: 600;
+  font-style: italic;
+  color: #5a3b18;
+}

@@ -1,16 +1,16 @@
 {
   "config": {
-    "groom": "Tuấn Anh",
-    "bride": "Mai Vy",
-    "title": "TIỆC CƯỚI ONLINE",
-    "slogan": "Trăm Năm Hạnh Phúc",
+    "groom": "Mike",
+    "bride": "Jennife",
+    "title": "WEDDING LIVE",
+    "slogan": "A Hundred Years of Happiness",
     "date": "2026-11-03",
     "showRosePetals": true,
     "showHearts": true,
     "showFireworks": true,
     "showBubbles": true,
     "speech": true,
-    "voice": "vi-VN-HoaiMyNeural",
+    "voice": "en-US-AriaNeural",
     "speechMode": "browser",
     "volume": 0.9,
     "voicePitch": 1.25,
@@ -21,409 +21,100 @@
     "funnyVoiceEnabled": true,
     "bgm": {
       "enabled": true,
-      "youtubeUrl": "https://youtu.be/uQzGdzzDtLA?si=iVerLoGcizyboFWP",
-      "youtubeId": "uQzGdzzDtLA",
-      "title": "Ngày Đầu Tiên - Đức Phúc",
+      "youtubeUrl": "https://youtu.be/QeGfHsdDeJw",
+      "youtubeId": "QeGfHsdDeJw",
+      "title": "Old Wedding Songs 2021 Wedding Songs For Walk",
       "volume": 20,
       "playing": true
     },
-    "thanksTemplate": "Cảm ơn bạn {name} đã mừng {count} {gift} cho cô dâu {bride} và chú rể {groom}! Chúc bạn và gia đình dồi dào sức khỏe, vạn sự như ý!",
+    "thanksTemplate": "Thank you {name} for the {count} {gift} for bride {bride} and groom {groom}! Wishing you and your family good health and every happiness!",
     "funnyJokes": [
-      "Úi giời ơi tin được không! Đại gia {name} vừa mừng hẳn {count} {gift}! Đẹp trai nhiều tiền thế này bảo sao cô dâu mê tít!",
-      "U là trời! Cảm ơn bạn {name} nha! Mừng cưới xịn xò thế này thì tối nay cô dâu chú rể đếm tiền mỏi tay luôn rồi!",
-      "Bạn {name} chơi lớn quá! Mừng {count} {gift} chất lừ! Chúc bạn ăn cỗ no say, sớm tìm được người yêu để năm sau tới lượt mình nha!",
-      "Đẳng cấp thực sự bà con ơi! Bạn {name} vừa mừng {count} {gift}! Xứng đáng có mười người yêu xếp hàng tỏ tình!",
-      "Cảm ơn bạn {name} nhiều nha! Say rượu thì về chứ say tình là ở lại chung vui tới bến luôn nhé!",
-      "Quá đã luôn bà con ơi! Bạn {name} vừa lên đồ mừng quà cực đỉnh! Cạn ly một trăm phần trăm vì bạn {name} nào!"
+      "Oh wow, can you believe it! Big spender {name} just sent {count} {gift}! Handsome and generous — no wonder the bride is swooning!",
+      "Goodness me! Thank you {name}! With gifts like this, the newlyweds will be counting envelopes all night long!",
+      "You went all out, {name}! {count} {gift} — absolute legend! Enjoy the feast, and may love find you next year!",
+      "Pure class, everyone! {name} just sent {count} {gift}! Truly deserves a queue of admirers!",
+      "Thank you so much, {name}! If you are drunk on love, stay till the end — the party is just getting started!",
+      "What a moment! {name} just showed up with the most amazing gift! A hundred percent toast to {name}!"
     ],
     "marryJokes": [
-      "Báo động hỷ sự bà con ơi! Bạn {name} vừa mừng {count} {gift} và chính thức cướp được chú rể về dinh rồi nha! Chúc mừng tân lang mới!",
-      "Trời ơi đất hỡi! Bạn {name} vừa ra tay tặng quà khủng, soán ngôi chú rể thành công mỹ mãn! Cạn ly chúc mừng tân lang!",
-      "Tin chấn động hôn trường! Bạn {name} vừa chính thức trở thành chú rể đẹp trai bên cạnh cô dâu! Chúc hai bạn trăm năm hạnh phúc, sớm sinh quý tử nha!"
+      "Wedding alert, everyone! {name} just sent {count} {gift} and officially stole the groom away! Congratulations to the new groom!",
+      "Oh my word! {name} dropped a huge gift and took over as groom — mission accomplished! Raise a glass to the new groom!",
+      "Breaking news at the wedding! {name} is now the handsome groom standing beside the bride! A hundred years of happiness, and a baby boy soon!"
     ],
     "wishes": [
-      "Chúc hai bạn trăm năm hạnh phúc, đầu bạc răng long!",
-      "Chúc tân lang tân nương tình nồng ý thắm, sớm sinh quý tử!",
-      "Chúc đôi uyên ương hòa thuận gắn bó, gia đình hưng thịnh!",
-      "Chúc mừng ngày vui đại hỷ, vạn sự cát tường, phúc lộc viên mãn!"
+      "Wishing you a hundred years of happiness, till your hair turns silver!",
+      "May the bride and groom share deep love and welcome a baby soon!",
+      "May the happy couple stay in harmony and watch their family flourish!",
+      "Congratulations on this joyful day — may good fortune and blessings fill your home!"
     ],
     "giftSlots": [
       {
         "id": "rose",
-        "name": "Mừng Phong Bì",
+        "name": "Wedding Envelope",
         "coins": 1,
         "action": "envelope",
-        "prayer": "Mừng phong bì cưới"
+        "prayer": "A wedding envelope gift"
       },
       {
         "id": "peach",
-        "name": "Mừng Chỉ Vàng",
+        "name": "Gift of Gold",
         "coins": 5,
         "action": "gold",
-        "prayer": "Mừng 1 chỉ vàng"
+        "prayer": "One tael of gold"
       },
       {
         "id": "clarinet",
-        "name": "Góp Vui Nhảy Múa",
+        "name": "Join the Dance",
         "coins": 10,
         "action": "dance",
-        "prayer": "Góp vui điệu nhảy"
+        "prayer": "A round of dancing"
       },
       {
         "id": "beer",
-        "name": "Đãi Rượu Bàn",
+        "name": "Buy a Round",
         "coins": 1,
         "action": "cheers",
-        "prayer": "Đãi 1 bàn rượu"
+        "prayer": "A table of drinks"
       },
       {
         "id": "ring",
-        "name": "Làm Chú Rể / Trao Nhẫn",
+        "name": "Become the Groom / Exchange Rings",
         "coins": 10,
         "action": "ring",
-        "prayer": "Trao nhẫn cưới"
+        "prayer": "Exchange the wedding rings"
       }
-    ]
+    ],
+    "config": {
+      "groom": "Mike",
+      "bride": "Jennifer",
+      "title": "WEDDING ONLINE",
+      "slogan": "A Lifetime of Happiness",
+      "date": "2026-11-03",
+      "enableMarryAuction": true,
+      "minCoinsToMarry": 10
+    }
   },
   "stats": {
-    "guests": 122,
+    "guests": 1,
     "outside": 21,
-    "envelopes": 590,
-    "wishes": 176
+    "envelopes": 0,
+    "wishes": 0
   },
   "goals": {
     "rose": {
-      "current": 1670,
+      "current": 0,
       "target": 2532,
-      "label": "Mưa hoa hồng"
+      "label": "Rose rain"
     },
     "cake": {
-      "current": 60500,
+      "current": 0,
       "target": 100000,
-      "label": "Cắt bánh cưới"
+      "label": "Cake cutting"
     }
   },
-  "people": [
-    {
-      "id": "guest-1",
-      "name": "Minh Thư",
-      "avatar": "",
-      "sprite": 4,
-      "table": 0,
-      "seat": 0,
-      "statusTag": "💍 Xin vía"
-    },
-    {
-      "id": "guest-2",
-      "name": "Nhà Đẹp Huy",
-      "avatar": "",
-      "sprite": 1,
-      "table": 1,
-      "seat": 1,
-      "statusTag": "🍗 Ăn cỗ"
-    },
-    {
-      "id": "guest-3",
-      "name": "Jamie",
-      "avatar": "",
-      "sprite": 2,
-      "table": 2,
-      "seat": 2,
-      "statusTag": "🍻 Cạn ly"
-    },
-    {
-      "id": "guest-4",
-      "name": "Linh",
-      "avatar": "",
-      "sprite": 5,
-      "table": 3,
-      "seat": 0,
-      "statusTag": "💃 Quẩy"
-    },
-    {
-      "id": "guest-5",
-      "name": "Em Bông",
-      "avatar": "",
-      "sprite": 3,
-      "table": 4,
-      "seat": 1,
-      "statusTag": "👀 Hóng biến"
-    },
-    {
-      "id": "guest-6",
-      "name": "Quang Nhật",
-      "avatar": "",
-      "sprite": 0,
-      "table": 5,
-      "seat": 2,
-      "statusTag": "🥂 Cụng ly"
-    },
-    {
-      "id": "guest-7",
-      "name": "Ánh Ngọc",
-      "avatar": "",
-      "sprite": 4,
-      "table": 6,
-      "seat": 0,
-      "statusTag": "✨ Đẹp đôi"
-    },
-    {
-      "id": "guest-8",
-      "name": "Mymy",
-      "avatar": "",
-      "sprite": 5,
-      "table": 7,
-      "seat": 1,
-      "statusTag": "💖 Chúc phúc"
-    },
-    {
-      "id": "guest-9",
-      "name": "Thanh Tùng",
-      "avatar": "",
-      "sprite": 2,
-      "table": 8,
-      "seat": 2,
-      "statusTag": "🍻 Dzô 100%"
-    },
-    {
-      "id": "guest-10",
-      "name": "Tuệ An",
-      "avatar": "",
-      "sprite": 3,
-      "table": 9,
-      "seat": 0,
-      "statusTag": "🌸 Ngọt ngào"
-    },
-    {
-      "id": "guest-11",
-      "name": "Mai Linh",
-      "avatar": "",
-      "sprite": 4,
-      "table": 10,
-      "seat": 1,
-      "statusTag": "👰 Bắt hoa"
-    },
-    {
-      "id": "guest-12",
-      "name": "Hồng Hạnh",
-      "avatar": "",
-      "sprite": 0,
-      "table": 11,
-      "seat": 2,
-      "statusTag": "🎉 Vui quá"
-    },
-    {
-      "id": "guest-13",
-      "name": "Quốc Bảo",
-      "avatar": "",
-      "sprite": 1,
-      "table": 12,
-      "seat": 0,
-      "statusTag": "🍾 Khui rượu"
-    },
-    {
-      "id": "guest-14",
-      "name": "Khánh Vy",
-      "avatar": "",
-      "sprite": 5,
-      "table": 13,
-      "seat": 1,
-      "statusTag": "💍 Xin vía"
-    },
-    {
-      "id": "guest-15",
-      "name": "Văn Đức",
-      "avatar": "",
-      "sprite": 2,
-      "table": 14,
-      "seat": 2,
-      "statusTag": "🍻 1 2 3 Dzô"
-    },
-    {
-      "id": "guest-16",
-      "name": "Hoàng Yến",
-      "avatar": "",
-      "sprite": 4,
-      "table": 15,
-      "seat": 0,
-      "statusTag": "✨ Chúc trăm năm"
-    },
-    {
-      "id": "guest-17",
-      "name": "Tấn Phát",
-      "avatar": "",
-      "sprite": 0,
-      "table": 16,
-      "seat": 1,
-      "statusTag": "🍗 Gà luộc"
-    },
-    {
-      "id": "guest-18",
-      "name": "Ngọc Trân",
-      "avatar": "",
-      "sprite": 3,
-      "table": 17,
-      "seat": 2,
-      "statusTag": "💖 Xinh gái"
-    },
-    {
-      "id": "guest-19",
-      "name": "Gia Hưng",
-      "avatar": "",
-      "sprite": 1,
-      "table": 18,
-      "seat": 0,
-      "statusTag": "💃 Nhảy bung nóc"
-    },
-    {
-      "id": "guest-20",
-      "name": "Bảo Nam",
-      "avatar": "",
-      "sprite": 2,
-      "table": 19,
-      "seat": 1,
-      "statusTag": "👑 Sắp tới lượt"
-    },
-    {
-      "id": "guest-21",
-      "name": "Diệu Nhi",
-      "avatar": "",
-      "sprite": 5,
-      "table": 20,
-      "seat": 2,
-      "statusTag": "💐 Chờ bắt hoa"
-    },
-    {
-      "id": "guest-22",
-      "name": "Hải Đăng",
-      "avatar": "",
-      "sprite": 0,
-      "table": 21,
-      "seat": 0,
-      "statusTag": "🍻 Uống cạn"
-    },
-    {
-      "id": "guest-23",
-      "name": "Trúc Ly",
-      "avatar": "",
-      "sprite": 4,
-      "table": 22,
-      "seat": 1,
-      "statusTag": "🎉 Quá rực rỡ"
-    },
-    {
-      "id": "guest-24",
-      "name": "Đức Quân",
-      "avatar": "",
-      "sprite": 1,
-      "table": 23,
-      "seat": 2,
-      "statusTag": "👑 Đại gia"
-    },
-    {
-      "id": "donor-629",
-      "name": "Văn Hùng",
-      "avatar": "",
-      "sprite": 5,
-      "table": 0,
-      "seat": 0,
-      "statusTag": "👑 Đại gia"
-    },
-    {
-      "id": "demo-cmt-527",
-      "name": "Anh Dũng",
-      "avatar": "",
-      "sprite": 4,
-      "table": 0,
-      "seat": 1,
-      "statusTag": "💖 Chúc phúc"
-    },
-    {
-      "id": "donor-932",
-      "name": "Thành Đạt",
-      "avatar": "",
-      "sprite": 5,
-      "table": 1,
-      "seat": 0,
-      "statusTag": "👑 Đại gia"
-    }
-  ],
-  "scores": {
-    "donor-1": {
-      "id": "donor-1",
-      "name": "HOÀNG LONG",
-      "total": 7400000,
-      "avatar": ""
-    },
-    "donor-2": {
-      "id": "donor-2",
-      "name": "Xoan Nguyễn",
-      "total": 360000,
-      "avatar": ""
-    },
-    "donor-3": {
-      "id": "donor-3",
-      "name": "Minh Thư",
-      "total": 120000,
-      "avatar": ""
-    },
-    "donor-4": {
-      "id": "donor-4",
-      "name": "Vũ Hằng",
-      "total": 60200,
-      "avatar": ""
-    },
-    "donor-5": {
-      "id": "donor-5",
-      "name": "Phương Thảo",
-      "total": 60000,
-      "avatar": ""
-    },
-    "donor-629": {
-      "id": "donor-629",
-      "name": "Văn Hùng",
-      "total": 1,
-      "avatar": ""
-    },
-    "donor-932": {
-      "id": "donor-932",
-      "name": "Thành Đạt",
-      "total": 1,
-      "avatar": ""
-    }
-  },
-  "recentGivers": [
-    {
-      "id": "donor-932",
-      "name": "Thành Đạt",
-      "gift": "Mừng Phong Bì",
-      "count": 1,
-      "diamonds": 1,
-      "total": 1
-    },
-    {
-      "id": "donor-629",
-      "name": "Văn Hùng",
-      "gift": "Mừng Phong Bì",
-      "count": 1,
-      "diamonds": 1,
-      "total": 1
-    },
-    {
-      "id": "donor-1",
-      "name": "HOÀNG LONG",
-      "gift": "Nhẫn Kim Cương",
-      "count": 1,
-      "diamonds": 500
-    },
-    {
-      "id": "donor-2",
-      "name": "Xoan Nguyễn",
-      "gift": "Mừng Chỉ Vàng",
-      "count": 5,
-      "diamonds": 25
-    }
-  ],
+  "people": [],
+  "scores": {},
+  "recentGivers": [],
   "status": {
     "state": "offline",
     "message": "Chưa kết nối. Hãy mở TikFinity Desktop trên máy này.",

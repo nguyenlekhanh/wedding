@@ -12,15 +12,15 @@ const defaultState = {
   config: {
     groom: "Tuấn Anh",
     bride: "Mai Vy",
-    title: "TIỆC CƯỚI ONLINE",
-    slogan: "Trăm Năm Hạnh Phúc",
+    title: "WEDDING LIVE",
+    slogan: "A Hundred Years of Happiness",
     date: "2026-11-03",
     showRosePetals: true,
     showHearts: true,
     showFireworks: true,
     showBubbles: true,
     speech: true,
-    voice: "vi-VN-HoaiMyNeural",
+    voice: "en-US-AriaNeural",
     speechMode: "browser",
     volume: 0.9,
     voicePitch: 1.25,
@@ -33,36 +33,36 @@ const defaultState = {
       enabled: true,
       youtubeUrl: "https://www.youtube.com/watch?v=w4Z01V4uFz8",
       youtubeId: "w4Z01V4uFz8",
-      title: "Hòa Tấu Đám Cưới Lãng Mạn (Piano & Violin)",
+      title: "Romantic Wedding Instrumental (Piano & Violin)",
       volume: 50,
       playing: true
     },
-    thanksTemplate: "Cảm ơn bạn {name} đã mừng {count} {gift} cho cô dâu {bride} và chú rể {groom}! Chúc bạn và gia đình dồi dào sức khỏe, vạn sự như ý!",
+    thanksTemplate: "Thank you {name} for the {count} {gift} for bride {bride} and groom {groom}! Wishing you and your family good health and every happiness!",
     funnyJokes: [
-      "Úi giời ơi tin được không! Đại gia {name} vừa mừng hẳn {count} {gift}! Đẹp trai nhiều tiền thế này bảo sao cô dâu mê tít!",
-      "U là trời! Cảm ơn bạn {name} nha! Mừng cưới xịn xò thế này thì tối nay cô dâu chú rể đếm tiền mỏi tay luôn rồi!",
-      "Bạn {name} chơi lớn quá! Mừng {count} {gift} chất lừ! Chúc bạn ăn cỗ no say, sớm tìm được người yêu để năm sau tới lượt mình nha!",
-      "Đẳng cấp thực sự bà con ơi! Bạn {name} vừa mừng {count} {gift}! Xứng đáng có mười người yêu xếp hàng tỏ tình!",
-      "Cảm ơn bạn {name} nhiều nha! Say rượu thì về chứ say tình là ở lại chung vui tới bến luôn nhé!",
-      "Quá đã luôn bà con ơi! Bạn {name} vừa lên đồ mừng quà cực đỉnh! Cạn ly một trăm phần trăm vì bạn {name} nào!"
+      "Oh wow, can you believe it! Big spender {name} just sent {count} {gift}! Handsome and generous — no wonder the bride is swooning!",
+      "Goodness me! Thank you {name}! With gifts like this, the newlyweds will be counting envelopes all night long!",
+      "You went all out, {name}! {count} {gift} — absolute legend! Enjoy the feast, and may love find you next year!",
+      "Pure class, everyone! {name} just sent {count} {gift}! Truly deserves a queue of admirers!",
+      "Thank you so much, {name}! If you are drunk on love, stay till the end — the party is just getting started!",
+      "What a moment! {name} just showed up with the most amazing gift! A hundred percent toast to {name}!"
     ],
     marryJokes: [
-      "Báo động hỷ sự bà con ơi! Bạn {name} vừa mừng {count} {gift} và chính thức cướp được chú rể về dinh rồi nha! Chúc mừng tân lang mới!",
-      "Trời ơi đất hỡi! Bạn {name} vừa ra tay tặng quà khủng, soán ngôi chú rể thành công mỹ mãn! Cạn ly chúc mừng tân lang!",
-      "Tin chấn động hôn trường! Bạn {name} vừa chính thức trở thành chú rể đẹp trai bên cạnh cô dâu! Chúc hai bạn trăm năm hạnh phúc, sớm sinh quý tử nha!"
+      "Wedding alert, everyone! {name} just sent {count} {gift} and officially stole the groom away! Congratulations to the new groom!",
+      "Oh my word! {name} dropped a huge gift and took over as groom — mission accomplished! Raise a glass to the new groom!",
+      "Breaking news at the wedding! {name} is now the handsome groom standing beside the bride! A hundred years of happiness, and a baby boy soon!"
     ],
     wishes: [
-      "Chúc hai bạn trăm năm hạnh phúc, đầu bạc răng long!",
-      "Chúc tân lang tân nương tình nồng ý thắm, sớm sinh quý tử!",
-      "Chúc đôi uyên ương hòa thuận gắn bó, gia đình hưng thịnh!",
-      "Chúc mừng ngày vui đại hỷ, vạn sự cát tường, phúc lộc viên mãn!"
+      "Wishing you a hundred years of happiness, till your hair turns silver!",
+      "May the bride and groom share deep love and welcome a baby soon!",
+      "May the happy couple stay in harmony and watch their family flourish!",
+      "Congratulations on this joyful day — may good fortune and blessings fill your home!"
     ],
     giftSlots: [
-      { id: 'rose', name: 'Mừng Phong Bì', coins: 1, action: 'envelope', prayer: 'Mừng phong bì cưới' },
-      { id: 'peach', name: 'Mừng Chỉ Vàng', coins: 5, action: 'gold', prayer: 'Mừng 1 chỉ vàng' },
-      { id: 'clarinet', name: 'Góp Vui Nhảy Múa', coins: 10, action: 'dance', prayer: 'Góp vui điệu nhảy' },
-      { id: 'beer', name: 'Đãi Rượu Bàn', coins: 1, action: 'cheers', prayer: 'Đãi 1 bàn rượu' },
-      { id: 'ring', name: 'Làm Chú Rể / Trao Nhẫn', coins: 10, action: 'ring', prayer: 'Trao nhẫn cưới' }
+      { id: 'rose', name: 'Wedding Envelope', coins: 1, action: 'envelope', prayer: 'A wedding envelope gift' },
+      { id: 'peach', name: 'Gift of Gold', coins: 5, action: 'gold', prayer: 'One tael of gold' },
+      { id: 'clarinet', name: 'Join the Dance', coins: 10, action: 'dance', prayer: 'A round of dancing' },
+      { id: 'beer', name: 'Buy a Round', coins: 1, action: 'cheers', prayer: 'A table of drinks' },
+      { id: 'ring', name: 'Become the Groom / Exchange Rings', coins: 10, action: 'ring', prayer: 'Exchange the wedding rings' }
     ]
   },
   stats: {
@@ -72,37 +72,37 @@ const defaultState = {
     wishes: 175
   },
   goals: {
-    rose: { current: 1670, target: 2532, label: 'Mưa hoa hồng' },
-    cake: { current: 60300, target: 100000, label: 'Cắt bánh cưới' }
+    rose: { current: 1670, target: 2532, label: 'Rose rain' },
+    cake: { current: 60300, target: 100000, label: 'Cake cutting' }
   },
   people: [
     // Phía bên trái (12 khách ngồi 4 hàng)
-    { id: 'guest-1', name: 'Minh Thư', avatar: '', sprite: 4, table: 0, seat: 0, statusTag: '💍 Xin vía' },
-    { id: 'guest-2', name: 'Nhà Đẹp Huy', avatar: '', sprite: 1, table: 1, seat: 1, statusTag: '🍗 Ăn cỗ' },
-    { id: 'guest-3', name: 'Jamie', avatar: '', sprite: 2, table: 2, seat: 2, statusTag: '🍻 Cạn ly' },
-    { id: 'guest-4', name: 'Linh', avatar: '', sprite: 5, table: 3, seat: 0, statusTag: '💃 Quẩy' },
-    { id: 'guest-5', name: 'Em Bông', avatar: '', sprite: 3, table: 4, seat: 1, statusTag: '👀 Hóng biến' },
-    { id: 'guest-6', name: 'Quang Nhật', avatar: '', sprite: 0, table: 5, seat: 2, statusTag: '🥂 Cụng ly' },
-    { id: 'guest-7', name: 'Ánh Ngọc', avatar: '', sprite: 4, table: 6, seat: 0, statusTag: '✨ Đẹp đôi' },
-    { id: 'guest-8', name: 'Mymy', avatar: '', sprite: 5, table: 7, seat: 1, statusTag: '💖 Chúc phúc' },
-    { id: 'guest-9', name: 'Thanh Tùng', avatar: '', sprite: 2, table: 8, seat: 2, statusTag: '🍻 Dzô 100%' },
-    { id: 'guest-10', name: 'Tuệ An', avatar: '', sprite: 3, table: 9, seat: 0, statusTag: '🌸 Ngọt ngào' },
-    { id: 'guest-11', name: 'Mai Linh', avatar: '', sprite: 4, table: 10, seat: 1, statusTag: '👰 Bắt hoa' },
-    { id: 'guest-12', name: 'Hồng Hạnh', avatar: '', sprite: 0, table: 11, seat: 2, statusTag: '🎉 Vui quá' },
+    { id: 'guest-1', name: 'Minh Thư', avatar: '', sprite: 4, table: 0, seat: 0, statusTag: '💍 Sending love' },
+    { id: 'guest-2', name: 'Nhà Đẹp Huy', avatar: '', sprite: 1, table: 1, seat: 1, statusTag: '🍗 Feasting' },
+    { id: 'guest-3', name: 'Jamie', avatar: '', sprite: 2, table: 2, seat: 2, statusTag: '🍻 Bottoms up' },
+    { id: 'guest-4', name: 'Linh', avatar: '', sprite: 5, table: 3, seat: 0, statusTag: '💃 Dancing' },
+    { id: 'guest-5', name: 'Em Bông', avatar: '', sprite: 3, table: 4, seat: 1, statusTag: '👀 Here for the drama' },
+    { id: 'guest-6', name: 'Quang Nhật', avatar: '', sprite: 0, table: 5, seat: 2, statusTag: '🥂 Cheers' },
+    { id: 'guest-7', name: 'Ánh Ngọc', avatar: '', sprite: 4, table: 6, seat: 0, statusTag: '✨ Perfect pair' },
+    { id: 'guest-8', name: 'Mymy', avatar: '', sprite: 5, table: 7, seat: 1, statusTag: '💖 Blessings' },
+    { id: 'guest-9', name: 'Thanh Tùng', avatar: '', sprite: 2, table: 8, seat: 2, statusTag: '🍻 100% Cheers' },
+    { id: 'guest-10', name: 'Tuệ An', avatar: '', sprite: 3, table: 9, seat: 0, statusTag: '🌸 So sweet' },
+    { id: 'guest-11', name: 'Mai Linh', avatar: '', sprite: 4, table: 10, seat: 1, statusTag: '👰 Catching the bouquet' },
+    { id: 'guest-12', name: 'Hồng Hạnh', avatar: '', sprite: 0, table: 11, seat: 2, statusTag: '🎉 So happy' },
 
     // Phía bên phải (12 khách ngồi 4 hàng)
-    { id: 'guest-13', name: 'Quốc Bảo', avatar: '', sprite: 1, table: 12, seat: 0, statusTag: '🍾 Khui rượu' },
-    { id: 'guest-14', name: 'Khánh Vy', avatar: '', sprite: 5, table: 13, seat: 1, statusTag: '💍 Xin vía' },
-    { id: 'guest-15', name: 'Văn Đức', avatar: '', sprite: 2, table: 14, seat: 2, statusTag: '🍻 1 2 3 Dzô' },
-    { id: 'guest-16', name: 'Hoàng Yến', avatar: '', sprite: 4, table: 15, seat: 0, statusTag: '✨ Chúc trăm năm' },
-    { id: 'guest-17', name: 'Tấn Phát', avatar: '', sprite: 0, table: 16, seat: 1, statusTag: '🍗 Gà luộc' },
-    { id: 'guest-18', name: 'Ngọc Trân', avatar: '', sprite: 3, table: 17, seat: 2, statusTag: '💖 Xinh gái' },
-    { id: 'guest-19', name: 'Gia Hưng', avatar: '', sprite: 1, table: 18, seat: 0, statusTag: '💃 Nhảy bung nóc' },
-    { id: 'guest-20', name: 'Bảo Nam', avatar: '', sprite: 2, table: 19, seat: 1, statusTag: '👑 Sắp tới lượt' },
-    { id: 'guest-21', name: 'Diệu Nhi', avatar: '', sprite: 5, table: 20, seat: 2, statusTag: '💐 Chờ bắt hoa' },
-    { id: 'guest-22', name: 'Hải Đăng', avatar: '', sprite: 0, table: 21, seat: 0, statusTag: '🍻 Uống cạn' },
-    { id: 'guest-23', name: 'Trúc Ly', avatar: '', sprite: 4, table: 22, seat: 1, statusTag: '🎉 Quá rực rỡ' },
-    { id: 'guest-24', name: 'Đức Quân', avatar: '', sprite: 1, table: 23, seat: 2, statusTag: '👑 Đại gia' }
+    { id: 'guest-13', name: 'Quốc Bảo', avatar: '', sprite: 1, table: 12, seat: 0, statusTag: '🍾 Popping bottles' },
+    { id: 'guest-14', name: 'Khánh Vy', avatar: '', sprite: 5, table: 13, seat: 1, statusTag: '💍 Sending love' },
+    { id: 'guest-15', name: 'Văn Đức', avatar: '', sprite: 2, table: 14, seat: 2, statusTag: '🍻 1 2 3 Cheers' },
+    { id: 'guest-16', name: 'Hoàng Yến', avatar: '', sprite: 4, table: 15, seat: 0, statusTag: '✨ Hundred-year wishes' },
+    { id: 'guest-17', name: 'Tấn Phát', avatar: '', sprite: 0, table: 16, seat: 1, statusTag: '🍗 Chicken feast' },
+    { id: 'guest-18', name: 'Ngọc Trân', avatar: '', sprite: 3, table: 17, seat: 2, statusTag: '💖 Gorgeous' },
+    { id: 'guest-19', name: 'Gia Hưng', avatar: '', sprite: 1, table: 18, seat: 0, statusTag: '💃 Dancing all night' },
+    { id: 'guest-20', name: 'Bảo Nam', avatar: '', sprite: 2, table: 19, seat: 1, statusTag: '👑 Next in line' },
+    { id: 'guest-21', name: 'Diệu Nhi', avatar: '', sprite: 5, table: 20, seat: 2, statusTag: '💐 Waiting for the bouquet' },
+    { id: 'guest-22', name: 'Hải Đăng', avatar: '', sprite: 0, table: 21, seat: 0, statusTag: '🍻 Drink it all' },
+    { id: 'guest-23', name: 'Trúc Ly', avatar: '', sprite: 4, table: 22, seat: 1, statusTag: '🎉 Absolutely radiant' },
+    { id: 'guest-24', name: 'Đức Quân', avatar: '', sprite: 1, table: 23, seat: 2, statusTag: '👑 Big Spender' }
   ],
   scores: {
     'donor-1': { id: 'donor-1', name: 'HOÀNG LONG', total: 7400000, avatar: '' },
@@ -112,8 +112,8 @@ const defaultState = {
     'donor-5': { id: 'donor-5', name: 'Phương Thảo', total: 60000, avatar: '' }
   },
   recentGivers: [
-    { id: 'donor-1', name: 'HOÀNG LONG', gift: 'Nhẫn Kim Cương', count: 1, diamonds: 500 },
-    { id: 'donor-2', name: 'Xoan Nguyễn', gift: 'Mừng Chỉ Vàng', count: 5, diamonds: 25 }
+    { id: 'donor-1', name: 'HOÀNG LONG', gift: 'Diamond Ring', count: 1, diamonds: 500 },
+    { id: 'donor-2', name: 'Xoan Nguyễn', gift: 'Gift of Gold', count: 5, diamonds: 25 }
   ],
   status: {
     state: 'offline', // 'offline' | 'connecting' | 'waiting' | 'connected' | 'error'
@@ -180,12 +180,12 @@ function processJoinEvent(user) {
     const seatIdx = state.people.length;
     person = {
       id,
-      name: user.name || 'Khách Quý',
+      name: user.name || 'Guest',
       avatar: user.avatar || '',
       sprite: Math.floor(Math.random() * 6),
       table: Math.floor(seatIdx / 2) % 6,
       seat: seatIdx % 2,
-      statusTag: '✨ Khách quý'
+      statusTag: '✨ Guest'
     };
     state.people.push(person);
     state.stats.guests++;
@@ -198,7 +198,7 @@ function processJoinEvent(user) {
 function processChatEvent(chat) {
   if (!chat || !chat.id || chat.id === 'unknown') return;
   const id = 'tik-' + chat.id;
-  const name = chat.name || 'Khách Mời';
+  const name = chat.name || 'Guest';
   const comment = String(chat.comment || '').trim();
   if (!comment) return;
 
@@ -212,7 +212,7 @@ function processChatEvent(chat) {
       sprite: Math.floor(Math.random() * 6),
       table: Math.floor(seatIdx / 2) % 6,
       seat: seatIdx % 2,
-      statusTag: '✨ Khách quý'
+      statusTag: '✨ Guest'
     };
     state.people.push(person);
     state.stats.guests++;
@@ -222,12 +222,14 @@ function processChatEvent(chat) {
   // Check keywords for action triggers
   const lower = comment.toLowerCase();
   let triggeredAction = null;
-  if (lower.includes('hôn') || lower.includes('hon')) triggeredAction = 'kiss';
-  else if (lower.includes('dzô') || lower.includes('dzo') || lower.includes('zô') || lower.includes('cụng ly')) triggeredAction = 'cheers';
-  else if (lower.includes('nhảy') || lower.includes('nhay') || lower.includes('quẩy')) triggeredAction = 'dance';
-  else if (lower.includes('bánh') || lower.includes('banh')) triggeredAction = 'cake';
-  else if (lower.includes('rượu') || lower.includes('ruou') || lower.includes('sâm panh')) triggeredAction = 'champagne';
-  else if (lower.includes('hoa') || lower.includes('canh hoa')) triggeredAction = 'petal';
+  // Vietnamese triggers are kept unchanged; English aliases are added so the English
+  // overlay guide works for an international audience. First match still wins.
+  if (lower.includes('hôn') || lower.includes('hon') || lower.includes('kiss')) triggeredAction = 'kiss';
+  else if (lower.includes('dzô') || lower.includes('dzo') || lower.includes('zô') || lower.includes('cụng ly') || lower.includes('cheer')) triggeredAction = 'cheers';
+  else if (lower.includes('nhảy') || lower.includes('nhay') || lower.includes('quẩy') || lower.includes('dance')) triggeredAction = 'dance';
+  else if (lower.includes('bánh') || lower.includes('banh') || lower.includes('cake')) triggeredAction = 'cake';
+  else if (lower.includes('rượu') || lower.includes('ruou') || lower.includes('sâm panh') || lower.includes('champagne') || lower.includes('wine')) triggeredAction = 'champagne';
+  else if (lower.includes('hoa') || lower.includes('canh hoa') || lower.includes('rose') || lower.includes('flower') || lower.includes('petal')) triggeredAction = 'petal';
 
   broadcast('activity', { type: 'chat', id, name, comment, avatar: person.avatar, triggeredAction });
   if (triggeredAction) {
@@ -240,8 +242,8 @@ function processChatEvent(chat) {
 function processGiftEvent(giftData) {
   if (!giftData || !giftData.id || giftData.id === 'unknown') return null;
   const id = 'tik-' + giftData.id;
-  const name = giftData.name || 'Người Tặng';
-  const gift = giftData.gift || 'Mừng Cưới';
+  const name = giftData.name || 'Gift Sender';
+  const gift = giftData.gift || 'Wedding Gift';
   const count = Math.max(1, Number(giftData.count) || 1);
   const diamonds = Math.max(1, Number(giftData.diamonds) || 1);
   const totalCoins = count * diamonds;
@@ -249,7 +251,7 @@ function processGiftEvent(giftData) {
   state.stats.envelopes += count;
 
   // Update goals
-  if (/hoa|rose/i.test(gift)) {
+  if (/hoa|rose|flower/i.test(gift)) {
     state.goals.rose.current = Math.min(state.goals.rose.target * 2, state.goals.rose.current + count);
   }
   state.goals.cake.current = Math.min(state.goals.cake.target * 2, state.goals.cake.current + totalCoins * 100);
@@ -272,12 +274,12 @@ function processGiftEvent(giftData) {
       sprite: Math.floor(Math.random() * 6),
       table: Math.floor(seatIdx / 2) % 6,
       seat: seatIdx % 2,
-      statusTag: '👑 Đại gia'
+      statusTag: '👑 Big Spender'
     };
     state.people.push(person);
     state.stats.guests++;
   } else {
-    person.statusTag = '👑 Đại gia';
+    person.statusTag = '👑 Big Spender';
   }
 
   // Add to recent givers
@@ -323,7 +325,7 @@ function processGiftEvent(giftData) {
     diamonds,
     total: totalCoins,
     avatar: giftData.avatar || '',
-    prayer: (becameGroom ? `💍 ${name} chính thức làm Chú Rể mới!` : 'Mừng hạnh phúc trăm năm'),
+    prayer: (becameGroom ? `💍 ${name} is officially the new Groom!` : 'A hundred years of happy marriage'),
     becameGroom,
     previousGroom,
     isRobbed: becameGroom && previousGroom && previousGroom !== name,
@@ -336,9 +338,9 @@ function processGiftEvent(giftData) {
       action: 'marry',
       initiator: name,
       previousGroom,
-      text: `🎉 CHÚC MỪNG ${name} ĐÃ ĐẮT GIÁ LÀM CHÚ RỂ MỚI! 💕`
+      text: `🎉 CONGRATULATIONS ${name} — YOU ARE THE NEW GROOM! 💕`
     });
-  } else if (/hoa|rose/i.test(gift)) {
+  } else if (/hoa|rose|flower/i.test(gift)) {
     broadcast('action', { action: 'petal', initiator: name });
   } else if (/bánh|cake/i.test(gift)) {
     broadcast('action', { action: 'cake', initiator: name });
@@ -503,7 +505,7 @@ class TikFinityClient extends EventEmitter {
     const urls = e.profilePicture?.urls || e.profilePicture?.urlList || e.avatarThumb?.urlList || e.avatarLarge?.urlList || [];
     return {
       id: String(e.userId || e.idStr || e.id || e.uniqueId || e.displayId || 'unknown'),
-      name: String(e.nickname || e.uniqueId || e.displayId || 'Khách Mời').slice(0, 60),
+      name: String(e.nickname || e.uniqueId || e.displayId || 'Guest').slice(0, 60),
       avatar: String(urls[0] || e.profilePictureUrl || '')
     };
   }
@@ -516,7 +518,7 @@ class TikFinityClient extends EventEmitter {
     }
     return {
       ...this.parseUser(t),
-      gift: String(e.giftName || e.name || n.name || t.giftName || `Quà ${t.giftId || ''}`),
+      gift: String(e.giftName || e.name || n.name || t.giftName || `Gift ${t.giftId || ''}`),
       giftId: String(t.giftId || e.id || ''),
       count: Math.max(1, Number(t.repeatCount || t.count) || 1),
       diamonds: Math.max(1, Number(e.diamondCount ?? n.diamond_count ?? t.diamondCount ?? t.diamonds) || 1)
@@ -735,8 +737,8 @@ const server = http.createServer(async (req, res) => {
     if (data.type === 'chat') {
       const chatEvent = {
         id: data.id || ('demo-user-' + Date.now()),
-        name: data.name || 'Khách Mời',
-        comment: data.comment || 'Chúc mừng hai bạn trăm năm hạnh phúc!',
+        name: data.name || 'Guest',
+        comment: data.comment || 'Happy hundred years to you both!',
         avatar: data.avatar || ''
       };
       processChatEvent(chatEvent);
@@ -748,8 +750,8 @@ const server = http.createServer(async (req, res) => {
     if (data.type === 'gift') {
       const offeringEvent = processGiftEvent({
         id: data.id || ('demo-giver-' + Date.now()),
-        name: data.name || 'Đại Gia Giấu Tên',
-        gift: data.gift || 'Mừng Phong Bì',
+        name: data.name || 'Mystery Big Spender',
+        gift: data.gift || 'Wedding Envelope',
         count: Math.max(1, Number(data.count) || 1),
         diamonds: Math.max(1, Number(data.diamonds) || 1),
         avatar: data.avatar || ''
@@ -800,15 +802,15 @@ const server = http.createServer(async (req, res) => {
     if (data.event === 'chat' || data.comment) {
       processChatEvent({
         id: data.uniqueId || data.userId || data.name || 'guest',
-        name: data.nickname || data.uniqueId || data.name || 'Khách Mời',
+        name: data.nickname || data.uniqueId || data.name || 'Guest',
         comment: data.comment || data.text || '',
         avatar: data.profilePictureUrl || data.avatar || ''
       });
     } else if (data.event === 'gift' || data.giftId || data.giftName) {
       processGiftEvent({
         id: data.uniqueId || data.userId || data.name || 'donor',
-        name: data.nickname || data.uniqueId || data.name || 'Người Tặng',
-        gift: data.giftName || data.gift || 'Mừng Cưới',
+        name: data.nickname || data.uniqueId || data.name || 'Gift Sender',
+        gift: data.giftName || data.gift || 'Wedding Gift',
         count: Number(data.repeatCount || data.count) || 1,
         diamonds: Number(data.diamondCount || data.diamonds) || 1,
         avatar: data.profilePictureUrl || data.avatar || ''
@@ -816,7 +818,7 @@ const server = http.createServer(async (req, res) => {
     } else if (data.event === 'member' || data.event === 'join') {
       processJoinEvent({
         id: data.uniqueId || data.userId || data.name || 'guest',
-        name: data.nickname || data.uniqueId || data.name || 'Khách Quý',
+        name: data.nickname || data.uniqueId || data.name || 'Guest',
         avatar: data.profilePictureUrl || data.avatar || ''
       });
     }

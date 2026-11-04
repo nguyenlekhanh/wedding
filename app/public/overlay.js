@@ -196,8 +196,11 @@ async function speakThankYou(text) {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     const voices = speechSynthesis.getVoices();
-    const viVoice = voices.find(v => (v.name.includes('HoaiMy') || v.name.includes('Linh') || v.lang.startsWith('vi')) && (v.name.includes('Female') || v.name.includes('HoaiMy') || !v.name.includes('Nam') && !v.name.includes('An'))) || voices.find(v => v.lang.toLowerCase().startsWith('vi')) || voices[0];
-    if (viVoice) u.voice = viVoice;
+    // English overlay: prefer an English voice, then any English voice, then any voice at all.
+    const enVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en') && /female|aria|jenny|zira|samantha|natural/i.test(v.name))
+      || voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en'))
+      || voices[0];
+    if (enVoice) u.voice = enVoice;
     u.rate = Number(cfg.voiceRate) || 1.08;
     u.pitch = Number(cfg.voicePitch) || 1.25;
     u.volume = Number(cfg.volume) || 0.95;
@@ -298,7 +301,7 @@ function renderGuests(people = []) {
 
       const statusTag = document.createElement('span');
       statusTag.className = 'guest-status-tag';
-      statusTag.textContent = p.statusTag || '💍 Xin vía';
+      statusTag.textContent = p.statusTag || '💍 Sending love';
 
       badge.append(av, nameSpan, statusTag);
       node.append(sprite, badge);
@@ -338,7 +341,7 @@ function renderRegistry(scores = {}) {
     empty.style.fontSize = '12px';
     empty.style.textAlign = 'center';
     empty.style.padding = '8px 0';
-    empty.textContent = 'Chờ phong bì đầu tiên...';
+    empty.textContent = 'Waiting for the first gift...';
     list.append(empty);
     return;
   }
@@ -374,13 +377,14 @@ function renderState(state) {
   // Couple names
   if ($('#groom-name')) $('#groom-name').textContent = cfg.groom || 'Tuấn Anh';
   if ($('#bride-name')) $('#bride-name').textContent = cfg.bride || 'Mai Vy';
-  if ($('#wedding-title')) $('#wedding-title').textContent = cfg.title || 'TIỆC CƯỚI ONLINE';
+  if ($('#wedding-title')) $('#wedding-title').textContent = cfg.title || 'WEDDING LIVE';
 
   // Stats
-  if ($('#stat-guests')) $('#stat-guests').textContent = `${stats.guests || 119} khách`;
-  if ($('#stat-outside')) $('#stat-outside').textContent = `+${stats.outside || 21} ngoài`;
-  if ($('#stat-envelopes')) $('#stat-envelopes').textContent = `${stats.envelopes || 588} phong bì`;
-  if ($('#stat-wishes')) $('#stat-wishes').textContent = `${stats.wishes || 175} lời chúc`;
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  if ($('#stat-guests')) $('#stat-guests').textContent = plural(stats.guests || 119, 'guest', 'guests');
+  if ($('#stat-outside')) $('#stat-outside').textContent = `+${stats.outside || 21} online`;
+  if ($('#stat-envelopes')) $('#stat-envelopes').textContent = plural(stats.envelopes || 588, 'envelope', 'envelopes');
+  if ($('#stat-wishes')) $('#stat-wishes').textContent = plural(stats.wishes || 175, 'wish', 'wishes');
 
   // Goals
   if (goals.rose) {
@@ -439,10 +443,10 @@ function triggerKiss() {
       sprite.classList.add('couple-idle');
     }, 4500);
   }
-  showCeremonyBanner('💋 CÔ DÂU VÀ CHÚ RỂ TRAO NHAU NỤ HÔN NỒNG NÀN! 💕', 'Tình nồng ý thắm gắn kết trọn đời trọn kiếp!', 'kiss');
+  showCeremonyBanner('💋 THE BRIDE AND GROOM SHARE A KISS! 💕', 'A love sealed for a lifetime — forever and always!', 'kiss');
   spawnHearts(20);
   playWeddingBell();
-  showToast('💋 Cô dâu và chú rể trao nhau nụ hôn nồng cháy minh chứng tình yêu! 💕');
+  showToast('💋 The bride and groom just kissed — true love on full display! 💕');
 }
 
 // 2. Nghi thức Cụng ly 1 2 3 DZÔ!
@@ -452,8 +456,8 @@ function triggerCheers(initiator = '') {
     g.classList.add('cheering');
     setTimeout(() => g.classList.remove('cheering'), 2500);
   });
-  showCeremonyBanner('🍻 1 2 3 DZÔ! CẢ HÔN TRƯỜNG CẠN LY CHÚC MỪNG! 🥂', `${initiator ? initiator + ' mời: ' : ''}Cạn ly 100% chúc tân lang tân nương trăm năm hạnh phúc!`, 'cheers');
-  showToast(`🥂 ${initiator ? initiator + ' mời: ' : ''}1 2 3 DZÔ! Cạn ly chúc mừng tân lang tân nương! 🍻`);
+  showCeremonyBanner('🍻 1 2 3 CHEERS! THE WHOLE HALL RAISES A GLASS! 🥂', `${initiator ? initiator + ' says: ' : ''}Bottoms up — a hundred years of happiness to the bride and groom!`, 'cheers');
+  showToast(`🥂 ${initiator ? initiator + ' says: ' : ''}1 2 3 CHEERS! Raise your glass to the bride and groom! 🍻`);
 }
 
 // 3. Nghi thức Khách cùng nhảy múa
@@ -463,8 +467,8 @@ function triggerDance() {
     g.classList.add('dancing');
     setTimeout(() => g.classList.remove('dancing'), 4500);
   });
-  showCeremonyBanner('💃 CẢ HỘI TRƯỜNG CÙNG NHẢY MÚA QUẨY TƯNG BỪNG! 🎉', 'Hòa nhịp âm nhạc đón mừng ngày vui đại hỷ rực rỡ!', 'dance');
-  showToast('💃 Cả hội trường tiệc cưới cùng hòa nhịp khiêu vũ quẩy tưng bừng! 🎉');
+  showCeremonyBanner('💃 THE WHOLE HALL HITS THE DANCE FLOOR! 🎉', 'Move to the music and celebrate this glorious day!', 'dance');
+  showToast('💃 The wedding hall is dancing — what a party! 🎉');
 }
 
 // 4. Nghi thức Cắt bánh cưới
@@ -476,29 +480,29 @@ function triggerCake() {
     sprite.classList.add('couple-kissing');
     setTimeout(() => sprite.classList.remove('couple-kissing'), 3200);
   }
-  showCeremonyBanner('🎂 NGHI THỨC CẮT BÁNH CƯỚI TRĂM NĂM! 💕', 'Tân lang & tân nương cùng cắt bánh cưới ngọt ngào viên mãn!', 'cake');
-  showToast(`🎂 Nghi thức cắt bánh cưới hạnh phúc viên mãn trăm năm! 💕`);
+  showCeremonyBanner('🎂 THE WEDDING CAKE CUTTING CEREMONY! 💕', 'The bride and groom cut the cake — a sweet start to a hundred years!', 'cake');
+  showToast(`🎂 The cake is cut — sweet wishes for a hundred years of happiness! 💕`);
 }
 
 // 5. Nghi thức Rót tháp sâm panh
 function triggerChampagne() {
   playClink();
   spawnHearts(16);
-  showCeremonyBanner('🍾 RÓT THÁP RƯỢU SÂM PANH HỶ SỰ! 🥂', 'Rót tràn tình nồng, trăm năm hạnh phúc viên mãn!', 'champagne');
-  showToast(`🍾 Rót tháp rượu sâm panh tình nồng ý thắm! 🥂`);
+  showCeremonyBanner('🍾 POURING THE CHAMPAGNE TOWER! 🥂', 'Overflowing with love — a hundred years of happiness!', 'champagne');
+  showToast(`🍾 The champagne tower is flowing with love! 🥂`);
 }
 
 // 6. Nghi thức Mưa hoa hồng rực rỡ
 function triggerPetal() {
   playWeddingBell();
   spawnPetalsBurst(45);
-  showCeremonyBanner('🌹 MƯA HOA HỒNG RỰC RỠ ĐẠI HỶ! 🌸', 'Trăm hoa đua nở trải thảm đỏ chúc phúc đôi uyên ương!', 'petal');
-  showToast('🌹 Mưa hoa hồng rực rỡ trải thảm đỏ hôn trường hỷ sự! 💕');
+  showCeremonyBanner('🌹 A SHOWER OF ROSES FOR THE HAPPY COUPLE! 🌸', 'Petals blanket the red carpet to bless the newlyweds!', 'petal');
+  showToast('🌹 Roses rain over the wedding hall! 💕');
 }
 
 // 7. Nghi thức Cướp Chú Rể (Đấu giá kết hôn)
 function triggerMarry(newGroom, prevGroom, joke = '') {
-  showCeremonyBanner(`👑 CHÚC MỪNG TÂN LANG: ${newGroom.toUpperCase()}! 💍`, `${prevGroom ? 'Đã chính thức soán ngôi ' + prevGroom + ' làm Chú Rể mới!' : 'Đã chính thức trở thành Chú Rể bên cô dâu!'}`, 'marry', 7000);
+  showCeremonyBanner(`👑 CONGRATULATIONS, NEW GROOM: ${newGroom.toUpperCase()}! 💍`, `${prevGroom ? 'Officially taking over from ' + prevGroom + ' as the new groom!' : 'Officially the groom standing beside the bride!'}`, 'marry', 7000);
 
   if ($('#groom-name')) $('#groom-name').textContent = newGroom;
 
@@ -513,7 +517,7 @@ function triggerMarry(newGroom, prevGroom, joke = '') {
   playWeddingBell();
   triggerKiss();
   spawnHearts(20);
-  showToast(`🎉 BÁO ĐỘNG HỶ SỰ: ${newGroom} đã kết duyên cùng cô dâu! Chúc mừng tân lang! 👑💕`);
+  showToast(`🎉 WEDDING BELLS! ${newGroom} has won the bride's hand! Congratulations to the new groom! 👑💕`);
 }
 
 // Show Chat Bubble
@@ -524,8 +528,27 @@ function showChatBubble(personId, comment) {
   node.querySelector('.wedding-chat-bubble')?.remove();
   const bubble = document.createElement('div');
   bubble.className = 'wedding-chat-bubble';
+  // Viewer comments are shown verbatim: the original Unicode text is never rewritten,
+  // transliterated or sent to any external service.
   bubble.textContent = comment;
   node.append(bubble);
+
+  // Optional translation adapter - disabled by default and offline by design.
+  // Define `window.WEDDING_TRANSLATE_COMMENT = async (text) => translatedText`
+  // before this script loads to render an English line under the original comment.
+  const translate = window.WEDDING_TRANSLATE_COMMENT;
+  if (typeof translate === 'function') {
+    try {
+      Promise.resolve(translate(comment, { personId })).then(translated => {
+        if (typeof translated !== 'string' || !translated.trim() || translated === comment) return;
+        if (!bubble.isConnected) return;
+        const line = document.createElement('span');
+        line.className = 'chat-bubble-translation';
+        line.textContent = translated;
+        bubble.append(line);
+      }).catch(() => {});
+    } catch (e) {}
+  }
 
   setTimeout(() => bubble.remove(), 4200);
 }
@@ -623,15 +646,15 @@ setInterval(spawnBubbles, 950);
 
 // Ambient Guest Random Chat
 const ambientLines = [
-  'Chúc trăm năm hạnh phúc! 💕',
-  '1 2 3 DZÔ! 🍻',
-  'Hôn điii hôn điii! 💋',
-  'Cô dâu xinh quá nè! ✨',
-  'Chú rể phong độ đỉnh cao! 🤵',
-  'Ăn cỗ no nê nha mọi người! 🍗',
-  'Xin vía sớm có bồ! 💍',
-  'Cạn ly chúc phúc đôi bạn trẻ! 🥂',
-  'Đẹp đôi nhất quả đất! 💖'
+  'A hundred years of happiness! 💕',
+  '1 2 3 CHEERS! 🍻',
+  'Kiss! Kiss! Kiss! 💋',
+  'The bride looks absolutely stunning! ✨',
+  'The groom is looking sharp! 🤵',
+  'Eat up, everyone — the food is amazing! 🍗',
+  'Wishing a love like theirs for myself! 💍',
+  'Raise a glass to the young couple! 🥂',
+  'Cutest couple on the internet! 💖'
 ];
 
 setInterval(() => {
@@ -706,25 +729,25 @@ async function processOfferingQueue() {
   const wishEl = $('#celeb-wish');
 
   if (donorEl) donorEl.textContent = item.name;
-  if (giftEl) giftEl.textContent = `Mừng ${item.gift} ×${item.count}`;
-  const wishes = currentState?.config?.wishes || ['Chúc trăm năm hạnh phúc!'];
+  if (giftEl) giftEl.textContent = `A gift of ${item.gift} ×${item.count}`;
+  const wishes = currentState?.config?.wishes || ['Wishing you a hundred years of happiness!'];
   const wish = wishes[Math.floor(Math.random() * wishes.length)];
   if (wishEl) wishEl.textContent = `"${wish}"`;
 
   card?.classList.add('show');
-  showToast(`💌 ${item.name} vừa mừng ${item.gift} ×${item.count}! Trăm năm hạnh phúc! 💕`);
+  showToast(`💌 ${item.name} just sent ${item.gift} ×${item.count}! A hundred years of happiness! 💕`);
 
   // Cute MC Voice Announcement
   const cfg = currentState?.config || {};
   let thankMsg = item.funnyMessage;
   if (!thankMsg) {
-    thankMsg = cfg.thanksTemplate || 'Cảm ơn bạn {name} đã mừng quà cưới!';
+    thankMsg = cfg.thanksTemplate || 'Thank you {name} for the wedding gift!';
     thankMsg = thankMsg
       .replace('{name}', item.name)
       .replace('{gift}', item.gift)
       .replace('{count}', item.count)
-      .replace('{groom}', cfg.groom || 'chú rể')
-      .replace('{bride}', cfg.bride || 'cô dâu');
+      .replace('{groom}', cfg.groom || 'the groom')
+      .replace('{bride}', cfg.bride || 'the bride');
   }
 
   if (cfg.speech !== false) {
