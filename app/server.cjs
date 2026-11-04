@@ -49,11 +49,14 @@ const defaultState = {
     enableMarryAuction: true,
     minCoinsToMarry: 10,
     funnyVoiceEnabled: true,
+    // Five independent YouTube tracks. No default video IDs are shipped: every
+    // URL must come from the operator (an existing single URL migrates to track 1).
     bgm: {
       enabled: true,
-      youtubeUrl: "https://www.youtube.com/watch?v=w4Z01V4uFz8",
-      youtubeId: "w4Z01V4uFz8",
-      title: "Romantic Wedding Instrumental (Piano & Violin)",
+      activeTrack: 1,
+      youtubeUrl: "",
+      youtubeId: "",
+      title: "",
       volume: 50,
       playing: true
     },
@@ -963,6 +966,83 @@ async function handleAiRoutes(req, res, pathname, url) {
 }
 
 // ========================================================
+// WEDDING BACKGROUND MUSIC — 5 independent YouTube tracks
+// One IFrame player in the overlay is reused; the server only stores tracks and
+// which one is active. The legacy single-URL fields stay in sync for the
+// existing consumers (overlay, OBS, old dashboards).
+// ========================================================
+const BGM_TRACK_COUNT = 5;
+const BGM_DEFAULT_NAMES = [
+  'Wedding Entrance',
+  'Romantic Piano',
+  'Wedding Ceremony',
+  'First Dance',
+  'Wedding Celebration'
+];
+
+/** Accepts a full YouTube URL or a bare 11-character video id. */
+function parseYoutubeId(input) {
+  const raw = String(input == null ? '' : input).trim();
+  if (!raw) return '';
+  if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
+  const m = raw.match(/^.*(?:youtu\.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|&v=)([^#&?]*).*/);
+  if (m && m[1] && m[1].length === 11) return m[1];
+  return '';
+}
+
+function defaultBgmTracks(seed) {
+  const base = seed || {};
+  return BGM_DEFAULT_NAMES.map((name, i) => ({
+    id: i + 1,
+    name,
+    url: i === 0 ? String(base.youtubeUrl || '') : '',
+    videoId: i === 0 ? String(base.youtubeId || '') : ''
+  }));
+}
+
+/** Creates/migrates the 5 track list and keeps every field within bounds. */
+function ensureBgmTracks() {
+  if (!state.config.bgm) state.config.bgm = { ...defaultState.config.bgm };
+  const bgm = state.config.bgm;
+
+  if (!Array.isArray(bgm.tracks) || bgm.tracks.length !== BGM_TRACK_COUNT) {
+    // Compatibility: the existing single URL becomes track 1, the rest start empty.
+    bgm.tracks = defaultBgmTracks({ youtubeUrl: bgm.youtubeUrl, youtubeId: bgm.youtubeId });
+  }
+
+  bgm.tracks = bgm.tracks.slice(0, BGM_TRACK_COUNT).map((t, i) => {
+    const url = String((t && t.url) || '').trim().slice(0, 300);
+    return {
+      id: i + 1,
+      name: String((t && t.name) || BGM_DEFAULT_NAMES[i]).trim().slice(0, 80) || BGM_DEFAULT_NAMES[i],
+      url,
+      videoId: String((t && t.videoId) || parseYoutubeId(url)).slice(0, 11)
+    };
+  });
+
+  const active = Number(bgm.activeTrack);
+  bgm.activeTrack = Number.isInteger(active) && active >= 1 && active <= BGM_TRACK_COUNT ? active : 1;
+
+  // The legacy single-track fields always mirror the ACTIVE track, so a stale
+  // youtubeId can never shadow the track the operator selected.
+  const current = bgm.tracks[bgm.activeTrack - 1];
+  if (current) {
+    bgm.youtubeUrl = current.videoId ? current.url : '';
+    bgm.youtubeId = current.videoId || '';
+    bgm.title = current.name;
+  }
+  return bgm;
+}
+
+// Migrate the legacy single-URL configuration into track 1 on boot.
+try {
+  ensureBgmTracks();
+  persistState();
+} catch (e) {
+  console.error('[BGM] Could not migrate the track list:', e.message);
+}
+
+// ========================================================
 // AI WEDDING MC (/api/mc/*)
 // A virtual host on the stage. It brings NO new AI or TTS engine: it composes
 // text with the existing provider manager and hands the line to announce(),
@@ -1203,32 +1283,82 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // 6. Update BGM
+  // 6. Update BGM — 5 independent tracks, one active player
   if (pathname === '/api/bgm' && req.method === 'POST') {
     const data = await readJson();
-    if (!state.config.bgm) state.config.bgm = { ...defaultState.config.bgm };
+    const bgm = ensureBgmTracks();
+    let error = null;
 
-    if (data.youtubeUrl !== undefined) {
-      state.config.bgm.youtubeUrl = String(data.youtubeUrl);
-      let vid = '';
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = state.config.bgm.youtubeUrl.match(regExp);
-      if (match && match[2].length === 11) {
-        vid = match[2];
+    const validIndex = (value) => {
+      const index = Number(value);
+      return Number.isInteger(index) && index >= 1 && index <= BGM_TRACK_COUNT ? index : null;
+    };
+
+    const writeTrack = (index, fields) => {
+      const track = bgm.tracks[index - 1];
+      if (!track) return;
+      if (fields.name !== undefined) {
+        track.name = String(fields.name).trim().slice(0, 80) || BGM_DEFAULT_NAMES[index - 1];
       }
-      state.config.bgm.youtubeId = vid;
+      if (fields.url !== undefined) {
+        const url = String(fields.url).trim().slice(0, 300);
+        // Pressing Play must never wipe a saved link (an empty row means "keep").
+        if (fields.keepUrlOnEmpty && !url) return;
+        const videoId = parseYoutubeId(url);
+        if (url && !videoId) {
+          error = `Track ${index}: that is not a valid YouTube link or 11-character video ID.`;
+          return;
+        }
+        track.url = url;
+        track.videoId = videoId;
+      }
+    };
+
+    if (data.trackIndex !== undefined) {
+      const index = validIndex(data.trackIndex);
+      if (!index) error = `Track number must be between 1 and ${BGM_TRACK_COUNT}.`;
+      else writeTrack(index, Object.assign({ keepUrlOnEmpty: data.play !== undefined }, data));
+    } else if (data.youtubeUrl !== undefined || data.title !== undefined) {
+      // Legacy single-URL payloads keep working: they update track 1.
+      writeTrack(1, { url: data.youtubeUrl, name: data.title });
     }
-    if (data.title !== undefined) state.config.bgm.title = String(data.title);
-    if (data.volume !== undefined) state.config.bgm.volume = Math.max(0, Math.min(100, Number(data.volume) || 50));
-    if (data.playing !== undefined) state.config.bgm.playing = Boolean(data.playing);
-    if (data.enabled !== undefined) state.config.bgm.enabled = Boolean(data.enabled);
+
+    if (!error && data.play !== undefined) {
+      const index = validIndex(data.play);
+      if (!index) {
+        error = `Track number must be between 1 and ${BGM_TRACK_COUNT}.`;
+      } else {
+        const track = bgm.tracks[index - 1];
+        if (!track.videoId) {
+          error = `Track ${index} has no valid YouTube link yet. Save a link before playing it.`;
+        } else {
+          // Switching tracks reuses the single overlay player.
+          bgm.activeTrack = index;
+          bgm.youtubeUrl = track.url;
+          bgm.youtubeId = track.videoId;
+          bgm.title = track.name;
+          bgm.playing = true;
+        }
+      }
+    }
+
+    if (!error && data.stop) bgm.playing = false;
+    if (data.volume !== undefined) bgm.volume = Math.max(0, Math.min(100, Number(data.volume) || 50));
+    if (data.playing !== undefined) bgm.playing = Boolean(data.playing);
+    if (data.enabled !== undefined) bgm.enabled = Boolean(data.enabled);
+
+    if (error) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error, bgm }));
+      return;
+    }
 
     persistState();
     broadcast('state', state);
     broadcast('bgm', state.config.bgm);
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, bgm: state.config.bgm }));
+    res.end(JSON.stringify({ ok: true, bgm }));
     return;
   }
 

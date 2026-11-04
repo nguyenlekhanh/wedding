@@ -864,3 +864,40 @@ body {
   margin-top: 8px;
 }
 .ai-sep { height: 1px; background: var(--border-color); margin: 18px 0; }
+
+/* ===== YouTube BGM: 5 independent tracks ===== */
+.bgm-track-list { display: flex; flex-direction: column; gap: 10px; }
+.bgm-track-row {
+  display: grid;
+  grid-template-columns: 38px minmax(130px, 1.1fr) minmax(200px, 2fr) auto auto 118px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.bgm-track-row.is-playing {
+  border-color: rgba(255, 190, 120, 0.55);
+  background: rgba(255, 190, 120, 0.07);
+}
+.bgm-track-no {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-weight: 700;
+  background: rgba(255, 190, 120, 0.16);
+  color: #ffd8a8;
+}
+.bgm-track-row input { width: 100%; }
+.bgm-track-row .btn { white-space: nowrap; padding: 8px 12px; }
+.bgm-track-status { font-size: 12px; opacity: 0.75; white-space: nowrap; }
+.bgm-track-row.is-playing .bgm-track-status { opacity: 1; color: #ffcf8b; font-weight: 600; }
+@media (max-width: 1100px) {
+  .bgm-track-row { grid-template-columns: 34px 1fr 1fr; }
+  .bgm-track-row .bgm-track-url { grid-column: 1 / -1; }
+}

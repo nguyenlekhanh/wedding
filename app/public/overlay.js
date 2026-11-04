@@ -43,6 +43,10 @@ fit();
 // ========================================================
 let ytPlayer = null;
 let isYtReady = false;
+let loadedVideoId = '';   // video the player is actually carrying
+let lastBgmConfig = null; // newest snapshot, applied as soon as the player is ready
+let playerError = null;
+let ytPlayerState = null;
 
 // Safe accessor: this module runs before `currentState` is initialised, so the
 // player bootstrap must never touch it directly (TDZ ReferenceError).
@@ -62,44 +66,67 @@ function initYtPlayer() {
   const slot = document.getElementById('yt-player-slot');
   if (!slot || !window.YT || typeof window.YT.Player !== 'function') return false;
 
+  // A failed construction leaves a half-built <iframe> behind. The IFrame API
+  // only accepts a container element, so that leftover must be replaced.
+  const existing = document.getElementById('yt-bgm-iframe');
+  if (existing && existing.tagName === 'IFRAME') existing.remove();
   if (!document.getElementById('yt-bgm-iframe')) {
     const container = document.createElement('div');
     container.id = 'yt-bgm-iframe';
     slot.append(container);
   }
 
-  const initialVideoId = currentBgmConfig().youtubeId || 'w4Z01V4uFz8';
+  // No invented fallback video: an unconfigured track list starts silent.
+  const initial = currentBgmConfig();
+  const initialVideoId = String(initial.youtubeId || '');
+  const playerVars = { autoplay: 1, loop: 1, controls: 0, disablekb: 1, modestbranding: 1 };
+  const options = { height: '100', width: '100', playerVars };
+  // The IFrame API throws "Invalid video id" when videoId exists but is empty,
+  // so the key is only added when there is a real track to carry.
+  if (initialVideoId) {
+    options.videoId = initialVideoId;
+    playerVars.playlist = initialVideoId;
+    loadedVideoId = initialVideoId;
+  }
   try {
-    ytPlayer = new YT.Player('yt-bgm-iframe', {
-      height: '100',
-      width: '100',
-      videoId: initialVideoId,
-      playerVars: {
-        autoplay: 1,
-        loop: 1,
-        playlist: initialVideoId,
-        controls: 0,
-        disablekb: 1,
-        modestbranding: 1
-      },
+    ytPlayer = new YT.Player('yt-bgm-iframe', Object.assign(options, {
       events: {
         onReady: (event) => {
           isYtReady = true;
+          playerError = null;
+          try { ytPlayerState = event.target.getPlayerState(); } catch (e) {}
           const bgm = currentBgmConfig();
-          event.target.setVolume(bgm.volume ?? 50);
-          if (bgm.enabled !== false && bgm.playing !== false) {
-            event.target.playVideo();
-          }
+          const volume = Number(bgm.volume);
+          event.target.setVolume(Number.isFinite(volume) ? Math.max(0, Math.min(100, volume)) : 50);
+          // A snapshot that arrived while the player was booting must not be lost.
+          updateBgmState(lastBgmConfig || bgm);
+          console.log('[BGM] player ready', (lastBgmConfig || bgm).youtubeId || '(no track configured)');
+        },
+        onStateChange: (event) => {
+          ytPlayerState = event.data;
+          const names = { '-1': 'unstarted', 0: 'ended', 1: 'playing', 2: 'paused', 3: 'buffering', 5: 'cued' };
+          console.log('[BGM] state', event.data, names[event.data] || '');
         },
         onError: (err) => {
-          console.warn('YouTube BGM Player error:', err);
+          const code = err && err.data !== undefined ? err.data : null;
+          const reasons = {
+            2: 'invalid parameter',
+            5: 'HTML5 player error',
+            100: 'video not found',
+            101: 'embedding disabled by the video owner',
+            150: 'embedding disabled by the video owner'
+          };
+          playerError = code === null ? String(err && err.message || err) : code;
+          console.warn(`[BGM] YouTube player error ${code}${reasons[code] ? ' — ' + reasons[code] : ''}`);
         }
       }
-    });
+    }));
     return true;
   } catch (e) {
-    console.warn('Could not initialize YouTube player:', e);
+    playerError = String(e && e.message || e);
+    console.warn('[BGM] could not initialize the YouTube player:', e && e.message || e);
     ytPlayer = null;
+    isYtReady = false;
     return false;
   }
 }
@@ -124,31 +151,36 @@ window.onYouTubeIframeAPIReady = initYtPlayer;
 
 function updateBgmState(bgmConfig) {
   if (!bgmConfig) return;
+  lastBgmConfig = bgmConfig;
+
   const titleEl = document.getElementById('bgm-title-text');
   if (titleEl && bgmConfig.title) titleEl.textContent = bgmConfig.title;
 
-  if (isYtReady && ytPlayer && typeof ytPlayer.playVideo === 'function') {
-    try {
-      if (bgmConfig.youtubeId) {
-        const currentUrl = ytPlayer.getVideoUrl?.() || '';
-        if (!currentUrl.includes(bgmConfig.youtubeId)) {
-          ytPlayer.loadVideoById({
-            videoId: bgmConfig.youtubeId,
-            suggestedQuality: 'small'
-          });
-        }
-      }
-      if (bgmConfig.volume !== undefined) {
-        // The ducking controller owns the volume: while the MC speaks this keeps
-        // the ducked level (never 0), otherwise it follows the admin's slider.
-        bgmDucker.sync(Number(bgmConfig.volume));
-      }
-      if (bgmConfig.enabled === false || bgmConfig.playing === false) {
-        ytPlayer.pauseVideo();
-      } else {
-        ytPlayer.playVideo();
-      }
-    } catch (e) {}
+  // Not ready yet: onReady applies the latest snapshot, nothing is dropped.
+  if (!isYtReady || !ytPlayer || typeof ytPlayer.loadVideoById !== 'function') return;
+
+  try {
+    const videoId = String(bgmConfig.youtubeId || '');
+    if (videoId && videoId !== loadedVideoId) {
+      // Switching tracks reuses this single player (never a second one).
+      loadedVideoId = videoId;
+      playerError = null;
+      ytPlayer.loadVideoById({ videoId, suggestedQuality: 'small' });
+      // A switch must not break ducking: re-assert the mixer's volume.
+      bgmDucker.sync(Number(bgmConfig.volume));
+    }
+    if (bgmConfig.volume !== undefined) {
+      // The ducking controller owns the volume: while the MC speaks this keeps
+      // the ducked level (never 0), otherwise it follows the admin's slider.
+      bgmDucker.sync(Number(bgmConfig.volume));
+    }
+    if (bgmConfig.enabled === false || bgmConfig.playing === false) {
+      ytPlayer.pauseVideo();
+    } else if (videoId) {
+      ytPlayer.playVideo();
+    }
+  } catch (e) {
+    console.warn('[BGM] could not apply the background music state:', e && e.message || e);
   }
 }
 
@@ -981,6 +1013,15 @@ window.__weddingMC = () => {
     } : null,
     bgmVolume,
     youtubeReady: isYtReady,
+    // BGM diagnostics (the operator and the automated checks read these).
+    youtubeApiLoaded: typeof window.YT !== 'undefined' && !!window.YT && typeof window.YT.Player === 'function',
+    playerState: ytPlayerState,
+    playerError,
+    activeTrack: Number(currentState?.config?.bgm?.activeTrack) || 1,
+    videoId: loadedVideoId || String(currentState?.config?.bgm?.youtubeId || ''),
+    configuredVolume: Number.isFinite(Number(currentState?.config?.bgm?.volume)) ? Number(currentState.config.bgm.volume) : 50,
+    actualVolume: bgmVolume,
+    bgmPlaying: isYtReady && ytPlayerState === 1,
     duckEnabled: currentState?.config?.ttsDuckBgm !== false,
     duck: bgmDucker.state()
   };

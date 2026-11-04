@@ -402,24 +402,10 @@
           <div class="section-heading">
             <small>ÂM NHẠC HÔN TRƯỜNG • PHÁT TRỰC TIẾP TỪ YOUTUBE</small>
             <h2>Cài Đặt Nhạc Nền Cưới (YouTube BGM)</h2>
-            <p>Admin có thể dán bất kỳ link bài hát YouTube nào hoặc chọn nhanh các bản nhạc cưới nổi tiếng bên dưới.</p>
+            <p>Admin có 5 bài nhạc nền độc lập: đổi tên, dán link YouTube và bấm Phát cho từng bài. Chỉ một bài phát tại một thời điểm.</p>
           </div>
           <div class="card-panel">
             <div class="form-grid">
-              <div class="form-group full-width">
-                <label>🔗 Link hoặc Video ID YouTube:</label>
-                <div class="input-action-group">
-                  <input type="text" id="cfg-bgm-url" placeholder="Dán link YouTube (ví dụ: https://www.youtube.com/watch?v=w4Z01V4uFz8)" value="https://www.youtube.com/watch?v=w4Z01V4uFz8">
-                  <button class="btn btn-primary" id="btn-apply-bgm">▶️ Áp Dụng & Phát Ngay</button>
-                </div>
-                <small class="hint-text">Hỗ trợ mọi định dạng: youtube.com/watch?v=..., youtu.be/..., hoặc mã Video ID</small>
-              </div>
-
-              <div class="form-group">
-                <label>🏷️ Tên bài hát hiển thị trên màn hình LIVE:</label>
-                <input type="text" id="cfg-bgm-title" value="Hòa Tấu Đám Cưới Lãng Mạn (Piano & Violin)">
-              </div>
-
               <div class="form-group">
                 <label>🔊 Âm lượng nhạc nền (%):</label>
                 <input type="range" id="cfg-bgm-volume" min="0" max="100" step="5" value="50">
@@ -434,19 +420,55 @@
               </div>
 
               <div class="form-group full-width">
-                <label>⚡ Chọn Nhanh Bản Nhạc Cưới Yêu Thích:</label>
-                <div class="quick-keywords">
-                  <button class="tag-btn bgm-preset-btn" data-url="https://www.youtube.com/watch?v=w4Z01V4uFz8" data-title="Ánh Nắng Của Anh (Piano Wedding)">🎹 Ánh Nắng Của Anh (Piano)</button>
-                  <button class="tag-btn bgm-preset-btn" data-url="https://www.youtube.com/watch?v=0k2Zzkw_-0I" data-title="Ngày Đầu Tiên - Đức Phúc">💍 Ngày Đầu Tiên (Đức Phúc)</button>
-                  <button class="tag-btn bgm-preset-btn" data-url="https://www.youtube.com/watch?v=kYx8kS_aV5Y" data-title="Cưới Thôi - Masew ft. Masiu">🍾 Cưới Thôi (Masew)</button>
-                  <button class="tag-btn bgm-preset-btn" data-url="https://www.youtube.com/watch?v=i9YyTjI-6_0" data-title="Đám Cưới Nha - Hồng Thanh">💐 Đám Cưới Nha (Hồng Thanh)</button>
-                  <button class="tag-btn bgm-preset-btn" data-url="https://www.youtube.com/watch?v=NlprozGcs80" data-title="Canon in D (Hòa Tấu Lễ Cưới Hoàng Gia)">🎻 Canon in D (Lễ Cưới)</button>
+                <label>📻 Danh sách 5 bài nhạc nền (mỗi bài một link YouTube riêng):</label>
+                <div class="bgm-track-list" id="bgm-track-list">
+                  <div class="bgm-track-row" data-track="1">
+                    <span class="bgm-track-no">1</span>
+                    <input type="text" id="cfg-bgm-name-1" placeholder="Tên bài (Wedding Entrance)">
+                    <input type="text" id="cfg-bgm-url-1" placeholder="https://www.youtube.com/watch?v=...">
+                    <button class="btn btn-secondary bgm-track-save" id="btn-bgm-save-1" data-track="1">💾 Lưu</button>
+                    <button class="btn btn-primary bgm-track-play" id="btn-bgm-play-1" data-track="1">▶️ Phát</button>
+                    <span class="bgm-track-status" id="bgm-status-1">⚪ Chưa có link</span>
+                  </div>
+                  <div class="bgm-track-row" data-track="2">
+                    <span class="bgm-track-no">2</span>
+                    <input type="text" id="cfg-bgm-name-2" placeholder="Tên bài (Romantic Piano)">
+                    <input type="text" id="cfg-bgm-url-2" placeholder="https://www.youtube.com/watch?v=...">
+                    <button class="btn btn-secondary bgm-track-save" id="btn-bgm-save-2" data-track="2">💾 Lưu</button>
+                    <button class="btn btn-primary bgm-track-play" id="btn-bgm-play-2" data-track="2">▶️ Phát</button>
+                    <span class="bgm-track-status" id="bgm-status-2">⚪ Chưa có link</span>
+                  </div>
+                  <div class="bgm-track-row" data-track="3">
+                    <span class="bgm-track-no">3</span>
+                    <input type="text" id="cfg-bgm-name-3" placeholder="Tên bài (Wedding Ceremony)">
+                    <input type="text" id="cfg-bgm-url-3" placeholder="https://www.youtube.com/watch?v=...">
+                    <button class="btn btn-secondary bgm-track-save" id="btn-bgm-save-3" data-track="3">💾 Lưu</button>
+                    <button class="btn btn-primary bgm-track-play" id="btn-bgm-play-3" data-track="3">▶️ Phát</button>
+                    <span class="bgm-track-status" id="bgm-status-3">⚪ Chưa có link</span>
+                  </div>
+                  <div class="bgm-track-row" data-track="4">
+                    <span class="bgm-track-no">4</span>
+                    <input type="text" id="cfg-bgm-name-4" placeholder="Tên bài (First Dance)">
+                    <input type="text" id="cfg-bgm-url-4" placeholder="https://www.youtube.com/watch?v=...">
+                    <button class="btn btn-secondary bgm-track-save" id="btn-bgm-save-4" data-track="4">💾 Lưu</button>
+                    <button class="btn btn-primary bgm-track-play" id="btn-bgm-play-4" data-track="4">▶️ Phát</button>
+                    <span class="bgm-track-status" id="bgm-status-4">⚪ Chưa có link</span>
+                  </div>
+                  <div class="bgm-track-row" data-track="5">
+                    <span class="bgm-track-no">5</span>
+                    <input type="text" id="cfg-bgm-name-5" placeholder="Tên bài (Wedding Celebration)">
+                    <input type="text" id="cfg-bgm-url-5" placeholder="https://www.youtube.com/watch?v=...">
+                    <button class="btn btn-secondary bgm-track-save" id="btn-bgm-save-5" data-track="5">💾 Lưu</button>
+                    <button class="btn btn-primary bgm-track-play" id="btn-bgm-play-5" data-track="5">▶️ Phát</button>
+                    <span class="bgm-track-status" id="bgm-status-5">⚪ Chưa có link</span>
+                  </div>
                 </div>
+                <small class="hint-text">Chỉ một bài phát tại một thời điểm — bấm Phát ở bài khác sẽ thay bài đang phát. Hỗ trợ youtube.com/watch?v=..., youtu.be/..., hoặc mã Video ID 11 ký tự.</small>
               </div>
             </div>
             <div class="panel-footer">
-              <button class="btn btn-secondary" id="btn-toggle-bgm">⏯️ Bật / Tắt Nhạc Nhanh</button>
-              <button class="btn btn-primary" id="btn-save-bgm">💾 Lưu Cấu Hình Nhạc</button>
+              <button class="btn btn-secondary" id="btn-bgm-stop">⏹️ Dừng Nhạc</button>
+              <button class="btn btn-primary" id="btn-save-bgm">💾 Lưu Âm Lượng</button>
             </div>
           </div>
         </section>

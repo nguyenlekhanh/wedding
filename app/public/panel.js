@@ -306,62 +306,112 @@ $('#btn-reset-session')?.addEventListener('click', async () => {
   alert('Đã thiết lập lại phiên LIVE mới thành công!');
 });
 
-// BGM YouTube Controls
-async function saveBgm(customPayload = {}) {
-  const youtubeUrl = $('#cfg-bgm-url')?.value?.trim();
-  const title = $('#cfg-bgm-title')?.value?.trim() || 'Nhạc Đám Cưới Lãng Mạn';
-  const volume = Number($('#cfg-bgm-volume')?.value) || 50;
-  const playing = $('#cfg-bgm-playing')?.value === 'true';
+// BGM YouTube Controls — five independent tracks sharing one overlay player
+const BGM_TRACK_COUNT = 5;
+let lastBgmState = null;
 
-  const payload = Object.assign({
-    youtubeUrl,
-    title,
-    volume,
-    playing,
-    enabled: true
-  }, customPayload);
+function bgmRow(index) {
+  return {
+    name: $(`#cfg-bgm-name-${index}`),
+    url: $(`#cfg-bgm-url-${index}`),
+    status: $(`#bgm-status-${index}`),
+    row: document.querySelector(`.bgm-track-row[data-track="${index}"]`)
+  };
+}
 
+async function bgmRequest(payload) {
+  const res = await fetch('/api/bgm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+function renderBgm(bgm) {
+  if (!bgm) return;
+  lastBgmState = bgm;
+  const tracks = Array.isArray(bgm.tracks) ? bgm.tracks : [];
+  tracks.forEach((track, idx) => {
+    const index = idx + 1;
+    const row = bgmRow(index);
+    if (row.name && document.activeElement !== row.name) row.name.value = track.name || '';
+    if (row.url && document.activeElement !== row.url) row.url.value = track.url || '';
+    const playing = bgm.playing !== false && Number(bgm.activeTrack) === index && !!track.videoId;
+    if (row.status) {
+      row.status.textContent = playing
+        ? '🔴 Đang phát'
+        : (track.videoId ? '⚪ Sẵn sàng' : '⚪ Chưa có link');
+    }
+    row.row?.classList.toggle('is-playing', playing);
+  });
+  if ($('#cfg-bgm-volume') && bgm.volume !== undefined) $('#cfg-bgm-volume').value = bgm.volume;
+  if ($('#cfg-bgm-playing')) $('#cfg-bgm-playing').value = String(bgm.playing !== false);
+}
+
+async function saveBgmTrack(index, extra = {}) {
+  const row = bgmRow(index);
   try {
-    const res = await fetch('/api/bgm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    return await res.json();
+    const data = await bgmRequest(Object.assign({
+      trackIndex: index,
+      name: row.name?.value?.trim() ?? '',
+      url: row.url?.value?.trim() ?? ''
+    }, extra));
+    renderBgm(data.bgm);
+    return data.bgm;
   } catch (e) {
-    console.error('Save BGM error:', e);
+    alert(`Bài số ${index}: ${e.message}`);
+    return null;
   }
 }
 
-$('#btn-apply-bgm')?.addEventListener('click', async () => {
-  await saveBgm({ playing: true });
-  alert('Đã cập nhật và phát nhạc nền cưới trên màn hình LIVE thành công!');
+for (let i = 1; i <= BGM_TRACK_COUNT; i += 1) {
+  $(`#btn-bgm-save-${i}`)?.addEventListener('click', async () => {
+    const bgm = await saveBgmTrack(i);
+    if (bgm) alert(`Đã lưu bài số ${i}.`);
+  });
+  $(`#btn-bgm-play-${i}`)?.addEventListener('click', async () => {
+    const bgm = await saveBgmTrack(i, { play: i });
+    if (bgm) alert(`Đang phát bài số ${i}: ${bgm.title}`);
+  });
+}
+
+$('#btn-bgm-stop')?.addEventListener('click', async () => {
+  try {
+    const data = await bgmRequest({ stop: true });
+    renderBgm(data.bgm);
+  } catch (e) {
+    alert(e.message);
+  }
 });
 
 $('#btn-save-bgm')?.addEventListener('click', async () => {
-  await saveBgm();
-  alert('Đã lưu cấu hình nhạc nền YouTube thành công!');
+  try {
+    const data = await bgmRequest({ volume: Number($('#cfg-bgm-volume')?.value) || 50 });
+    renderBgm(data.bgm);
+    alert('Đã lưu âm lượng nhạc nền.');
+  } catch (e) {
+    alert(e.message);
+  }
 });
 
-$('#btn-toggle-bgm')?.addEventListener('click', async () => {
-  const currentSelect = $('#cfg-bgm-playing');
-  const nowPlaying = currentSelect?.value === 'true';
-  const newPlaying = !nowPlaying;
-  if (currentSelect) currentSelect.value = String(newPlaying);
-  await saveBgm({ playing: newPlaying });
-  alert(newPlaying ? 'Đã bật nhạc nền! 🎵' : 'Đã tạm dừng nhạc nền! ⏸️');
+$('#cfg-bgm-volume')?.addEventListener('change', () => {
+  const volume = Number($('#cfg-bgm-volume')?.value) || 50;
+  bgmRequest({ volume }).then(data => renderBgm(data.bgm)).catch(() => {});
 });
 
-// Preset Playlist Buttons
-$$('.bgm-preset-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const url = btn.dataset.url;
-    const title = btn.dataset.title;
-    if ($('#cfg-bgm-url')) $('#cfg-bgm-url').value = url;
-    if ($('#cfg-bgm-title')) $('#cfg-bgm-title').value = title;
-    await saveBgm({ youtubeUrl: url, title, playing: true });
-    alert(`Đang phát: ${title}! 🎵`);
-  });
+$('#cfg-bgm-playing')?.addEventListener('change', async () => {
+  const playing = $('#cfg-bgm-playing')?.value === 'true';
+  try {
+    const data = await bgmRequest(playing
+      ? { play: Number(lastBgmState?.activeTrack) || 1 }
+      : { stop: true });
+    renderBgm(data.bgm);
+  } catch (e) {
+    alert(e.message);
+  }
 });
 
 // Render State into Admin Panel
@@ -423,12 +473,7 @@ function renderAdminState(state) {
     if ($('#cfg-thanks-template') && cfg.thanksTemplate) $('#cfg-thanks-template').value = cfg.thanksTemplate;
     if (cfg.ttsVoice) currentTtsVoice = cfg.ttsVoice;
     if ($('#cfg-tts-voice') && cfg.ttsVoice) $('#cfg-tts-voice').value = cfg.ttsVoice;
-    if (cfg.bgm) {
-      if ($('#cfg-bgm-url') && cfg.bgm.youtubeUrl) $('#cfg-bgm-url').value = cfg.bgm.youtubeUrl;
-      if ($('#cfg-bgm-title') && cfg.bgm.title) $('#cfg-bgm-title').value = cfg.bgm.title;
-      if ($('#cfg-bgm-volume') && cfg.bgm.volume !== undefined) $('#cfg-bgm-volume').value = cfg.bgm.volume;
-      if ($('#cfg-bgm-playing') && cfg.bgm.playing !== undefined) $('#cfg-bgm-playing').value = String(cfg.bgm.playing);
-    }
+    if (cfg.bgm) renderBgm(cfg.bgm);
   }
 }
 

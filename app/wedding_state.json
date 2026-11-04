@@ -26,11 +26,44 @@
     "funnyVoiceEnabled": true,
     "bgm": {
       "enabled": true,
-      "youtubeUrl": "https://youtu.be/QeGfHsdDeJw",
-      "youtubeId": "QeGfHsdDeJw",
-      "title": "Old Wedding Songs 2021 Wedding Songs For Walk",
+      "youtubeUrl": "https://www.youtube.com/watch?v=FdxlfNp5hCk&list=RDFdxlfNp5hCk&start_radio=1&pp=ygUNd2VkZGluZyBzb25nc6AHAQ%3D%3D",
+      "youtubeId": "FdxlfNp5hCk",
+      "title": "Best Wedding Songs 2026 💍 2026 Perfect Wedding Songs to Make Your Guests Cry |",
       "volume": 50,
-      "playing": true
+      "playing": true,
+      "tracks": [
+        {
+          "id": 1,
+          "name": "Wedding Entrance",
+          "url": "https://youtu.be/QeGfHsdDeJw",
+          "videoId": "QeGfHsdDeJw"
+        },
+        {
+          "id": 2,
+          "name": "Classical Music for Weddings",
+          "url": "https://www.youtube.com/watch?v=lHlxpGnAGbU&list=RDlHlxpGnAGbU&start_radio=1&pp=ygUNd2VkZGluZyBzb25nc6AHAQ%3D%3D",
+          "videoId": "lHlxpGnAGbU"
+        },
+        {
+          "id": 3,
+          "name": "Best Wedding Songs 2026 💍 2026 Perfect Wedding Songs to Make Your Guests Cry |",
+          "url": "https://www.youtube.com/watch?v=FdxlfNp5hCk&list=RDFdxlfNp5hCk&start_radio=1&pp=ygUNd2VkZGluZyBzb25nc6AHAQ%3D%3D",
+          "videoId": "FdxlfNp5hCk"
+        },
+        {
+          "id": 4,
+          "name": "First Dance",
+          "url": "",
+          "videoId": ""
+        },
+        {
+          "id": 5,
+          "name": "Wedding Celebration",
+          "url": "",
+          "videoId": ""
+        }
+      ],
+      "activeTrack": 3
     },
     "thanksTemplate": "Thank you {name} for the {count} {gift} for bride {bride} and groom {groom}! Wishing you and your family good health and every happiness!",
     "funnyJokes": [

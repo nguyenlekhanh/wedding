@@ -10,6 +10,7 @@
  * provider failure fallback, prompt-injection handling, SSE contract and regressions.
  */
 import http from 'node:http';
+import fs from 'node:fs';
 
 const BASE = process.env.MC_TEST_BASE || process.env.AI_TEST_BASE || 'http://127.0.0.1:3917';
 const results = [];
@@ -512,6 +513,122 @@ async function main() {
     migrated.json.config.actor.style === 'blazer' && migrated.json.config.actor.accessory === 'earrings' &&
     migrated.json.config.actor.hair === '#c9a15c' && migrated.json.config.actor.outfit === '#161a2e',
     JSON.stringify(migrated.json.config.actor));
+
+  // 20. Five independent YouTube BGM tracks (one shared player)
+  const stateBgm = (await api('/api/state')).json.config.bgm;
+  const originalBgm = JSON.parse(JSON.stringify(stateBgm));
+  ok('BGM exposes exactly five tracks with the default wedding names',
+    Array.isArray(stateBgm.tracks) && stateBgm.tracks.length === 5 &&
+    ['Wedding Entrance', 'Romantic Piano', 'Wedding Ceremony', 'First Dance', 'Wedding Celebration']
+      .every((n, i) => stateBgm.tracks[i].name === n),
+    (stateBgm.tracks || []).map((t) => t.name).join(' | '));
+
+  const demoUrls = [
+    'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    'https://youtu.be/9bZkp7q19f0',
+    'https://www.youtube.com/embed/kJQP7kiw5Fk',
+    '3JZ_D3ELwOQ',
+    'https://www.youtube.com/watch?v=60ItHLz5WEA&list=RD60ItHLz5WEA'
+  ];
+  const demoNames = ['Entrance Test', 'Piano Test', 'Ceremony Test', 'First Dance Test', 'Celebration Test'];
+  for (let i = 1; i <= 5; i += 1) {
+    await api('/api/bgm', { method: 'POST', body: { trackIndex: i, name: demoNames[i - 1], url: demoUrls[i - 1] } });
+  }
+  const saved = (await api('/api/state')).json.config.bgm;
+  ok('All five track names and URLs save independently',
+    saved.tracks.length === 5 && saved.tracks.every((t, i) => t.name === demoNames[i] && t.url === demoUrls[i] && t.videoId.length === 11),
+    saved.tracks.map((t) => `${t.id}:${t.name}:${t.videoId}`).join(' | '));
+
+  const persisted = fs.readFileSync('wedding_state.json', 'utf8');
+  ok('All five tracks are written to the persistent state file',
+    /"tracks"/.test(persisted) && persisted.includes('Celebration Test') && persisted.includes('9bZkp7q19f0'));
+
+  const play2 = (await api('/api/bgm', { method: 'POST', body: { play: 2 } })).json.bgm;
+  ok('Play on track 2 makes it the only active track',
+    play2.activeTrack === 2 && play2.playing === true && play2.youtubeId === '9bZkp7q19f0' && play2.title === 'Piano Test',
+    `active=${play2.activeTrack} id=${play2.youtubeId}`);
+
+  const play5 = (await api('/api/bgm', { method: 'POST', body: { play: 5 } })).json.bgm;
+  ok('Play on track 5 replaces track 2',
+    play5.activeTrack === 5 && play5.playing === true && play5.youtubeId === '60ItHLz5WEA',
+    `active=${play5.activeTrack} id=${play5.youtubeId}`);
+
+  const playAgain = (await api('/api/bgm', { method: 'POST', body: { play: 5 } })).json.bgm;
+  ok('Play on the already playing track keeps a single active track',
+    playAgain.activeTrack === 5 && playAgain.youtubeId === play5.youtubeId);
+
+  const stopped = (await api('/api/bgm', { method: 'POST', body: { stop: true } })).json.bgm;
+  ok('Stop stops the active track', stopped.playing === false && stopped.activeTrack === 5);
+
+  const bad = await api('/api/bgm', { method: 'POST', body: { trackIndex: 3, url: 'https://example.com/not-a-video' } });
+  const afterBad = (await api('/api/state')).json.config.bgm;
+  ok('Invalid YouTube links are rejected with an error and change nothing',
+    bad.status === 400 && bad.json?.ok === false && /valid YouTube/i.test(bad.json.error || '') &&
+    afterBad.tracks[2].videoId === 'kJQP7kiw5Fk',
+    `status=${bad.status} error=${bad.json?.error}`);
+
+  const legacy = (await api('/api/bgm', { method: 'POST', body: { youtubeUrl: demoUrls[1], title: 'Legacy Single URL' } })).json.bgm;
+  ok('Legacy single-URL payload still updates track 1',
+    legacy.tracks[0].videoId === '9bZkp7q19f0' && legacy.tracks[0].name === 'Legacy Single URL');
+
+  const overlayBgm = await (await fetch(BASE + '/overlay.js')).text();
+  ok('Only one YouTube player instance exists in the overlay',
+    (overlayBgm.match(/new YT\.Player\(/g) || []).length === 1);
+  ok('Track switches reuse loadVideoById and re-apply the ducked volume',
+    /loadVideoById[\s\S]{0,320}bgmDucker\.sync/.test(overlayBgm) && /bgmDucker/ .test(overlayBgm));
+  ok('No pause/stop control is reachable from the switch path',
+    !/loadVideoById[\s\S]{0,320}(pauseVideo|stopVideo)/.test(overlayBgm));
+
+  const adminHtml = await (await fetch(BASE + '/index.html')).text();
+  ok('Dashboard renders five track rows with save, play and status controls',
+    (adminHtml.match(/class="bgm-track-row"/g) || []).length === 5 &&
+    [1, 2, 3, 4, 5].every((i) => adminHtml.includes(`id="cfg-bgm-name-${i}"`) &&
+      adminHtml.includes(`id="cfg-bgm-url-${i}"`) && adminHtml.includes(`id="btn-bgm-save-${i}"`) &&
+      adminHtml.includes(`id="btn-bgm-play-${i}"`) && adminHtml.includes(`id="bgm-status-${i}"`)) &&
+    adminHtml.includes('id="btn-bgm-stop"'));
+  const adminJs = await (await fetch(BASE + '/panel.js')).text();
+  ok('Dashboard script drives tracks through the track API',
+    /trackIndex/.test(adminJs) && /renderBgm/.test(adminJs) && !/cfg-bgm-url"/.test(adminJs));
+
+  ok('MC stays enabled while the BGM track list is reconfigured',
+    (await api('/api/mc/config')).json.config.enabled === true);
+
+  // 21. Regression guards: player boot path, diagnostics, play-without-wipe
+  ok('Overlay never builds the player with an empty videoId',
+    !/videoId:\s*[^,\n]*\|\|\s*undefined/.test(overlayBgm) && /if \(initialVideoId\) \{/.test(overlayBgm));
+  ok('Overlay tracks the loaded video locally instead of calling getVideoUrl',
+    /loadedVideoId/.test(overlayBgm) && !/getVideoUrl/.test(overlayBgm));
+  ok('Overlay logs [BGM] state changes and YouTube errors',
+    /\[BGM\] state/.test(overlayBgm) && /\[BGM\] YouTube player error/.test(overlayBgm));
+  ok('A snapshot that arrives before the player is ready is applied on ready',
+    /updateBgmState\(lastBgmConfig \|\| bgm\)/.test(overlayBgm));
+  ok('Diagnostics expose the required BGM fields',
+    ['youtubeApiLoaded', 'playerState', 'playerError', 'activeTrack', 'videoId', 'configuredVolume', 'actualVolume', 'bgmPlaying']
+      .every((key) => new RegExp(key + '\\s*[:,]').test(overlayBgm)));
+
+  await api('/api/bgm', { method: 'POST', body: { trackIndex: 4, name: 'First Dance', url: '3JZ_D3ELwOQ' } });
+  const keepPlay = await api('/api/bgm', { method: 'POST', body: { trackIndex: 4, url: '', play: 4 } });
+  ok('Pressing Play with an empty URL field keeps the saved link',
+    keepPlay.status === 200 && keepPlay.json.bgm.activeTrack === 4 && keepPlay.json.bgm.tracks[3].videoId === '3JZ_D3ELwOQ');
+  const cleared = await api('/api/bgm', { method: 'POST', body: { trackIndex: 4, url: '' } });
+  ok('Saving an emptied field still clears the link',
+    cleared.status === 200 && cleared.json.bgm.tracks[3].videoId === '');
+  const mirrored = (await api('/api/bgm', { method: 'POST', body: { play: 2 } })).json.bgm;
+  ok('Legacy youtubeUrl/youtubeId mirror the active track',
+    mirrored.youtubeId === mirrored.tracks[1].videoId && mirrored.youtubeUrl === mirrored.tracks[1].url,
+    `${mirrored.youtubeId} / ${mirrored.tracks[1].videoId}`);
+
+  // Restore the operator's original BGM configuration.
+  for (let i = 1; i <= 5; i += 1) {
+    const t = originalBgm.tracks[i - 1];
+    await api('/api/bgm', { method: 'POST', body: { trackIndex: i, name: t.name, url: t.url } });
+  }
+  await api('/api/bgm', { method: 'POST', body: { volume: originalBgm.volume ?? 50 } });
+  const restorePlay = await api('/api/bgm', {
+    method: 'POST',
+    body: originalBgm.playing === false ? { stop: true } : { play: originalBgm.activeTrack || 1 }
+  });
+  if (restorePlay.status !== 200) await api('/api/bgm', { method: 'POST', body: { stop: true } });
 
   // Restore a sane production configuration (tests shorten the cooldowns).
   await api('/api/mc/config', {
