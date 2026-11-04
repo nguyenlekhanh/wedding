@@ -60,6 +60,15 @@ const defaultState = {
       volume: 50,
       playing: true
     },
+    // Two permanently dancing wedding-party characters on the aisle.
+    dancers: {
+      enabled: true,
+      left: true,
+      right: true,
+      speed: 1,
+      scale: 1,
+      intensity: 1
+    },
     thanksTemplate: "Thank you {name} for the {count} {gift} for bride {bride} and groom {groom}! Wishing you and your family good health and every happiness!",
     funnyJokes: [
       "Oh wow, can you believe it! Big spender {name} just sent {count} {gift}! Handsome and generous — no wonder the bride is swooning!",
@@ -1037,6 +1046,9 @@ function ensureBgmTracks() {
 // Migrate the legacy single-URL configuration into track 1 on boot.
 try {
   ensureBgmTracks();
+  if (!state.config.dancers) {
+    state.config.dancers = { ...defaultState.config.dancers };
+  }
   persistState();
 } catch (e) {
   console.error('[BGM] Could not migrate the track list:', e.message);
@@ -1280,6 +1292,30 @@ const server = http.createServer(async (req, res) => {
     }
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ ok: true, action: data }));
+    return;
+  }
+
+  // 5b. Wedding dancers — two permanently dancing aisle characters
+  if (pathname === '/api/dancers' && (req.method === 'POST' || req.method === 'PUT')) {
+    const data = await readJson();
+    const clamp = (value, min, max, fallback) => {
+      const n = Number(value);
+      return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback;
+    };
+    const current = state.config.dancers || {};
+    state.config.dancers = {
+      enabled: data.enabled === undefined ? current.enabled !== false : Boolean(data.enabled),
+      left: data.left === undefined ? current.left !== false : Boolean(data.left),
+      right: data.right === undefined ? current.right !== false : Boolean(data.right),
+      speed: data.speed === undefined ? clamp(current.speed, 0.4, 2, 1) : clamp(data.speed, 0.4, 2, 1),
+      scale: data.scale === undefined ? clamp(current.scale, 0.6, 1.6, 1) : clamp(data.scale, 0.6, 1.6, 1),
+      intensity: data.intensity === undefined ? clamp(current.intensity, 0.2, 1.8, 1) : clamp(data.intensity, 0.2, 1.8, 1)
+    };
+    persistState();
+    broadcast('state', state);
+    broadcast('dancers', state.config.dancers);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, dancers: state.config.dancers }));
     return;
   }
 

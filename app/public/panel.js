@@ -414,6 +414,51 @@ $('#cfg-bgm-playing')?.addEventListener('change', async () => {
   }
 });
 
+// Wedding dancers — two permanent aisle characters (Vietnamese labels on purpose)
+function renderDancers(dancers) {
+  if (!dancers) return;
+  const setValue = (selector, value) => {
+    const el = $(selector);
+    if (el && document.activeElement !== el) el.value = String(value);
+  };
+  setValue('#cfg-dancers-enabled', dancers.enabled !== false);
+  setValue('#cfg-dancers-left', dancers.left !== false);
+  setValue('#cfg-dancers-right', dancers.right !== false);
+  setValue('#cfg-dancers-speed', dancers.speed ?? 1);
+  setValue('#cfg-dancers-scale', dancers.scale ?? 1);
+  setValue('#cfg-dancers-intensity', dancers.intensity ?? 1);
+
+  const status = $('#dancers-status');
+  if (status) {
+    status.textContent = dancers.enabled === false
+      ? 'Vũ công đang tắt.'
+      : `Đang bật • trái: ${dancers.left === false ? 'ẩn' : 'hiện'} • phải: ${dancers.right === false ? 'ẩn' : 'hiện'} • tốc độ ${Number(dancers.speed || 1).toFixed(1)}× • cỡ ${Number(dancers.scale || 1).toFixed(2)}× • lực ${Number(dancers.intensity || 1).toFixed(1)}×`;
+  }
+}
+
+$('#btn-save-dancers')?.addEventListener('click', async () => {
+  try {
+    const res = await fetch('/api/dancers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        enabled: $('#cfg-dancers-enabled')?.value === 'true',
+        left: $('#cfg-dancers-left')?.value === 'true',
+        right: $('#cfg-dancers-right')?.value === 'true',
+        speed: Number($('#cfg-dancers-speed')?.value) || 1,
+        scale: Number($('#cfg-dancers-scale')?.value) || 1,
+        intensity: Number($('#cfg-dancers-intensity')?.value) || 1
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+    renderDancers(data.dancers);
+    alert('Đã lưu cài đặt vũ công!');
+  } catch (e) {
+    alert('Lỗi: ' + e.message);
+  }
+});
+
 // Render State into Admin Panel
 function renderAdminState(state) {
   const cfg = state.config || {};
@@ -474,6 +519,7 @@ function renderAdminState(state) {
     if (cfg.ttsVoice) currentTtsVoice = cfg.ttsVoice;
     if ($('#cfg-tts-voice') && cfg.ttsVoice) $('#cfg-tts-voice').value = cfg.ttsVoice;
     if (cfg.bgm) renderBgm(cfg.bgm);
+    if (cfg.dancers) renderDancers(cfg.dancers);
   }
 }
 

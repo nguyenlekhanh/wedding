@@ -52,6 +52,10 @@
           <span class="nav-icon">🎵</span>
           <span>Nhạc Nền Cưới (YouTube)</span>
         </button>
+        <button class="nav-item" data-tab="tab-dancers">
+          <span class="nav-icon">💃</span>
+          <span>Wedding Dancers</span>
+        </button>
         <button class="nav-item" data-tab="tab-tikfinity">
           <span class="nav-icon">🔗</span>
           <span>Kết Nối TikTok / TikFinity</span>
@@ -469,6 +473,61 @@
             <div class="panel-footer">
               <button class="btn btn-secondary" id="btn-bgm-stop">⏹️ Dừng Nhạc</button>
               <button class="btn btn-primary" id="btn-save-bgm">💾 Lưu Âm Lượng</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB: WEDDING DANCERS ================= -->
+        <section class="tab-pane" id="tab-dancers">
+          <div class="section-heading">
+            <small>SÂN KHẤU CƯỚI • HAI VŨ CÔNG NHẢY LIÊN TỤC HAI BÊN THẢM ĐỎ</small>
+            <h2>💃 Wedding Dancers</h2>
+            <p>Hai nhân vật nhảy không ngừng hai bên thảm đỏ trong suốt buổi LIVE. Cài đặt được lưu lại và tự khôi phục sau khi khởi động lại server hoặc tải lại màn hình LIVE.</p>
+          </div>
+          <div class="card-panel">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>💃 Bật / Tắt vũ công:</label>
+                <select id="cfg-dancers-enabled">
+                  <option value="true">Bật vũ công</option>
+                  <option value="false">Tắt vũ công</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>👈 Vũ công bên trái:</label>
+                <select id="cfg-dancers-left">
+                  <option value="true">Hiện</option>
+                  <option value="false">Ẩn</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>👉 Vũ công bên phải:</label>
+                <select id="cfg-dancers-right">
+                  <option value="true">Hiện</option>
+                  <option value="false">Ẩn</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>⏱️ Tốc độ nhảy (0.4 – 2.0):</label>
+                <input type="range" id="cfg-dancers-speed" min="0.4" max="2" step="0.1" value="1">
+              </div>
+
+              <div class="form-group">
+                <label>📏 Kích thước nhân vật (0.6 – 1.6):</label>
+                <input type="range" id="cfg-dancers-scale" min="0.6" max="1.6" step="0.05" value="1">
+              </div>
+
+              <div class="form-group">
+                <label>⚡ Độ mạnh động tác (0.2 – 1.8):</label>
+                <input type="range" id="cfg-dancers-intensity" min="0.2" max="1.8" step="0.1" value="1">
+              </div>
+            </div>
+            <div class="panel-footer">
+              <span class="hint-text" id="dancers-status">Đang tải cài đặt…</span>
+              <button class="btn btn-primary" id="btn-save-dancers">💾 Lưu Cài Đặt Vũ Công</button>
             </div>
           </div>
         </section>

@@ -497,6 +497,10 @@ function renderState(state) {
     updateBgmState(cfg.bgm);
   }
 
+  // Aisle dancers only receive their dashboard settings here; the dancing itself
+  // is pure CSS and runs from the moment the layer is attached.
+  document.dispatchEvent(new CustomEvent('wedding:dancers', { detail: cfg.dancers || {} }));
+
   renderGuests(state.people || []);
   renderRegistry(state.scores || {});
 }

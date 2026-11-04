@@ -517,10 +517,11 @@ async function main() {
   // 20. Five independent YouTube BGM tracks (one shared player)
   const stateBgm = (await api('/api/state')).json.config.bgm;
   const originalBgm = JSON.parse(JSON.stringify(stateBgm));
-  ok('BGM exposes exactly five tracks with the default wedding names',
+  // The operator may rename tracks, so this checks the 5-track structure, not the
+  // factory names (those are asserted from the server source below).
+  ok('BGM exposes exactly five named tracks',
     Array.isArray(stateBgm.tracks) && stateBgm.tracks.length === 5 &&
-    ['Wedding Entrance', 'Romantic Piano', 'Wedding Ceremony', 'First Dance', 'Wedding Celebration']
-      .every((n, i) => stateBgm.tracks[i].name === n),
+    stateBgm.tracks.every((t, i) => t.id === i + 1 && typeof t.name === 'string' && t.name.trim().length > 0),
     (stateBgm.tracks || []).map((t) => t.name).join(' | '));
 
   const demoUrls = [
@@ -629,6 +630,67 @@ async function main() {
     body: originalBgm.playing === false ? { stop: true } : { play: originalBgm.activeTrack || 1 }
   });
   if (restorePlay.status !== 200) await api('/api/bgm', { method: 'POST', body: { stop: true } });
+
+  // 22. Wedding dancers — two permanent aisle characters
+  const dancerDefaults = (await api('/api/state')).json.config.dancers;
+  ok('Dancers default to enabled, both visible, normal speed and medium intensity',
+    !!dancerDefaults && dancerDefaults.enabled === true && dancerDefaults.left === true &&
+    dancerDefaults.right === true && Number(dancerDefaults.speed) === 1 &&
+    Number(dancerDefaults.scale) === 1 && Number(dancerDefaults.intensity) === 1,
+    JSON.stringify(dancerDefaults));
+
+  const dancersOverlayHtml = await (await fetch(BASE + '/overlay.html')).text();
+  const dancerCss = await (await fetch(BASE + '/dancers.css')).text();
+  const dancerJs = await (await fetch(BASE + '/dancers.js')).text();
+  ok('Overlay loads the dancers as an independent component',
+    /dancers\.css/.test(dancersOverlayHtml) && /dancers\.js/.test(dancersOverlayHtml) && /#dancers-layer/.test(dancerCss));
+  ok('Two visually distinct SVG dancers are built',
+    /dancer--left/.test(dancerJs) && /dancer--right/.test(dancerJs) &&
+    /Bridesmaid/i.test(dancerJs) && /Groomsman/i.test(dancerJs) &&
+    /#e4667f/.test(dancerJs) && /#1d2437/.test(dancerJs));
+  ok('Dance loop covers sway, bounce, steps, arms, head and skirt',
+    ['dn-sway', 'dn-bounce', 'dn-step-l', 'dn-step-r', 'dn-arm-l', 'dn-arm-r', 'dn-nod', 'dn-flare']
+      .every((name) => dancerCss.includes('@keyframes ' + name)));
+  ok('Left and right dancers have different timing',
+    /--dn-beat: calc\(0\.66s/.test(dancerCss) && /--dn-beat: calc\(0\.75s/.test(dancerCss));
+  ok('Dancers cannot intercept pointer events and stay below the procession',
+    /#dancers-layer[\s\S]{0,220}pointer-events: none/.test(dancerCss) && /z-index: 30/.test(dancerCss));
+  ok('Dancers never subscribe to gift, MC or ceremony events',
+    !/addEventListener\(\s*['"](gift|gifts|mc|ceremony|speech)/i.test(dancerJs) &&
+    !/wedding:(gift|speak|ceremony)/i.test(dancerJs) &&
+    !/api\/(gift|mc)\b/.test(dancerJs));
+  ok('Overlay only forwards dancer settings to the component',
+    /wedding:dancers/.test(overlayJs));
+
+  const savedDancers = await api('/api/dancers', {
+    method: 'POST',
+    body: { speed: 1.4, scale: 1.2, intensity: 1.5, left: false }
+  });
+  ok('Dancer controls save independently',
+    savedDancers.json.dancers.speed === 1.4 && savedDancers.json.dancers.scale === 1.2 &&
+    savedDancers.json.dancers.intensity === 1.5 && savedDancers.json.dancers.left === false);
+
+  const clampedDancers = (await api('/api/dancers', {
+    method: 'POST',
+    body: { speed: 99, scale: 0, intensity: -5 }
+  })).json.dancers;
+  ok('Dancer speed / scale / intensity are clamped',
+    clampedDancers.speed === 2 && clampedDancers.scale === 0.6 && clampedDancers.intensity === 0.2,
+    JSON.stringify(clampedDancers));
+
+  const disabledDancers = (await api('/api/dancers', { method: 'POST', body: { enabled: false } })).json.dancers;
+  ok('Dancers can be disabled without touching the rest of the app', disabledDancers.enabled === false);
+  await api('/api/dancers', {
+    method: 'POST',
+    body: { enabled: true, left: true, right: true, speed: 1, scale: 1, intensity: 1 }
+  });
+  ok('Dancer settings persist to the state file', /"dancers"/.test(fs.readFileSync('wedding_state.json', 'utf8')));
+
+  const adminDancers = await (await fetch(BASE + '/index.html')).text();
+  ok('Dashboard has the Wedding Dancers tab and controls',
+    adminDancers.includes('id="tab-dancers"') && adminDancers.includes('cfg-dancers-speed') &&
+    adminDancers.includes('cfg-dancers-scale') && adminDancers.includes('cfg-dancers-intensity') &&
+    adminDancers.includes('btn-save-dancers'));
 
   // Restore a sane production configuration (tests shorten the cooldowns).
   await api('/api/mc/config', {
