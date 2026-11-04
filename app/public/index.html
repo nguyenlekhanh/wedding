@@ -40,6 +40,10 @@
           <span class="nav-icon">🎙️</span>
           <span>Âm Thanh & Giọng Đọc AI</span>
         </button>
+        <button class="nav-item" data-tab="tab-ai">
+          <span class="nav-icon">🤖</span>
+          <span>AI Providers & Cấu Hình</span>
+        </button>
         <button class="nav-item" data-tab="tab-bgm">
           <span class="nav-icon">🎵</span>
           <span>Nhạc Nền Cưới (YouTube)</span>
@@ -495,6 +499,174 @@
             </div>
           </div>
         </section>
+
+        <!-- ================= TAB 8: AI PROVIDERS ================= -->
+        <section class="tab-pane" id="tab-ai">
+          <div class="section-heading">
+            <small>TRUNG TÂM NHÀ CUNG CẤP AI</small>
+            <h2>🤖 AI Providers & Cấu Hình Model</h2>
+            <p>Quản lý OpenRouter, Ollama (LAN), OpenAI và mọi máy chủ tương thích OpenAI tại một nơi duy nhất.</p>
+          </div>
+
+          <div class="card-panel">
+            <div class="panel-header">
+              <h3>Danh Sách Nhà Cung Cấp</h3>
+              <small id="ai-summary">Đang tải…</small>
+            </div>
+            <div class="ai-toolbar">
+              <button class="btn btn-secondary btn-sm" id="ai-btn-refresh">🔄 Tải lại</button>
+              <button class="btn btn-primary btn-sm" id="ai-btn-new">➕ Thêm nhà cung cấp</button>
+              <span class="ai-note" id="ai-encryption-note"></span>
+            </div>
+            <div id="ai-provider-list"></div>
+          </div>
+
+          <div class="card-panel" id="ai-form-card" style="display:none;">
+            <div class="panel-header">
+              <h3 id="ai-form-title">Thêm nhà cung cấp</h3>
+              <button class="btn btn-secondary btn-sm" id="ai-form-cancel">Đóng</button>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Loại nhà cung cấp:</label>
+                <select id="ai-f-type">
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="ollama">Ollama (máy cục bộ / LAN)</option>
+                  <option value="openai">OpenAI (API chính thức)</option>
+                  <option value="openai-compatible">OpenAI-compatible (tuỳ chỉnh)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Tên hiển thị:</label>
+                <input type="text" id="ai-f-name" placeholder="Ví dụ: OpenRouter">
+              </div>
+              <div class="form-group full-width">
+                <label>API Base URL:</label>
+                <input type="text" id="ai-f-baseurl" placeholder="https://openrouter.ai/api/v1">
+                <small class="hint-text" id="ai-f-baseurl-hint">Địa chỉ máy chủ. Nhà cung cấp tuỳ chỉnh bị chặn truy cập mạng nội bộ (SSRF).</small>
+              </div>
+              <div class="form-group full-width">
+                <label>API Key:</label>
+                <input type="password" id="ai-f-apikey" placeholder="Để trống = giữ khoá đã lưu" autocomplete="new-password">
+                <small class="hint-text" id="ai-f-key-hint">Khoá được mã hoá trên máy chủ và không bao giờ trả về trình duyệt.</small>
+              </div>
+              <div class="form-group">
+                <label>Model mặc định:</label>
+                <input type="text" id="ai-f-model" placeholder="Ví dụ: openai/gpt-4o-mini">
+              </div>
+              <div class="form-group">
+                <label>Thời gian chờ (ms):</label>
+                <input type="number" id="ai-f-timeout" value="20000" min="1000" max="180000" step="1000">
+              </div>
+              <div class="form-group">
+                <label>Trạng thái:</label>
+                <select id="ai-f-enabled">
+                  <option value="true">Bật</option>
+                  <option value="false">Tắt</option>
+                </select>
+              </div>
+            </div>
+            <div class="panel-footer">
+              <button class="btn btn-secondary" id="ai-f-clear-key">🗑️ Xoá khoá đã lưu</button>
+              <button class="btn btn-primary" id="ai-f-save">💾 Lưu nhà cung cấp</button>
+            </div>
+          </div>
+
+          <div class="card-panel">
+            <div class="panel-header">
+              <h3>Định Tuyến: Chính & Dự Phòng</h3>
+              <small>Tự động chuyển sang nhà cung cấp khác khi lỗi</small>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Nhà cung cấp chính:</label>
+                <select id="ai-default-select"></select>
+              </div>
+              <div class="form-group">
+                <label>Nhà cung cấp dự phòng:</label>
+                <select id="ai-fallback-select"></select>
+              </div>
+              <div class="form-group">
+                <label>Model dự phòng (trống = dùng model của nhà cung cấp dự phòng):</label>
+                <input type="text" id="ai-fallback-model" placeholder="llama3.2:latest">
+              </div>
+              <div class="form-group">
+                <label>Tự động dự phòng:</label>
+                <select id="ai-fallback-enabled">
+                  <option value="true">Bật</option>
+                  <option value="false">Tắt</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Số lần thử tối đa:</label>
+                <input type="number" id="ai-fallback-attempts" min="1" max="5" value="2">
+              </div>
+              <div class="form-group">
+                <label>Timeout mặc định (ms):</label>
+                <input type="number" id="ai-fallback-timeout" min="1000" max="180000" step="1000" value="20000">
+              </div>
+            </div>
+            <div class="panel-footer">
+              <button class="btn btn-secondary" id="ai-routing-test">🧪 Đọc thử qua bộ định tuyến</button>
+              <button class="btn btn-primary" id="ai-routing-save">💾 Lưu định tuyến</button>
+            </div>
+            <div id="ai-routing-result"></div>
+          </div>
+
+          <div class="card-panel">
+            <div class="panel-header">
+              <h3>AI Viết Lời Chúc Cho MC</h3>
+              <small>Mặc định TẮT để giữ nguyên kịch bản hiện tại</small>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Dùng AI thay mẫu câu có sẵn:</label>
+                <select id="ai-text-enabled">
+                  <option value="false">Tắt - dùng mẫu câu</option>
+                  <option value="true">Bật - AI tự viết</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Timeout cho lời chúc (ms):</label>
+                <input type="number" id="ai-text-timeout" min="1000" max="30000" step="500" value="6000">
+              </div>
+              <div class="form-group">
+                <label>Temperature:</label>
+                <input type="number" id="ai-text-temp" min="0" max="2" step="0.1" value="0.8">
+              </div>
+              <div class="form-group">
+                <label>Max tokens:</label>
+                <input type="number" id="ai-text-maxtokens" min="16" max="800" step="8" value="120">
+              </div>
+            </div>
+            <div class="panel-footer">
+              <button class="btn btn-primary" id="ai-text-save">💾 Lưu</button>
+            </div>
+            <p class="ai-note">Khi bật, MC sẽ gọi AI để viết câu cảm ơn / cướp rể. Nếu AI lỗi hoặc chậm quá timeout, hệ thống tự quay về mẫu câu cũ nên LIVE không bị gián đoạn.</p>
+          </div>
+
+          <div class="card-panel">
+            <div class="panel-header">
+              <h3>Thống Kê & Nhật Ký AI</h3>
+              <button class="btn btn-danger btn-sm" id="ai-usage-clear">Xoá nhật ký</button>
+            </div>
+            <div class="ai-kpi-grid">
+              <div class="ai-kpi"><b id="ai-kpi-total">0</b><span>Tổng yêu cầu</span></div>
+              <div class="ai-kpi"><b id="ai-kpi-ok">0</b><span>Thành công</span></div>
+              <div class="ai-kpi"><b id="ai-kpi-fail">0</b><span>Thất bại</span></div>
+              <div class="ai-kpi"><b id="ai-kpi-avg">–</b><span>Thời gian trung bình</span></div>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table ai-log-table" id="ai-log-table">
+                <thead>
+                  <tr><th>Thời gian</th><th>Nhà cung cấp</th><th>Model</th><th>Tác vụ</th><th>ms</th><th>Kết quả</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p class="ai-note">Nhật ký chỉ lưu thông tin định tuyến (nhà cung cấp, model, thời gian, mã lỗi) — không lưu nội dung lời chúc hay API key.</p>
+          </div>
+        </section>
       </div>
     </main>
 
@@ -514,5 +686,6 @@
   </div>
 
   <script src="/panel.js"></script>
+  <script src="/ai-panel.js"></script>
 </body>
 </html>

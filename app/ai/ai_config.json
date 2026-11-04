@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "providers": [
+    {
+      "id": "pv_mw1jv817elpu",
+      "type": "openrouter",
+      "name": "OpenRouter",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "model": "openrouter/free",
+      "timeoutMs": 30000,
+      "enabled": true,
+      "createdAt": "2026-11-04T03:21:20.483Z",
+      "updatedAt": "2026-11-04T03:21:20.492Z"
+    },
+    {
+      "id": "pv_mw1jv82ibcgr",
+      "type": "ollama",
+      "name": "Ollama (LAN 10.0.0.142)",
+      "baseUrl": "http://10.0.0.142:11434",
+      "model": "llama3.2:latest",
+      "timeoutMs": 60000,
+      "enabled": true,
+      "createdAt": "2026-11-04T03:21:20.538Z",
+      "updatedAt": "2026-11-04T03:28:23.976Z"
+    },
+    {
+      "id": "pv_mw1jv82kuhka",
+      "type": "openai",
+      "name": "OpenAI",
+      "baseUrl": "https://api.openai.com/v1",
+      "model": "gpt-4o-mini",
+      "timeoutMs": 30000,
+      "enabled": true,
+      "createdAt": "2026-11-04T03:21:20.540Z",
+      "updatedAt": "2026-11-04T03:21:20.540Z"
+    }
+  ],
+  "defaultProviderId": "pv_mw1jv817elpu",
+  "fallback": {
+    "enabled": true,
+    "providerId": "pv_mw1jv82ibcgr",
+    "model": "llama3.2:latest",
+    "maxAttempts": 2,
+    "timeoutMs": 20000
+  },
+  "text": {
+    "enabled": true,
+    "temperature": 0.8,
+    "maxTokens": 120,
+    "timeoutMs": 6000,
+    "tasks": {
+      "gift_thankyou": true,
+      "marry_crown": true,
+      "guest_wish": false
+    }
+  },
+  "limits": {
+    "maxProviders": 12,
+    "maxPromptChars": 4000
+  }
+}

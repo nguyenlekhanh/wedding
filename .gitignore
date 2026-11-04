@@ -35,3 +35,10 @@ app/tts-install.log
 app/tts-check.log
 app/tts-bench.log
 app/tts-e2e.log
+
+# AI provider manager (secrets, runtime config, usage log)
+app/ai/secrets.enc.json
+app/ai/.master.key
+app/ai/ai_usage.json
+app/ai/ai_config.json.tmp
+app/ai/backup/

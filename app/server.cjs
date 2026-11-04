@@ -5,6 +5,12 @@ const https = require('node:https');
 const EventEmitter = require('node:events');
 const { TtsService } = require('./tts/tts-service.cjs');
 
+// AI provider manager. .env is read first and never overrides real env vars, so
+// the existing REACTIVE_AI_* / LLM_SECRETS_MASTER_KEY values keep working as-is.
+const { loadEnvFile } = require('./ai/env.cjs');
+loadEnvFile();
+const { manager: ai, AiError: AiManagerError, CODE: AI_CODE } = require('./ai/index.cjs');
+
 const PORT = Number(process.env.PORT) || 3003;
 const STATE_FILE = path.join(__dirname, 'wedding_state.json');
 
@@ -224,6 +230,34 @@ function announce(text, priority = SPEECH_PRIORITY.gift, meta = {}) {
   });
 }
 
+// ---------------------------------------------------------------
+// AI MC TEXT (opt-in; default off so the live flow stays byte-identical)
+// ---------------------------------------------------------------
+function aiMcSystemPrompt() {
+  return [
+    'You are a funny, warm wedding MC on a TikTok livestream.',
+    'Answer in ENGLISH, because the TTS voice is English.',
+    'At most 28 words, one natural exclamation, no quotation marks, no emoji, no hashtags.',
+    'Address the guest by name.'
+  ].join(' ');
+}
+
+function aiMcPrompt(ctx) {
+  const lines = [
+    'Bride: ' + (ctx.bride || ''),
+    'Groom: ' + (ctx.groom || ''),
+    'Guest: ' + ctx.name,
+    'Gift: ' + ctx.count + ' x ' + ctx.gift
+  ];
+  if (ctx.becameGroom) {
+    lines.push('The guest just outbid everyone and became the NEW GROOM (previous groom: ' + (ctx.previousGroom || 'unknown') + ').');
+    lines.push('Announce the crown transfer with excitement.');
+  } else {
+    lines.push('Write a thank-you line for this gift.');
+  }
+  return lines.join('\n');
+}
+
 // ========================================================
 // CORE EVENT PROCESSORS (Dùng chung cho TikFinity, Webhook, Demo)
 // ========================================================
@@ -391,12 +425,41 @@ function processGiftEvent(giftData) {
   broadcast('focus', offeringEvent);
 
   // MC voice: the crown announcement outranks an ordinary thank-you.
-  announce(funnyMessage, becameGroom ? SPEECH_PRIORITY.marry : SPEECH_PRIORITY.gift, {
-    kind: becameGroom ? 'marry' : 'gift',
-    name,
-    gift,
-    count
-  });
+  // The scripted line is used unless the admin turned AI text on; the focus/state
+  // SSE payloads above are untouched either way.
+  const speechPriority = becameGroom ? SPEECH_PRIORITY.marry : SPEECH_PRIORITY.gift;
+  const speechMeta = { kind: becameGroom ? 'marry' : 'gift', name, gift, count };
+  const textTask = becameGroom ? 'marry_crown' : 'gift_thankyou';
+  if (ai.isTextGenerationEnabled(textTask)) {
+    const settings = ai.getTextSettings();
+    const aiTimeout = Number(settings.timeoutMs) || 5000;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), aiTimeout);
+    ai.generateText({
+      task: textTask,
+      systemPrompt: aiMcSystemPrompt(),
+      prompt: aiMcPrompt({
+        name,
+        gift,
+        count,
+        groom: state.config.groom,
+        bride: state.config.bride,
+        becameGroom,
+        previousGroom
+      }),
+      timeout: aiTimeout,
+      maxTokens: Number(settings.maxTokens) || 120,
+      temperature: Number(settings.temperature) || 0.8,
+      signal: controller.signal
+    }).then((result) => {
+      announce(result.text, speechPriority, { ...speechMeta, ai: true, providerId: result.providerId, model: result.model });
+    }).catch(() => {
+      // Any AI failure keeps the show running with the scripted line.
+      announce(funnyMessage, speechPriority, speechMeta);
+    }).finally(() => clearTimeout(timer));
+  } else {
+    announce(funnyMessage, speechPriority, speechMeta);
+  }
 
   if (becameGroom) {
     broadcast('action', {
@@ -684,6 +747,209 @@ const MIME = {
   '.ico': 'image/x-icon'
 };
 
+// ========================================================
+// AI PROVIDER MANAGER API (/api/ai/*)
+// Same-origin + rate limited. API keys never leave the server.
+// ========================================================
+const AI_RATE = new Map();
+
+function clientIp(req) {
+  return (req.socket && req.socket.remoteAddress) || 'local';
+}
+
+function aiRateAllow(req, bucket, limit) {
+  const key = bucket + ':' + clientIp(req);
+  const now = Date.now();
+  const entry = AI_RATE.get(key);
+  if (!entry || now > entry.reset) {
+    AI_RATE.set(key, { count: 1, reset: now + 60000 });
+    return true;
+  }
+  if (entry.count >= limit) return false;
+  entry.count += 1;
+  return true;
+}
+
+function isSameOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return true; // curl / server-side callers send no Origin header
+  try {
+    return new URL(origin).host === String(req.headers.host || '');
+  } catch {
+    return false;
+  }
+}
+
+function readBodyLimited(req, limit) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(new AiManagerError(AI_CODE.INVALID_REQUEST, 'dữ liệu gửi lên quá lớn'));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'));
+      } catch {
+        resolve({});
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+function sendJson(res, status, payload) {
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store'
+  });
+  res.end(JSON.stringify(payload));
+}
+
+function aiErrorStatus(code) {
+  if (code === AI_CODE.CONFIG || code === AI_CODE.INVALID_REQUEST || code === AI_CODE.BLOCKED) return 400;
+  if (code === AI_CODE.CANCELLED) return 499;
+  if (code === AI_CODE.TIMEOUT) return 504;
+  return 502;
+}
+
+async function handleAiRoutes(req, res, pathname, url) {
+  if (!isSameOrigin(req)) {
+    sendJson(res, 403, { ok: false, error: 'Yêu cầu khác nguồn đã bị từ chối.' });
+    return true;
+  }
+  const write = req.method !== 'GET';
+  // Generous enough for the dashboard (which saves several settings in a row)
+  // but still a wall against a runaway loop or a hostile page.
+  if (!aiRateAllow(req, write ? 'ai:write' : 'ai:read', write ? 120 : 600)) {
+    sendJson(res, 429, { ok: false, error: 'Quá nhiều yêu cầu AI. Vui lòng thử lại sau 1 phút.' });
+    return true;
+  }
+
+  try {
+    if (pathname === '/api/ai/providers' && req.method === 'GET') {
+      sendJson(res, 200, { ok: true, ...ai.listProviders(), status: ai.getProviderStatus() });
+      return true;
+    }
+
+    if (pathname === '/api/ai/providers' && req.method === 'POST') {
+      const body = await readBodyLimited(req, 32 * 1024);
+      sendJson(res, 200, { ok: true, provider: ai.addProvider(body) });
+      return true;
+    }
+
+    const match = pathname.match(/^\/api\/ai\/providers\/([^/]+)(?:\/([a-z-]+))?$/);
+    if (match) {
+      const id = decodeURIComponent(match[1]);
+      const action = match[2] || '';
+
+      if (!action && req.method === 'DELETE') {
+        ai.removeProvider(id);
+        sendJson(res, 200, { ok: true });
+        return true;
+      }
+      if (!action && (req.method === 'PATCH' || req.method === 'PUT' || req.method === 'POST')) {
+        const body = await readBodyLimited(req, 32 * 1024);
+        sendJson(res, 200, { ok: true, provider: ai.updateProvider(id, body) });
+        return true;
+      }
+      if (req.method === 'POST' && action === 'enable') {
+        sendJson(res, 200, { ok: true, provider: ai.enableProvider(id) });
+        return true;
+      }
+      if (req.method === 'POST' && action === 'disable') {
+        sendJson(res, 200, { ok: true, provider: ai.disableProvider(id) });
+        return true;
+      }
+      if (req.method === 'POST' && action === 'test-connection') {
+        sendJson(res, 200, { ok: true, result: await ai.testConnection(id) });
+        return true;
+      }
+      if (req.method === 'POST' && action === 'test-generation') {
+        const body = await readBodyLimited(req, 32 * 1024);
+        sendJson(res, 200, { ok: true, result: await ai.testGeneration(id, body) });
+        return true;
+      }
+      if (req.method === 'GET' && action === 'models') {
+        const refresh = url.searchParams.get('refresh') === '1';
+        sendJson(res, 200, { ok: true, ...(await ai.listModels(id, { refresh })) });
+        return true;
+      }
+      sendJson(res, 404, { ok: false, error: 'Không tìm thấy thao tác AI.' });
+      return true;
+    }
+
+    if (pathname === '/api/ai/default' && req.method === 'POST') {
+      const body = await readBodyLimited(req, 8 * 1024);
+      sendJson(res, 200, { ok: true, ...ai.setDefaultProvider(body.providerId) });
+      return true;
+    }
+
+    if (pathname === '/api/ai/fallback' && req.method === 'POST') {
+      const body = await readBodyLimited(req, 8 * 1024);
+      sendJson(res, 200, { ok: true, fallback: ai.updateFallback(body) });
+      return true;
+    }
+
+    if (pathname === '/api/ai/text-settings' && req.method === 'POST') {
+      const body = await readBodyLimited(req, 8 * 1024);
+      sendJson(res, 200, { ok: true, text: ai.updateTextSettings(body) });
+      return true;
+    }
+
+    if (pathname === '/api/ai/status' && req.method === 'GET') {
+      sendJson(res, 200, { ok: true, status: ai.getProviderStatus() });
+      return true;
+    }
+
+    if (pathname === '/api/ai/usage' && req.method === 'GET') {
+      sendJson(res, 200, { ok: true, ...ai.getUsageStatistics() });
+      return true;
+    }
+
+    if (pathname === '/api/ai/usage' && req.method === 'DELETE') {
+      ai.clearUsage();
+      sendJson(res, 200, { ok: true });
+      return true;
+    }
+
+    if (pathname === '/api/ai/generate' && req.method === 'POST') {
+      const body = await readBodyLimited(req, 32 * 1024);
+      const result = await ai.generateText({
+        task: body.task,
+        prompt: body.prompt,
+        systemPrompt: body.systemPrompt,
+        provider: body.provider,
+        model: body.model,
+        temperature: body.temperature,
+        maxTokens: body.maxTokens,
+        timeout: body.timeout,
+        metadata: body.metadata
+      });
+      sendJson(res, 200, { ok: true, result });
+      return true;
+    }
+
+    sendJson(res, 404, { ok: false, error: 'Không tìm thấy API AI.' });
+    return true;
+  } catch (err) {
+    const code = err && err.code ? err.code : AI_CODE.UNKNOWN;
+    sendJson(res, aiErrorStatus(code), {
+      ok: false,
+      code,
+      error: err && err.message ? err.message : 'Lỗi không xác định',
+      attempts: err && err.attempts ? err.attempts : undefined
+    });
+    return true;
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -708,6 +974,11 @@ const server = http.createServer(async (req, res) => {
       catch (e) { resolve({}); }
     });
   });
+
+  // 0. AI Provider Manager API (same-origin, rate limited, keys stay server-side)
+  if (pathname.startsWith('/api/ai/')) {
+    if (await handleAiRoutes(req, res, pathname, url)) return;
+  }
 
   // 1. SSE Events Stream
   if (pathname === '/api/events') {
