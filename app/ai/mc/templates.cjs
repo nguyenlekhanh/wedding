@@ -45,7 +45,8 @@ const EN = {
     'All right, let us hear some noise for {bride} and {groom} — make them feel it!',
     'If you are watching, drop a wish in the comments — the newlyweds are reading every one.',
     'Quick check: who is ready to dance tonight? Let me see those hands!',
-    'One more round of applause for the best-looking couple in the room!'  ],
+    'One more round of applause for the best-looking couple in the room!'
+  ],
   idle: [
     'Take a look around — {guests} people celebrating {bride} and {groom} tonight.',
     'Grab a drink, find your people, and let us keep this party moving.',
@@ -58,6 +59,8 @@ const EN = {
   ]
 };
 
+// Optional Vietnamese pack: only used when the operator selects language = 'vi'.
+// The MC ships with en-US and every template/UI string is English by default.
 const VI = {
   welcome: [
     'Chào mừng {name} đã đến với tiệc cưới của {bride} và {groom}!',

@@ -17,11 +17,11 @@ const DEFAULTS = {
   paused: false,
   actor: {
     preset: 'female',        // female | male
-    skin: '#f2c6a4',
-    hair: '#3a2318',
-    outfit: '#a51f3c',
-    style: 'dress',          // dress | suit
-    accessory: 'veil'        // veil | bowtie | none
+    skin: '#f0c9a8',
+    hair: '#c9a15c',         // salon blonde (light brown is also popular)
+    outfit: '#161a2e',       // midnight-blue blazer / suit
+    style: 'blazer',         // blazer | suit
+    accessory: 'earrings'    // earrings | tie | open_collar | none
   },
   providerId: null,          // null → AI manager default provider
   model: '',
@@ -48,6 +48,14 @@ const DEFAULTS = {
 const LANGS = ['en', 'vi'];
 const PERSONALITIES = ['american_warm', 'american_funny', 'american_classic'];
 const PRESETS = ['female', 'male'];
+const STYLES = ['blazer', 'suit'];
+const ACCESSORIES = ['earrings', 'tie', 'open_collar', 'none'];
+
+// Old Vietnamese-reception defaults, migrated to the American host look.
+const LEGACY_STYLE = { dress: 'blazer', suit: 'suit' };
+const LEGACY_ACCESSORY = { veil: 'earrings', bowtie: 'tie', none: 'none' };
+const LEGACY_HAIR = { '#3a2318': '#c9a15c' };
+const LEGACY_OUTFIT = { '#a51f3c': '#161a2e' };
 
 const cloneDefaults = () => JSON.parse(JSON.stringify(DEFAULTS));
 
@@ -80,11 +88,15 @@ function normalize(input = {}, base = DEFAULTS) {
   out.paused = input.paused === undefined ? base.paused : Boolean(input.paused);
 
   out.actor.preset = PRESETS.includes(input.actor?.preset) ? input.actor.preset : base.actor.preset;
-  out.actor.style = ['dress', 'suit'].includes(input.actor?.style) ? input.actor.style : (out.actor.preset === 'male' ? 'suit' : 'dress');
-  out.actor.accessory = ['veil', 'bowtie', 'none'].includes(input.actor?.accessory) ? input.actor.accessory : base.actor.accessory;
+  const wantedStyle = LEGACY_STYLE[input.actor?.style] || input.actor?.style;
+  out.actor.style = STYLES.includes(wantedStyle) ? wantedStyle : (out.actor.preset === 'male' ? 'suit' : 'blazer');
+  const wantedAccessory = LEGACY_ACCESSORY[input.actor?.accessory] || input.actor?.accessory;
+  out.actor.accessory = ACCESSORIES.includes(wantedAccessory) ? wantedAccessory : base.actor.accessory;
   out.actor.skin = isHex(input.actor?.skin, base.actor.skin);
-  out.actor.hair = isHex(input.actor?.hair, base.actor.hair);
-  out.actor.outfit = isHex(input.actor?.outfit, base.actor.outfit);
+  const hair = isHex(input.actor?.hair, base.actor.hair);
+  out.actor.hair = LEGACY_HAIR[hair.toLowerCase()] || hair;
+  const outfit = isHex(input.actor?.outfit, base.actor.outfit);
+  out.actor.outfit = LEGACY_OUTFIT[outfit.toLowerCase()] || outfit;
 
   out.providerId = input.providerId === undefined ? base.providerId : (str(input.providerId, 40) || null);
   out.model = input.model === undefined ? base.model : str(input.model, 120);
@@ -124,7 +136,7 @@ function load() {
       save();
     }
   } catch (e) {
-    console.error('[MC] Không đọc được mc_config.json, dùng mặc định:', e.message);
+    console.error('[MC] Could not read mc_config.json, using defaults:', e.message);
     config = cloneDefaults();
   }
   return config;
@@ -136,7 +148,7 @@ function save() {
     fs.writeFileSync(tmp, JSON.stringify(config, null, 2), 'utf8');
     fs.renameSync(tmp, FILE);
   } catch (e) {
-    console.error('[MC] Không lưu được mc_config.json:', e.message);
+    console.error('[MC] Could not save mc_config.json:', e.message);
   }
 }
 
@@ -150,4 +162,4 @@ function update(patch = {}) {
   return config;
 }
 
-module.exports = { DEFAULTS, FILE, LANGS, PERSONALITIES, PRESETS, load, save, get, update, normalize };
+module.exports = { DEFAULTS, FILE, LANGS, PERSONALITIES, PRESETS, STYLES, ACCESSORIES, load, save, get, update, normalize };

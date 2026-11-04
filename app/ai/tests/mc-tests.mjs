@@ -94,22 +94,22 @@ const salt = String(Date.now()).slice(-4);
 
 async function main() {
   const health = await api('/api/tts/status');
-  ok('Server sống + Kokoro sẵn sàng', health.status === 200 && health.json.engine === 'kokoro',
+  ok('Server is up and Kokoro is ready', health.status === 200 && health.json.engine === 'kokoro',
     `ready=${health.json && health.json.ready}`);
 
   // 1. config defaults
   const cfg0 = await api('/api/mc/config');
-  ok('GET /api/mc/config trả cấu hình MC', cfg0.status === 200 && !!cfg0.json.config && !!cfg0.json.config.actor,
+  ok('GET /api/mc/config returns the MC config', cfg0.status === 200 && !!cfg0.json.config && !!cfg0.json.config.actor,
     `preset=${cfg0.json?.config?.actor?.preset}`);
-  ok('Cấu hình MC có đủ ưu tiên & hành vi',
+  ok('MC config carries priorities and behaviour flags',
     !!cfg0.json?.config?.priorities?.ceremony && cfg0.json.config.autoGift !== undefined);
   original.config = cfg0.json.config;
 
   // 2. SSE contract: overlay refresh delivers mc-config + state
   await subscribe();
   await sleep(400);
-  ok('SSE /api/events phát event mc-config khi kết nối', !!events.find((e) => e.event === 'mc-config'));
-  ok('SSE vẫn phát state (không phá hợp đồng cũ)', !!events.find((e) => e.event === 'state'));
+  ok('SSE /api/events emits mc-config on connect', !!events.find((e) => e.event === 'mc-config'));
+  ok('SSE still emits state (previous contract intact)', !!events.find((e) => e.event === 'state'));
 
   // 3. save config (test-friendly timings)
   const save = await api('/api/mc/config', {
@@ -123,7 +123,7 @@ async function main() {
       priorities: { welcome: 6, gift: 5, ceremony: 10, interaction: 3, idle: 1, manual: 8 }
     }
   });
-  ok('POST /api/mc/config lưu cấu hình', save.status === 200 && save.json.config.actor.preset === 'male' && save.json.config.actor.outfit === '#123456',
+  ok('POST /api/mc/config saves the settings', save.status === 200 && save.json.config.actor.preset === 'male' && save.json.config.actor.outfit === '#123456',
     JSON.stringify(save.json?.config?.actor));
 
   // 4. manual announcement → real Kokoro WAV over the existing tts event
@@ -131,28 +131,28 @@ async function main() {
   const manualText = `Ladies and gentlemen, welcome to the wedding reception, take ${salt}.`;
   const say = await api('/api/mc/say', { method: 'POST', body: { text: manualText } });
   const sayEvt = await waitFor((e) => e.event === 'tts' && e.data.mc && e.data.mcKind === 'manual' && String(e.data.text || '').includes(salt), 20000);
-  ok('Thông báo tay đi qua hàng đợi Kokoro (event tts)', say.status === 200 && !!sayEvt,
+  ok('Manual announcement goes through the Kokoro queue (tts event)', say.status === 200 && !!sayEvt,
     `${Date.now() - t0} ms`);
-  ok('Event tts mang metadata MC (kind/emotion/priority)',
+  ok('tts event carries MC metadata (kind/emotion/priority)',
     !!sayEvt && sayEvt.data.priority === 8 && !!sayEvt.data.emotion && sayEvt.data.mc === true,
     sayEvt ? `priority=${sayEvt.data.priority} emotion=${sayEvt.data.emotion}` : '');
   if (sayEvt) {
     const audio = await fetch(BASE + sayEvt.data.url);
     const buf = Buffer.from(await audio.arrayBuffer());
-    ok('WAV của MC tải được và hợp lệ', audio.status === 200 && buf.slice(0, 4).toString() === 'RIFF' && buf.slice(8, 12).toString() === 'WAVE',
+    ok('MC WAV downloads and is valid', audio.status === 200 && buf.slice(0, 4).toString() === 'RIFF' && buf.slice(8, 12).toString() === 'WAVE',
       `${buf.length} bytes`);
   } else {
-    ok('WAV của MC tải được và hợp lệ', false, 'không có event tts');
+    ok('MC WAV downloads and is valid', false, 'no tts event');
   }
 
   // 5. sanitising: markdown, URL, emoji never reach the voice
   const dirty = `**Hello** https://evil.example.com/x 🎉 ... ${salt}!`;
   await api('/api/mc/say', { method: 'POST', body: { text: dirty } });
-  const cleanEvt = await waitFor((e) => e.event === 'tts' && e.data.mc && /nâng ly/.test(e.data.text), 20000);
-  ok('Làm sạch thoại: bỏ markdown / URL / emoji',
+  const cleanEvt = await waitFor((e) => e.event === 'tts' && e.data.mc && String(e.data.text || '').includes(salt), 20000);
+  ok('Spoken text is sanitised (markdown / URL / emoji removed)',
     !!cleanEvt && !/https?:|\*|🎉/.test(cleanEvt.data.text),
-    cleanEvt ? JSON.stringify(cleanEvt.data.text) : 'không có tts');
-  if (cleanEvt) ok('Giới hạn độ dài theo maxChars', cleanEvt.data.text.length <= 120, `${cleanEvt.data.text.length} ký tự`);
+    cleanEvt ? JSON.stringify(cleanEvt.data.text) : 'no tts');
+  if (cleanEvt) ok('Line length respects maxChars', cleanEvt.data.text.length <= 120, `${cleanEvt.data.text.length} chars`);
 
   // 6. duplicate suppression
   const dupeText = `Please raise your glasses for the newlyweds one more time, round ${salt}.`;
@@ -161,9 +161,9 @@ async function main() {
   const markDupe = Date.now();
   const dupe = await api('/api/mc/say', { method: 'POST', body: { text: dupeText } });
   await sleep(1200);
-  ok('Câu trùng bị chặn (không phát lại)', dupe.status === 200 && dupe.json.spoken === false,
+  ok('Duplicate line is blocked (never spoken twice)', dupe.status === 200 && dupe.json.spoken === false,
     `spoken=${dupe.json?.spoken}, tts mới=${countSince(markDupe, (e) => e.event === 'tts')}`);
-  ok('Bộ đếm chống trùng tăng', (await api('/api/mc/status')).json.runtime.stats.suppressed >= 1);
+  ok('Duplicate-suppression counter increases', (await api('/api/mc/status')).json.runtime.stats.suppressed >= 1);
 
   // 6b. dashboard "🎤 MC NÓI NGAY" — generate and speak immediately
   await sleep(2400);
@@ -171,25 +171,25 @@ async function main() {
   const markNow = Date.now();
   const nowRes = await api('/api/mc/speak-now', { method: 'POST' });
   const nowEvt = await waitFor((e) => e.at >= markNow && e.event === 'tts' && e.data.mcKind === 'speak_now', 25000);
-  ok('POST /api/mc/speak-now trả 200 và tạo câu ngay', nowRes.status === 200 && nowRes.json.ok === true && !!nowEvt,
+  ok('POST /api/mc/speak-now returns 200 and writes a line immediately', nowRes.status === 200 && nowRes.json.ok === true && !!nowEvt,
     `${nowEvt ? nowEvt.at - markNow : '?'} ms`);
-  ok('Không phải chờ chu kỳ idle', !!nowEvt && (nowEvt.at - markNow) < idleConfigured,
+  ok('No need to wait for the idle interval', !!nowEvt && (nowEvt.at - markNow) < idleConfigured,
     `tts sau ${nowEvt ? nowEvt.at - markNow : '?'} ms, idle=${idleConfigured} ms`);
-  ok('Câu nói-ngay đã qua sanitizer + giới hạn độ dài',
+  ok('Speak-now line passed the sanitiser and the length limit',
     !!nowEvt && nowEvt.data.text.length <= 120 && !/https?:|\*|🎉/.test(nowEvt.data.text),
-    nowEvt ? JSON.stringify(nowEvt.data.text) : 'không có tts');
-  ok('Ưu tiên thủ công 8 (dưới nghi thức 10, trên quà 5)', !!nowEvt && nowEvt.data.priority === 8,
+    nowEvt ? JSON.stringify(nowEvt.data.text) : 'no tts');
+  ok('Manual priority 8 (below ceremony 10, above gifts 5)', !!nowEvt && nowEvt.data.priority === 8,
     nowEvt ? `priority=${nowEvt.data.priority}` : '');
-  ok('Cờ MC đầy đủ cho actor (mc, mcKind, emotion)',
+  ok('Actor flags present (mc, mcKind, emotion)',
     !!nowEvt && nowEvt.data.mc === true && nowEvt.data.mcKind === 'speak_now' && !!nowEvt.data.emotion);
-  ok('Audio đi qua Kokoro (URL WAV tải được)', !!nowEvt && /^\/api\/tts\/audio\/[a-f0-9]{40}\.wav$/.test(nowEvt.data.url),
+  ok('Audio goes through Kokoro (WAV URL downloads)', !!nowEvt && /^\/api\/tts\/audio\/[a-f0-9]{40}\.wav$/.test(nowEvt.data.url),
     nowEvt ? nowEvt.data.url : '');
 
   // spam guard: second click while the first line is still playing is refused
   const markSpam = Date.now();
   const spam = await api('/api/mc/speak-now', { method: 'POST' });
   await sleep(1200);
-  ok('Bấm liên tiếp bị chặn (429, không sinh câu mới)',
+  ok('Rapid clicks are blocked (429, no new line)',
     spam.status === 429 && spam.json.ok === false && countSince(markSpam, (e) => e.event === 'tts') === 0,
     `status=${spam.status} · ${spam.json.error || ''}`);
 
@@ -206,7 +206,7 @@ async function main() {
   const burstEvt = await waitFor((e) => e.at >= markBurst && e.event === 'tts' && e.data.mcKind && ['gift', 'gift_multi'].includes(e.data.mcKind), 25000);
   await sleep(2500);
   const burstCount = countSince(markBurst, (e) => e.event === 'tts');
-  ok('Quà dồn dập được gộp thành 1 câu', !!burstEvt && burstCount === 1,
+  ok('Gift burst merges into a single line', !!burstEvt && burstCount === 1,
     `tts=${burstCount}, text=${burstEvt ? JSON.stringify(burstEvt.data.text) : '—'}`);
 
   // 8. crown transfer keeps top priority
@@ -217,16 +217,16 @@ async function main() {
     body: { type: 'gift', id: `mc-crown-${markCrown}`, name: 'Dai Gia', gift: 'Wedding Ring', count: 1, diamonds: 50 }
   });
   const crownEvt = await waitFor((e) => e.at >= markCrown && e.event === 'tts' && e.data.priority === 10, 25000);
-  ok('Cướp rể / trao vương miện giữ ưu tiên 10', !!crownEvt, crownEvt ? `kind=${crownEvt.data.mcKind}` : 'không có');
+  ok('Crown transfer keeps priority 10', !!crownEvt, crownEvt ? `kind=${crownEvt.data.mcKind}` : 'none');
 
   // 8b. a manual request must not interrupt the crown announcement
   const markBusy = Date.now();
   const busyRes = await api('/api/mc/speak-now', { method: 'POST' });
   await sleep(1000);
-  ok('Không chen ngang thông báo cướp rể (ưu tiên 10)',
-    busyRes.status === 429 && /ưu tiên cao hơn|quan trọng/i.test(busyRes.json.error || ''),
+  ok('Does not cut in front of the crown announcement (priority 10)',
+    busyRes.status === 429 && /higher-priority/i.test(busyRes.json.error || ''),
     `status=${busyRes.status} · ${busyRes.json.error || ''}`);
-  ok('Không có câu nói-ngay nào chen vào nghi thức',
+  ok('No speak-now line interrupts a reception moment',
     countSince(markBusy, (e) => e.event === 'tts' && e.data.mcKind === 'speak_now') === 0);
 
   // 9. prompt injection from a comment never reaches the MC
@@ -237,7 +237,7 @@ async function main() {
   });
   await sleep(2500);
   const injected = countSince(markInject, (e) => e.event === 'tts' && /system prompt|ignore previous/i.test(e.data.text || ''));
-  ok('Prompt injection từ bình luận bị chặn', injected === 0);
+  ok('Prompt injection from a comment is blocked', injected === 0);
 
   // 10. pause → silence, resume → speaks again
   await api('/api/mc/pause', { method: 'POST' });
@@ -248,19 +248,19 @@ async function main() {
     body: { type: 'gift', id: `mc-paused-${Date.now()}`, name: 'Paused Guest', gift: 'Wedding Cake', count: 1, diamonds: 1 }
   });
   await sleep(2500);
-  ok('Tạm dừng MC → im lặng hoàn toàn', countSince(markPause, (e) => e.event === 'tts') === 0);
+  ok('Pausing the MC silences it completely', countSince(markPause, (e) => e.event === 'tts') === 0);
   const pauseState = await api('/api/mc/config');
-  ok('Trạng thái paused được báo về dashboard', pauseState.json.config.paused === true);
+  ok('Paused state is reported to the dashboard', pauseState.json.config.paused === true);
 
   await api('/api/mc/say', { method: 'POST', body: { text: 'This line must not be spoken while paused.' } });
   await sleep(900);
-  ok('Thông báo tay cũng bị chặn khi tạm dừng',
+  ok('Manual announcements are blocked while paused',
     countSince(markPause, (e) => e.event === 'tts') === 0);
 
   const pausedNow = await api('/api/mc/speak-now', { method: 'POST' });
   await sleep(600);
-  ok('MC tạm dừng → từ chối “NÓI NGAY”',
-    pausedNow.status === 400 && /tạm dừng/i.test(pausedNow.json.error || '') &&
+  ok('Paused MC refuses Speak Now',
+    pausedNow.status === 400 && /paused/i.test(pausedNow.json.error || '') &&
     countSince(markPause, (e) => e.event === 'tts') === 0,
     `status=${pausedNow.status} · ${pausedNow.json.error || ''}`);
 
@@ -274,12 +274,12 @@ async function main() {
     body: { type: 'gift', id: `mc-off-${Date.now()}`, name: 'Off Guest', gift: 'Wedding Flower', count: 1, diamonds: 1 }
   });
   await sleep(2500);
-  ok('Tắt MC → không tự động nói', countSince(markOff, (e) => e.event === 'tts') === 0);
+  ok('Disabled MC does not speak automatically', countSince(markOff, (e) => e.event === 'tts') === 0);
 
   const offNow = await api('/api/mc/speak-now', { method: 'POST' });
   await sleep(600);
-  ok('MC tắt → từ chối “NÓI NGAY”',
-    offNow.status === 400 && /tắt/i.test(offNow.json.error || '') &&
+  ok('Disabled MC refuses Speak Now',
+    offNow.status === 400 && /turned off|off\b/i.test(offNow.json.error || '') &&
     countSince(markOff, (e) => e.event === 'tts') === 0,
     `status=${offNow.status} · ${offNow.json.error || ''}`);
 
@@ -299,9 +299,9 @@ async function main() {
     body: { type: 'gift', id: `mc-fb-${Date.now()}`, name: 'Fallback Guest', gift: 'Wedding Envelope', count: 2, diamonds: 2 }
   });
   const fbEvt = await waitFor((e) => e.at >= markFallback && e.event === 'tts' && e.data.mc, 20000);
-  ok('AI lỗi → vẫn đọc bằng mẫu câu dự phòng', !!fbEvt && fbEvt.data.fallback === true,
-    fbEvt ? JSON.stringify(fbEvt.data.text) : 'không có tts');
-  ok('Câu dự phòng nêu đúng tên khách + món quà',
+  ok('AI failure still speaks the scripted fallback', !!fbEvt && fbEvt.data.fallback === true,
+    fbEvt ? JSON.stringify(fbEvt.data.text) : 'no tts');
+  ok('Fallback names the guest and the gift correctly',
     !!fbEvt && /Fallback Guest/.test(fbEvt.data.text) && /Envelope/i.test(fbEvt.data.text));
 
   // restore AI routing
@@ -314,70 +314,70 @@ async function main() {
   const markTestAi = Date.now();
   const testAi = await api('/api/mc/test-ai', { method: 'POST', body: { kind: 'test' } });
   await sleep(800);
-  ok('Nút "Thử tạo lời thoại" trả câu nói hợp lệ',
+  ok('Test Line button returns a valid line',
     testAi.status === 200 && !!testAi.json.result?.text, `${testAi.json.result?.source} / ${testAi.json.result?.text?.slice(0, 40)}`);
-  ok('Thử AI không phát loa', countSince(markTestAi, (e) => e.event === 'tts') === 0);
+  ok('Test AI does not speak out loud', countSince(markTestAi, (e) => e.event === 'tts') === 0);
 
   // 14. security: foreign origin rejected
   const foreign = await api('/api/mc/config', { method: 'POST', body: { enabled: false }, headers: { Origin: 'http://evil.example.com' } });
-  ok('Yêu cầu khác nguồn bị từ chối (403)', foreign.status === 403);
+  ok('Foreign-origin request is rejected (403)', foreign.status === 403);
 
   // 15. overlay contract + front-end assets
   const overlay = await fetch(BASE + '/overlay.html');
   const overlayHtml = await overlay.text();
-  ok('Overlay nạp actor + CSS MC', overlayHtml.includes('/mc-actor.js') && overlayHtml.includes('/mc-actor.css'));
+  ok('Overlay loads the actor and the MC CSS', overlayHtml.includes('/mc-actor.js') && overlayHtml.includes('/mc-actor.css'));
   const overlayCss = await (await fetch(BASE + '/overlay.css')).text();
-  ok('Overlay giữ khung 1080x1920', /width:\s*1080px/.test(overlayCss) && /height:\s*1920px/.test(overlayCss));
+  ok('Overlay keeps the 1080x1920 frame', /width:\s*1080px/.test(overlayCss) && /height:\s*1920px/.test(overlayCss));
   const actorJs = await fetch(BASE + '/mc-actor.js');
   const actorSrc = await actorJs.text();
-  ok('Actor có lip-sync theo WAV + 4 biểu cảm',
+  ok('Actor has WAV lip sync and four expressions',
     actorJs.status === 200 && /decodeAudioData/.test(actorSrc) && /excited/.test(actorSrc) && /surprised/.test(actorSrc),
     `${actorSrc.length} bytes`);
   const dash = await fetch(BASE + '/mc-panel.js');
   const dashSrc = await dash.text();
-  ok('Dashboard MC có đủ điều khiển (provider, giọng, tạm dừng, thông báo tay)',
+  ok('MC dashboard has every control (provider, voice, pause, manual announcement)',
     dash.status === 200 && /mc-provider/.test(dashSrc) && /mc-voice/.test(dashSrc) && /mc-btn-pause/.test(dashSrc) && /mc-say-text/.test(dashSrc));
 
   // 16. legacy behaviour intact
   const kiss = await api('/api/action', { method: 'POST', body: { action: 'kiss' } });
   const kissEvt = await waitFor((e) => e.event === 'action' && e.data.action === 'kiss', 5000);
-  ok('Nghi thức cũ vẫn phát action (kiss)', kiss.status === 200 && !!kissEvt);
+  ok('Legacy ceremony still emits its action (kiss)', kiss.status === 200 && !!kissEvt);
   const stateRes = await api('/api/state');
-  ok('State cưới vẫn còn nguyên cấu trúc', stateRes.status === 200 && !!stateRes.json.config && Array.isArray(stateRes.json.people));
+  ok('Wedding state structure is intact', stateRes.status === 200 && !!stateRes.json.config && Array.isArray(stateRes.json.people));
   const usage = await api('/api/ai/usage');
-  ok('Nhật ký AI vẫn hoạt động', usage.status === 200 && Array.isArray(usage.json.entries));
+  ok('AI usage log still works', usage.status === 200 && Array.isArray(usage.json.entries));
 
   // 17. farewell line uses the same queue and marks the actor for a farewell gesture
   await sleep(2400);
   const markFarewell = Date.now();
   await api('/api/mc/farewell', { method: 'POST' });
   const farewellEvt = await waitFor((e) => e.at >= markFarewell && e.event === 'tts' && e.data.mcKind === 'farewell', 20000);
-  ok('Lời tạm biệt đi qua Kokoro kèm cờ farewell cho actor', !!farewellEvt,
-    farewellEvt ? JSON.stringify(farewellEvt.data.text) : 'không có tts');
+  ok('Farewell goes through Kokoro with the actor farewell flag', !!farewellEvt,
+    farewellEvt ? JSON.stringify(farewellEvt.data.text) : 'no tts');
 
   // 18. American reception defaults + music ducking
   const mcCfgNow = (await api('/api/mc/config')).json.config;
-  ok('MC mặc định là host tiệc cưới Mỹ', mcCfgNow.personality === 'american_warm', mcCfgNow.personality);
-  ok('Ngôn ngữ mặc định en-US (en)', mcCfgNow.language === 'en', mcCfgNow.language);
-  ok('Ducking mặc định 12% và đang bật', mcCfgNow.duckVolume === 12 && mcCfgNow.duckEnabled === true,
+  ok('MC defaults to the American reception host', mcCfgNow.personality === 'american_warm', mcCfgNow.personality);
+  ok('Default language is en-US (en)', mcCfgNow.language === 'en', mcCfgNow.language);
+  ok('Ducking defaults to 12% and is enabled', mcCfgNow.duckVolume === 12 && mcCfgNow.duckEnabled === true,
     `${mcCfgNow.duckVolume}% / ${mcCfgNow.duckEnabled}`);
 
   const duck = await import('../../public/mc-duck.js');
   const down = duck.fadeSteps(20, duck.duckTarget(20, 12), 650);
   const up = duck.fadeSteps(down[down.length - 1], 20, 850);
-  ok('Nhạc 20 → 12, không bao giờ về 0',
+  ok('Music 20 → 12, never 0',
     duck.duckTarget(20, 12) === 12 && down[0] === 20 && down[down.length - 1] === 12 && !down.includes(0),
     `steps=${down.length} [${down.slice(0, 3).join(',')}…${down[down.length - 1]}]`);
-  ok('Nhạc trở lại đúng 20 sau khi MC nói xong', up[up.length - 1] === 20 && !up.includes(0),
+  ok('Music returns to exactly 20 after the MC stops', up[up.length - 1] === 20 && !up.includes(0),
     `steps=${up.length}`);
-  ok('Chuyển âm lượng mượt (mỗi bước ≤ 2%)',
+  ok('Volume ramp is smooth (each step ≤ 2%)',
     down.length >= 8 && down.every((v, i, a) => i === 0 || Math.abs(v - a[i - 1]) <= 2));
-  ok('Không tự tăng nhạc khi admin để dưới 12', duck.duckTarget(5, 12) === 5);
+  ok('Never raises music the operator set below 12', duck.duckTarget(5, 12) === 5);
 
   const overlayJs = await (await fetch(BASE + '/overlay.js')).text();
-  ok('Overlay dùng bộ ducking chung, không còn đường nào đặt volume = 0',
+  ok('Overlay uses the shared ducker and has no zero-volume path',
     /createBgmDucker/.test(overlayJs) && !/setVolume\([^)]*\?\s*0\b/.test(overlayJs) && /import \{ createBgmDucker \}/.test(overlayJs));
-  ok('Trang phục vụ /mc-duck.js cho overlay', (await fetch(BASE + '/mc-duck.js')).status === 200);
+  ok('/mc-duck.js is served for the overlay', (await fetch(BASE + '/mc-duck.js')).status === 200);
 
   // Ducking controller driven with a fake YouTube player (no browser needed).
   function duckHarness(o) {
@@ -411,11 +411,11 @@ async function main() {
   const d20 = duckHarness({ start: 20, admin: 20 });
   d20.ducker.duck();
   d20.tick(60);
-  ok('Nhạc 20 → 12 khi MC nói', d20.player.volume === 12, `vol=${d20.player.volume} steps=${d20.player.writes.length}`);
+  ok('Music drops 20 → 12 while the MC speaks', d20.player.volume === 12, `vol=${d20.player.volume} steps=${d20.player.writes.length}`);
   d20.ducker.restore();
   d20.tick(60);
-  ok('Nhạc trở lại đúng 20 khi MC nói xong', d20.player.volume === 20, `vol=${d20.player.volume}`);
-  ok('Không lúc nào nhạc bị tắt hẳn (min ≥ 1)', d20.player.min >= 1, `min=${d20.player.min}`);
+  ok('Music returns to exactly 20 when the MC finishes', d20.player.volume === 20, `vol=${d20.player.volume}`);
+  ok('Music is never fully muted (min ≥ 1)', d20.player.min >= 1, `min=${d20.player.min}`);
 
   const d50 = duckHarness({ start: 50, admin: 50 });
   d50.ducker.duck();
@@ -423,7 +423,7 @@ async function main() {
   const mid50 = d50.player.volume;
   d50.ducker.restore();
   d50.tick(60);
-  ok('Nhạc 50 → 12 → 50', mid50 === 12 && d50.player.volume === 50, `${mid50} → ${d50.player.volume}`);
+  ok('Music 50 → 12 → 50', mid50 === 12 && d50.player.volume === 50, `${mid50} → ${d50.player.volume}`);
 
   const d8 = duckHarness({ start: 8, admin: 8 });
   d8.ducker.duck();
@@ -431,7 +431,7 @@ async function main() {
   const d8duck = d8.player.volume;
   d8.ducker.restore();
   d8.tick(60);
-  ok('Nhạc đang 8 thì giữ 8 (không tự tăng lên 12)', d8duck === 8 && d8.player.volume === 8 && d8.player.max === 8,
+  ok('Music at 8 stays at 8 (never raised to 12)', d8duck === 8 && d8.player.volume === 8 && d8.player.max === 8,
     `duck=${d8duck} after=${d8.player.volume} max=${d8.player.max}`);
 
   const dSeq = duckHarness({ start: 20, admin: 20 });
@@ -442,7 +442,7 @@ async function main() {
   dSeq.ducker.duck();
   dSeq.tick(12);
   const jumpedBack = dSeq.player.writes.slice(beforeSeq).some(v => v >= 20);
-  ok('Nhiều câu MC liên tiếp không fade lại / không nhảy về 20', !jumpedBack && dSeq.ducker.state().active === true,
+  ok('Consecutive MC lines do not re-fade or jump to 20', !jumpedBack && dSeq.ducker.state().active === true,
     `writes=${dSeq.player.writes.length}`);
 
   const dInt = duckHarness({ start: 20, admin: 20 });
@@ -451,14 +451,14 @@ async function main() {
   const midInt = dInt.player.volume;
   dInt.ducker.restore();
   dInt.tick(60);
-  ok('MC bị ngắt giữa chừng vẫn trả nhạc về 20', midInt < 20 && dInt.player.volume === 20, `${midInt} → ${dInt.player.volume}`);
+  ok('Interrupted MC still restores music to 20', midInt < 20 && dInt.player.volume === 20, `${midInt} → ${dInt.player.volume}`);
 
   const dOff = duckHarness({ start: 20, admin: 20, enabled: false });
   dOff.ducker.duck();
   dOff.tick(60);
   dOff.ducker.restore();
   dOff.tick(60);
-  ok('Tắt ducking thì không đụng vào âm lượng YouTube', dOff.player.writes.length === 0 && dOff.player.volume === 20,
+  ok('Ducking off leaves the YouTube volume untouched', dOff.player.writes.length === 0 && dOff.player.volume === 20,
     `writes=${dOff.player.writes.length}`);
 
   const dSync = duckHarness({ start: 20, admin: 20 });
@@ -470,21 +470,55 @@ async function main() {
   const duringSync = dSync.player.volume;
   dSync.ducker.restore();
   dSync.tick(60);
-  ok('Admin đổi nhạc giữa lúc MC nói: vẫn duck 12, sau đó trả đúng 35', duringSync === 12 && dSync.player.volume === 35,
+  ok('Operator changes music mid-line: stays ducked at 12, restores to 35', duringSync === 12 && dSync.player.volume === 35,
     `${duringSync} → ${dSync.player.volume}`);
 
   const duckSrc = await (await fetch(BASE + '/mc-duck.js')).text();
-  ok('Bộ ducking không bao giờ pause/stop/mute nhạc', !/(pauseVideo|stopVideo|\.mute\(|\.unMute\()/.test(duckSrc));
+  ok('The ducker never pauses, stops or mutes the music', !/(pauseVideo|stopVideo|\.mute\(|\.unMute\()/.test(duckSrc));
   const panelSrc2 = await (await fetch(BASE + '/mc-panel.js')).text();
-  ok('Dashboard có âm lượng giảm nhạc, bật/tắt và mặc định Mỹ',
+  ok('Dashboard has duck volume, on/off and the American default',
     /mc-duck-volume/.test(panelSrc2) && /mc-duck-enabled/.test(panelSrc2) && /american_warm/.test(panelSrc2));
+
+  // 19. English MC subsystem + American host wardrobe
+  const panelEn = await (await fetch(BASE + '/mc-panel.js')).text();
+  const actorEn = await (await fetch(BASE + '/mc-actor.js')).text();
+  const vi = /[àáảãạăâđêôơưýỳỷỹỵÀÁẢÃẠĂÂĐÊÔƠƯ]/;
+  ok('No Vietnamese user-facing strings in the MC dashboard', !vi.test(panelEn), 'mc-panel.js');
+  ok('No Vietnamese strings in the MC actor', !vi.test(actorEn), 'mc-actor.js');
+  ok('Female host wears blazer, satin blouse, trousers, heels and jewelry',
+    /mc-body-blazer/.test(actorEn) && /mc-blouse/.test(actorEn) && /mc-legs/.test(actorEn) &&
+    /mc-heels/.test(actorEn) && /mc-earrings/.test(actorEn) && /mc-necklace/.test(actorEn) &&
+    !/mc-body-dress/.test(actorEn) && !/mc-accessory-veil/.test(actorEn));
+  ok('Male host wears suit, shirt, necktie and leather shoes',
+    /mc-male-hair/.test(actorEn) && /mc-shoes/.test(actorEn) && /mc-tie/.test(actorEn) && /mc-lapel/.test(actorEn));
+  const actorCss = await (await fetch(BASE + '/mc-actor.css')).text();
+  ok('Idle / speaking / welcome / farewell animations kept',
+    ['mc-breathe', 'mc-head-sway', 'mc-blink', 'mc-mic-gesture', 'mc-wave', 'mc-bow', 'mc-enter', 'mc-leave', 'mc-excited']
+      .every((name) => actorCss.includes(name)));
+  ok('Lip sync still reads the Kokoro audio element',
+    /getElementById\('mc-audio'\)/.test(actorEn) && /decodeAudioData/.test(actorEn) &&
+    /requestAnimationFrame/.test(actorEn) && /--mouth/.test(actorEn));
+  ok('MC speech still plays through the existing audio queue',
+    /enqueueMcSpeech/.test(overlayJs) && /getElementById\('mc-audio'\)/.test(overlayJs));
+  ok('Dashboard outside the MC section stays Vietnamese',
+    /Tổng quan &amp; Điều khiển LIVE|Tổng quan & Điều khiển LIVE/.test(await (await fetch(BASE + '/index.html')).text()));
+  ok('MC API contract unchanged (config / runtime / provider / priorities)',
+    !!cfg0.json.config && !!cfg0.json.runtime && !!cfg0.json.provider && !!cfg0.json.config.priorities);
+  const migrated = await api('/api/mc/config', {
+    method: 'POST',
+    body: { actor: { style: 'dress', accessory: 'veil', hair: '#3a2318', outfit: '#a51f3c' } }
+  });
+  ok('Legacy Vietnamese-stage actor values migrate to the American host',
+    migrated.json.config.actor.style === 'blazer' && migrated.json.config.actor.accessory === 'earrings' &&
+    migrated.json.config.actor.hair === '#c9a15c' && migrated.json.config.actor.outfit === '#161a2e',
+    JSON.stringify(migrated.json.config.actor));
 
   // Restore a sane production configuration (tests shorten the cooldowns).
   await api('/api/mc/config', {
     method: 'POST',
     body: {
       enabled: true, paused: false,
-      actor: { preset: 'female', style: 'dress', accessory: 'veil', skin: '#f2c6a4', hair: '#3a2318', outfit: '#a51f3c' },
+      actor: { preset: 'female', style: 'blazer', accessory: 'earrings', skin: '#f0c9a8', hair: '#c9a15c', outfit: '#161a2e' },
       language: 'en', maxChars: 180, cooldownMs: 6000, giftMergeWindowMs: 2500, idleIntervalMs: 45000,
       personality: 'american_warm', duckVolume: 12, duckEnabled: true,
       autoWelcome: true, autoGift: true, autoCeremony: true, autoInteraction: true, idleHosting: true
@@ -492,7 +526,7 @@ async function main() {
   });
 
   const after = await api('/api/mc/config');
-  ok('Chu kỳ giữ nhịp tự động không bị thay đổi',
+  ok('Automatic idle cadence is unchanged',
     after.json.config.idleIntervalMs === 45000 && after.json.config.idleHosting === true,
     `idle=${after.json.config.idleIntervalMs}ms hosting=${after.json.config.idleHosting}`);
 

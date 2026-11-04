@@ -21,7 +21,7 @@
   var MC_DEFAULTS = {
     enabled: true,
     paused: false,
-    actor: { preset: 'female', skin: '#f2c6a4', hair: '#3a2318', outfit: '#a51f3c', style: 'dress', accessory: 'veil' }
+    actor: { preset: 'female', skin: '#f0c9a8', hair: '#c9a15c', outfit: '#161a2e', style: 'blazer', accessory: 'earrings' }
   };
 
   var config = JSON.parse(JSON.stringify(MC_DEFAULTS));
@@ -57,101 +57,154 @@
 
   // ---------------------------------------------------------------- SVG art
 
+  // Modern American wedding host: tailored blazer, satin blouse or dress shirt,
+  // tailored trousers, heels or leather oxfords, minimal jewelry, wireless mic.
+  // Female and male variants share the silhouette; the preset toggles hair,
+  // jewelry, footwear and the shirt/tie, so both stay visually consistent.
   function svgMarkup() {
     return [
       '<svg class="mc-svg" viewBox="0 0 220 360" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">',
       '<defs>',
-      '<linearGradient id="mc-dress" x1="0" y1="0" x2="0" y2="1">',
-      '<stop offset="0%" stop-color="var(--mc-outfit)" stop-opacity="1"/>',
-      '<stop offset="100%" stop-color="var(--mc-outfit-dark)" stop-opacity="1"/>',
+      '<linearGradient id="mc-blazer-fill" x1="0" y1="0" x2="0.3" y2="1">',
+      '<stop offset="0%" stop-color="var(--mc-blazer)"/>',
+      '<stop offset="100%" stop-color="var(--mc-blazer-dark)"/>',
       '</linearGradient>',
-      '<radialGradient id="mc-skin" cx="50%" cy="35%" r="70%">',
+      '<linearGradient id="mc-blouse-fill" x1="0" y1="0" x2="0" y2="1">',
+      '<stop offset="0%" stop-color="var(--mc-blouse)"/>',
+      '<stop offset="100%" stop-color="var(--mc-blouse-dark)"/>',
+      '</linearGradient>',
+      '<linearGradient id="mc-trouser-fill" x1="0" y1="0" x2="0" y2="1">',
+      '<stop offset="0%" stop-color="var(--mc-trousers)"/>',
+      '<stop offset="100%" stop-color="var(--mc-trousers-dark)"/>',
+      '</linearGradient>',
+      '<radialGradient id="mc-skin-grad" cx="50%" cy="35%" r="70%">',
       '<stop offset="0%" stop-color="var(--mc-skin-light)"/>',
       '<stop offset="100%" stop-color="var(--mc-skin)"/>',
       '</radialGradient>',
       '</defs>',
 
       // floor shadow
-      '<ellipse cx="110" cy="342" rx="66" ry="11" fill="rgba(0,0,0,0.38)"/>',
+      '<ellipse cx="110" cy="344" rx="62" ry="10" fill="rgba(0,0,0,0.4)"/>',
 
       '<g class="mc-torso">',
-      // dress (female) / suit (male) — both drawn, CSS toggles by preset
-      '<path class="mc-body-dress" d="M110 148 C 92 156, 74 246, 60 330 L160 330 C146 246, 128 156, 110 148 Z" fill="url(#mc-dress)" stroke="rgba(255,220,180,0.35)" stroke-width="1.4"/>',
-      '<path class="mc-body-suit" d="M110 148 C 94 156, 80 236, 76 330 L144 330 C140 236, 126 156, 110 148 Z" fill="#201a2b" stroke="rgba(255,255,255,0.18)" stroke-width="1.2"/>',
-      '<path class="mc-shirt" d="M110 150 L100 168 L110 214 L120 168 Z" fill="#f7f2e8"/>',
-      '<path class="mc-tie" d="M110 170 L104 182 L110 206 L116 182 Z" fill="#ffbe53"/>',
-      // neck
-      '<rect x="100" y="132" width="20" height="24" rx="9" fill="var(--mc-skin)" opacity="0.95"/>',
-      // necklace / veil accent
-      '<g class="mc-accessory-veil">',
-      '<path d="M86 158 C 96 186, 124 186, 134 158" fill="none" stroke="#ffd700" stroke-width="2.4" stroke-linecap="round"/>',
-      '<circle cx="110" cy="184" r="3.4" fill="#ffd700"/>',
+
+      // tailored trousers
+      '<g class="mc-legs">',
+      '<path d="M92 254 L96 320 L108 320 L108 254 Z" fill="url(#mc-trouser-fill)"/>',
+      '<path d="M112 254 L112 320 L124 320 L128 254 Z" fill="url(#mc-trouser-fill)"/>',
+      '<path d="M108 254 L108 320" stroke="rgba(0,0,0,0.35)" stroke-width="1.2"/>',
+
+      // high heels (female preset)
+      '<g class="mc-heels">',
+      '<path d="M96 320 L108 320 L108 329 L100 331 L94 337 L92 330 Z" fill="var(--mc-shoe)"/>',
+      '<path d="M93 330 L90 342 L93.4 342 L96.4 330 Z" fill="var(--mc-shoe)"/>',
+      '<path d="M112 320 L124 320 L126 330 L120 337 L114 331 L112 329 Z" fill="var(--mc-shoe)"/>',
+      '<path d="M121 330 L118 342 L121.4 342 L124.4 330 Z" fill="var(--mc-shoe)"/>',
       '</g>',
-      '<g class="mc-accessory-bowtie">',
-      '<path d="M102 158 L110 164 L118 158 L118 170 L110 164 L102 170 Z" fill="#a51f3c"/>',
+
+      // polished leather oxfords (male preset)
+      '<g class="mc-shoes">',
+      '<path d="M96 320 L108 320 L109 331 Q 100 336, 93 331 Z" fill="var(--mc-shoe)"/>',
+      '<path d="M112 320 L124 320 L127 331 Q 120 336, 111 331 Z" fill="var(--mc-shoe)"/>',
+      '<path d="M95 326 H107 M113 326 H125" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>',
+      '</g>',
+      '</g>',
+
+      // neck
+      '<rect x="101" y="124" width="18" height="30" rx="8" fill="var(--mc-skin)"/>',
+
+      // blazer body
+      '<path class="mc-body-blazer" d="M110 146 C 98 148, 88 154, 85 166 L 80 246 C 79 254, 82 260, 88 262 L 132 262 C 138 260, 141 254, 140 246 L 135 166 C 134 154, 122 148, 110 146 Z" fill="url(#mc-blazer-fill)" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>',
+
+      // satin blouse / dress shirt
+      '<path class="mc-blouse" d="M110 148 L 99 156 L 104 204 L 110 226 L 116 204 L 121 156 Z" fill="url(#mc-blouse-fill)"/>',
+
+      // jacket lapels
+      '<path class="mc-lapel" d="M110 147 L 97 155 L 102 203 L 110 174 Z" fill="var(--mc-blazer-lapel)"/>',
+      '<path class="mc-lapel right" d="M110 147 L 123 155 L 118 203 L 110 174 Z" fill="var(--mc-blazer-lapel)"/>',
+
+      // necktie (male / suit look)
+      '<g class="mc-tie">',
+      '<path d="M110 156 L 105 166 L 110 200 L 115 166 Z" fill="var(--mc-tie)"/>',
+      '<path d="M106 152 L 114 152 L 113 158 L 107 158 Z" fill="var(--mc-tie-dark)"/>',
+      '</g>',
+
+      // minimal elegant jewelry (female preset)
+      '<g class="mc-necklace">',
+      '<path d="M101 150 Q 110 163 119 150" fill="none" stroke="var(--mc-jewel)" stroke-width="1.5" stroke-linecap="round"/>',
+      '<circle cx="110" cy="161" r="2.4" fill="var(--mc-jewel)"/>',
       '</g>',
       '</g>',
 
       // free (waving) arm — left side of the image
       '<g class="mc-arm mc-arm-free">',
-      '<path d="M86 168 C 62 186, 50 218, 52 252" fill="none" stroke="var(--mc-outfit)" stroke-width="15" stroke-linecap="round"/>',
-      '<circle cx="52" cy="256" r="9" fill="var(--mc-skin)"/>',
+      '<path d="M86 164 C 70 182, 62 208, 64 238" fill="none" stroke="var(--mc-blazer)" stroke-width="13" stroke-linecap="round"/>',
+      '<circle cx="64" cy="242" r="8" fill="var(--mc-skin)"/>',
       '</g>',
 
-      // microphone arm — right side
+      // microphone arm — right side, wireless handheld
       '<g class="mc-arm mc-arm-mic">',
-      '<path d="M134 168 C 154 182, 160 198, 152 214" fill="none" stroke="var(--mc-outfit)" stroke-width="15" stroke-linecap="round"/>',
-      '<circle cx="150" cy="218" r="9" fill="var(--mc-skin)"/>',
+      '<path d="M134 164 C 150 176, 157 190, 152 202" fill="none" stroke="var(--mc-blazer)" stroke-width="13" stroke-linecap="round"/>',
+      '<circle cx="151" cy="206" r="8" fill="var(--mc-skin)"/>',
       '<g class="mc-mic">',
-      '<rect x="141" y="188" width="15" height="32" rx="7" fill="#2b2b33" stroke="#c9cbd6" stroke-width="1.6"/>',
-      '<path d="M144 197 H153 M144 202 H153 M144 207 H153" stroke="#8d90a0" stroke-width="1.2"/>',
-      '<rect x="146" y="219" width="5" height="10" rx="2" fill="#c9cbd6"/>',
+      '<rect x="144" y="170" width="14" height="32" rx="7" fill="#232634" stroke="#cfd2dd" stroke-width="1.4"/>',
+      '<circle cx="151" cy="176" r="6.4" fill="#3a3e52" stroke="#e2e5ef" stroke-width="1.2"/>',
+      '<path d="M146 186 H156 M146 191 H156 M146 196 H156" stroke="#8d90a0" stroke-width="1.1"/>',
+      '<rect x="148.5" y="202" width="5" height="9" rx="2" fill="#cfd2dd"/>',
       '</g>',
       '</g>',
 
       // head
       '<g class="mc-head">',
-      '<path class="mc-hair-back" d="M110 44 C 74 44, 62 74, 64 108 C 66 132, 70 140, 74 142 L 74 96 C 84 74, 136 74, 146 96 L 146 142 C 150 140, 154 132, 156 108 C 158 74, 146 44, 110 44 Z" fill="var(--mc-hair)"/>',
-      '<ellipse cx="110" cy="100" rx="37" ry="41" fill="url(#mc-skin)"/>',
-      '<ellipse cx="73" cy="104" rx="6" ry="9" fill="var(--mc-skin)"/>',
-      '<ellipse cx="147" cy="104" rx="6" ry="9" fill="var(--mc-skin)"/>',
 
-      // fringe
-      '<path class="mc-hair-front" d="M74 90 C 80 58, 140 58, 146 90 C 138 74, 120 66, 110 70 C 98 74, 84 80, 74 90 Z" fill="var(--mc-hair)"/>',
-      '<path class="mc-hair-side" d="M72 96 C 66 120, 68 150, 74 164 C 80 150, 80 124, 84 110 Z" fill="var(--mc-hair)" opacity="0.96"/>',
-      '<path class="mc-hair-side right" d="M148 96 C 154 120, 152 150, 146 164 C 140 150, 140 124, 136 110 Z" fill="var(--mc-hair)" opacity="0.96"/>',
+      // salon-styled hair (female): volume, side part, soft locks
+      '<path class="mc-hair-back mc-female-hair" d="M110 38 C 72 38, 58 70, 60 106 C 62 132, 68 148, 76 154 L 78 100 C 86 78, 134 78, 142 100 L 144 154 C 152 148, 158 132, 160 106 C 162 70, 148 38, 110 38 Z" fill="var(--mc-hair)"/>',
+      // short contemporary cut (male)
+      '<path class="mc-hair-back mc-male-hair" d="M110 40 C 82 40, 70 66, 72 98 L 74 116 L 80 100 C 90 80, 130 80, 140 100 L 146 116 L 148 98 C 150 66, 138 40, 110 40 Z" fill="var(--mc-hair)"/>',
+
+      '<ellipse cx="110" cy="94" rx="33" ry="38" fill="url(#mc-skin-grad)"/>',
+      '<ellipse cx="76" cy="100" rx="5.5" ry="8.5" fill="var(--mc-skin)"/>',
+      '<ellipse cx="144" cy="100" rx="5.5" ry="8.5" fill="var(--mc-skin)"/>',
+
+      // parted fringe with a soft shine
+      '<path class="mc-hair-front" d="M76 86 C 80 54, 142 52, 146 86 C 138 68, 116 60, 102 66 C 90 71, 82 78, 76 86 Z" fill="var(--mc-hair)"/>',
+      '<path class="mc-hair-shine" d="M104 62 C 122 56, 140 64, 146 82 C 134 70, 116 68, 104 74 Z" fill="var(--mc-hair-light)" opacity="0.6"/>',
+      '<path class="mc-hair-side mc-female-hair" d="M74 90 C 68 114, 70 142, 76 156 C 82 140, 82 116, 86 102 Z" fill="var(--mc-hair)"/>',
+      '<path class="mc-hair-side right mc-female-hair" d="M146 90 C 152 114, 150 142, 144 156 C 138 140, 138 116, 134 102 Z" fill="var(--mc-hair)"/>',
 
       // brows
-      '<path class="mc-brow mc-brow-left" d="M88 84 Q 96 79, 104 83" fill="none" stroke="var(--mc-hair)" stroke-width="3.2" stroke-linecap="round"/>',
-      '<path class="mc-brow mc-brow-right" d="M116 83 Q 124 79, 132 84" fill="none" stroke="var(--mc-hair)" stroke-width="3.2" stroke-linecap="round"/>',
+      '<path class="mc-brow mc-brow-left" d="M88 82 Q 96 77, 104 81" fill="none" stroke="var(--mc-hair)" stroke-width="2.8" stroke-linecap="round"/>',
+      '<path class="mc-brow mc-brow-right" d="M116 81 Q 124 77, 132 82" fill="none" stroke="var(--mc-hair)" stroke-width="2.8" stroke-linecap="round"/>',
 
       // eyes
       '<g class="mc-eye left">',
-      '<ellipse class="mc-eye-white" cx="97" cy="100" rx="8" ry="9" fill="#fffaf2"/>',
-      '<circle class="mc-pupil" cx="97" cy="101" r="4" fill="#33231b"/>',
-      '<circle cx="98.6" cy="99.4" r="1.3" fill="#fff"/>',
+      '<ellipse class="mc-eye-white" cx="97" cy="97" rx="7.6" ry="8.6" fill="#fffaf5"/>',
+      '<circle class="mc-pupil" cx="97" cy="98" r="3.9" fill="#2f3a4a"/>',
+      '<circle cx="98.5" cy="96.4" r="1.2" fill="#fff"/>',
       '</g>',
       '<g class="mc-eye right">',
-      '<ellipse class="mc-eye-white" cx="123" cy="100" rx="8" ry="9" fill="#fffaf2"/>',
-      '<circle class="mc-pupil" cx="123" cy="101" r="4" fill="#33231b"/>',
-      '<circle cx="124.6" cy="99.4" r="1.3" fill="#fff"/>',
+      '<ellipse class="mc-eye-white" cx="123" cy="97" rx="7.6" ry="8.6" fill="#fffaf5"/>',
+      '<circle class="mc-pupil" cx="123" cy="98" r="3.9" fill="#2f3a4a"/>',
+      '<circle cx="124.5" cy="96.4" r="1.2" fill="#fff"/>',
       '</g>',
 
-      // blush + nose
-      '<ellipse class="mc-cheek" cx="86" cy="115" rx="8" ry="5" fill="#ff8fa3" opacity="0.45"/>',
-      '<ellipse class="mc-cheek" cx="134" cy="115" rx="8" ry="5" fill="#ff8fa3" opacity="0.45"/>',
-      '<path d="M110 108 q -3 8, 2 9" fill="none" stroke="rgba(140,80,60,0.55)" stroke-width="2" stroke-linecap="round"/>',
+      // polished, natural makeup
+      '<ellipse class="mc-shadow" cx="97" cy="91" rx="8" ry="2.6" fill="#c2867a" opacity="0.28"/>',
+      '<ellipse class="mc-shadow" cx="123" cy="91" rx="8" ry="2.6" fill="#c2867a" opacity="0.28"/>',
+      '<ellipse class="mc-cheek" cx="86" cy="110" rx="7" ry="4" fill="#e8836f" opacity="0.28"/>',
+      '<ellipse class="mc-cheek" cx="134" cy="110" rx="7" ry="4" fill="#e8836f" opacity="0.28"/>',
+      '<path d="M110 103 q -3 7, 2 8" fill="none" stroke="rgba(150,90,70,0.5)" stroke-width="1.8" stroke-linecap="round"/>',
 
       // mouth (scaleY driven by JS)
       '<g class="mc-mouth-wrap">',
-      '<ellipse class="mc-mouth" cx="110" cy="128" rx="11" ry="8" fill="#8c2b3a"/>',
-      '<ellipse class="mc-tongue" cx="110" cy="131" rx="6" ry="4" fill="#d76a7e" opacity="0.85"/>',
+      '<ellipse class="mc-mouth" cx="110" cy="121" rx="9" ry="6.4" fill="#a8455a"/>',
+      '<ellipse class="mc-tongue" cx="110" cy="124" rx="5" ry="3.2" fill="#d4798a" opacity="0.8"/>',
       '</g>',
 
-      // earrings for the female preset
-      '<g class="mc-accessory-earrings">',
-      '<circle cx="73" cy="115" r="3.2" fill="#ffd700"/>',
-      '<circle cx="147" cy="115" r="3.2" fill="#ffd700"/>',
+      // minimal jewelry (female preset)
+      '<g class="mc-earrings">',
+      '<circle cx="76" cy="110" r="2.2" fill="var(--mc-jewel)"/>',
+      '<circle cx="144" cy="110" r="2.2" fill="var(--mc-jewel)"/>',
       '</g>',
       '</g>',
 
@@ -229,24 +282,43 @@
     root.style.setProperty('--mc-skin', a.skin || MC_DEFAULTS.actor.skin);
     root.style.setProperty('--mc-skin-light', lighten(a.skin || MC_DEFAULTS.actor.skin, 0.22));
     root.style.setProperty('--mc-hair', a.hair || MC_DEFAULTS.actor.hair);
-    root.style.setProperty('--mc-outfit', a.outfit || MC_DEFAULTS.actor.outfit);
-    root.style.setProperty('--mc-outfit-dark', shade(a.outfit || MC_DEFAULTS.actor.outfit, 0.66));
+    root.style.setProperty('--mc-hair-light', lighten(a.hair || MC_DEFAULTS.actor.hair, 0.3));
+    root.style.setProperty('--mc-blazer', a.outfit || MC_DEFAULTS.actor.outfit);
+    root.style.setProperty('--mc-blazer-dark', shade(a.outfit || MC_DEFAULTS.actor.outfit, 0.62));
+    root.style.setProperty('--mc-blazer-lapel', shade(a.outfit || MC_DEFAULTS.actor.outfit, 0.78));
 
     root.setAttribute('data-preset', a.preset === 'male' ? 'male' : 'female');
     root.classList.toggle('preset-male', a.preset === 'male');
     root.classList.toggle('preset-female', a.preset !== 'male');
 
     var isMale = a.preset === 'male';
-    root.querySelectorAll('.mc-body-dress, .mc-accessory-veil, .mc-accessory-earrings, .mc-hair-side').forEach(function (el) {
+    var suitLook = isMale || a.style === 'suit';
+
+    // Wardrobe palette: satin blouse for the host look, crisp shirt for a suit.
+    root.style.setProperty('--mc-blouse', suitLook ? '#f7f7fa' : '#f2e7d5');
+    root.style.setProperty('--mc-blouse-dark', suitLook ? '#e2e2ea' : '#e4d3b6');
+    root.style.setProperty('--mc-trousers', shade(a.outfit || MC_DEFAULTS.actor.outfit, 0.82));
+    root.style.setProperty('--mc-trousers-dark', shade(a.outfit || MC_DEFAULTS.actor.outfit, 0.6));
+    root.style.setProperty('--mc-shoe', '#141119');
+    root.style.setProperty('--mc-jewel', '#e6c67f');
+    root.style.setProperty('--mc-tie', '#c9a24a');
+    root.style.setProperty('--mc-tie-dark', '#a8842f');
+
+    // Female / male wardrobe pieces.
+    root.querySelectorAll('.mc-female-hair, .mc-earrings, .mc-necklace, .mc-heels').forEach(function (el) {
       el.style.display = isMale ? 'none' : '';
     });
-    root.querySelectorAll('.mc-body-suit, .mc-shirt, .mc-tie').forEach(function (el) {
+    root.querySelectorAll('.mc-male-hair, .mc-shoes').forEach(function (el) {
       el.style.display = isMale ? '' : 'none';
     });
-    var bowtie = root.querySelector('.mc-accessory-bowtie');
-    if (bowtie) bowtie.style.display = (!isMale && a.accessory === 'bowtie') ? '' : 'none';
-    var veil = root.querySelector('.mc-accessory-veil');
-    if (veil) veil.style.display = (!isMale && a.accessory !== 'none') ? '' : 'none';
+
+    // Accessories: minimal jewelry, necktie, open collar or nothing.
+    var tie = root.querySelector('.mc-tie');
+    if (tie) tie.style.display = (!isMale && suitLook && a.accessory === 'tie') || (isMale && a.accessory === 'tie') ? '' : 'none';
+    var necklace = root.querySelector('.mc-necklace');
+    if (necklace) necklace.style.display = !isMale && a.accessory === 'earrings' ? '' : 'none';
+    var earrings = root.querySelector('.mc-earrings');
+    if (earrings) earrings.style.display = !isMale && a.accessory === 'earrings' ? '' : 'none';
 
     var nameEl = root.querySelector('#mc-actor-name');
     if (nameEl) nameEl.textContent = isMale ? 'Daniel' : 'Taylor';

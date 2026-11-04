@@ -997,12 +997,12 @@ function mcProviderList() {
 
 async function handleMcRoutes(req, res, pathname) {
   if (!isSameOrigin(req)) {
-    sendJson(res, 403, { ok: false, error: 'Yêu cầu khác nguồn đã bị từ chối.' });
+    sendJson(res, 403, { ok: false, error: 'Requests from another origin are rejected.' });
     return true;
   }
   const isWrite = req.method !== 'GET';
   if (!aiRateAllow(req, isWrite ? 'mc:write' : 'mc:read', isWrite ? 90 : 300)) {
-    sendJson(res, 429, { ok: false, error: 'Quá nhiều yêu cầu MC. Vui lòng thử lại sau 1 phút.' });
+    sendJson(res, 429, { ok: false, error: 'Too many MC requests. Please try again in a minute.' });
     return true;
   }
 
@@ -1078,7 +1078,7 @@ async function handleMcRoutes(req, res, pathname) {
       // Reuses the existing TTS queue — no second speech engine.
       const body = await readBodyLimited(req, 8 * 1024);
       const cfg = mcStore.get();
-      const text = String(body.text || 'Xin chào, tôi là MC của tiệc cưới hôm nay.').slice(0, 300);
+      const text = String(body.text || 'Good evening, everyone — welcome to the celebration.').slice(0, 300);
       const result = await announce(text, mcStore.get().priorities.manual, {
         kind: 'mc-test',
         voice: cfg.voice || undefined,
@@ -1088,7 +1088,7 @@ async function handleMcRoutes(req, res, pathname) {
       return true;
     }
 
-    sendJson(res, 404, { ok: false, error: 'Không tìm thấy API MC.' });
+    sendJson(res, 404, { ok: false, error: 'MC API not found.' });
     return true;
   } catch (err) {
     const code = err && err.code ? err.code : 'unknown';

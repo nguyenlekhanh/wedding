@@ -52,7 +52,7 @@ class McBrain {
     this.lastSpokenAt = 0;
     this.lastActivityAt = Date.now();
     this.lastInteractionAt = 0;
-    this.lastManualAt = 0;        // last "MC NÓI NGAY" request
+    this.lastManualAt = 0;        // last dashboard "Speak Now" request
     this.manualInFlight = false;  // one manual request at a time
     this.busyUntil = 0;
     this.busyPriority = 0;
@@ -402,27 +402,27 @@ class McBrain {
   /** Admin announcement: bypasses cooldowns, still sanitised and de-duplicated. */
   manualSay(text) {
     const c = this.cfg();
-    if (!c.enabled) return { ok: false, error: 'MC đang tắt.' };
-    if (c.paused) return { ok: false, error: 'MC đang tạm dừng. Hãy bấm Tiếp tục trước khi đọc.' };
+    if (!c.enabled) return { ok: false, error: 'The MC is turned off.' };
+    if (c.paused) return { ok: false, error: 'The MC is paused. Press Resume before speaking.' };
     const clean = sanitizeSpoken(text, Math.max(c.maxChars, 240));
-    if (!clean) return { ok: false, error: 'Nội dung không hợp lệ để đọc.' };
+    if (!clean) return { ok: false, error: 'There is nothing speakable in that text.' };
     const spoken = this.deliver(clean, 'manual', c.priorities.manual, { manual: true });
     // A duplicate is a successful request that was intentionally not spoken.
     return { ok: true, text: clean, spoken, reason: spoken ? null : 'duplicate' };
   }
 
   /**
-   * Dashboard "🎤 MC NÓI NGAY".
+   * Dashboard "Speak Now".
    * Skips the idle interval but keeps every safety rule: enabled/paused, one
    * request at a time, a 5 s anti-spam cooldown, and never interrupting a
    * higher-priority (ceremony / crown) announcement.
    */
   async speakNow() {
     const c = this.cfg();
-    if (!c.enabled) return { ok: false, code: 'disabled', error: 'MC đang tắt. Hãy bật MC trước khi cho MC nói.' };
-    if (c.paused) return { ok: false, code: 'paused', error: 'MC đang tạm dừng. Hãy bấm Tiếp tục trước khi cho MC nói.' };
+    if (!c.enabled) return { ok: false, code: 'disabled', error: 'The MC is turned off. Enable the MC first.' };
+    if (c.paused) return { ok: false, code: 'paused', error: 'The MC is paused. Press Resume before speaking.' };
     if (this.manualInFlight) {
-      return { ok: false, code: 'busy_request', error: 'Đang tạo câu nói, vui lòng chờ một chút.' };
+      return { ok: false, code: 'busy_request', error: 'A line is being written right now. Please wait a moment.' };
     }
 
     const now = Date.now();
@@ -436,7 +436,7 @@ class McBrain {
       return {
         ok: false,
         code: 'busy',
-        error: 'MC đang đọc một thông báo ưu tiên cao hơn, chưa thể nói thêm. Thử lại sau vài giây.',
+        error: 'The MC is reading a higher-priority announcement and cannot speak over it. Try again in a few seconds.',
         retryAfterMs: this.busyUntil - now
       };
     }
@@ -448,7 +448,7 @@ class McBrain {
       return {
         ok: false,
         code: 'cooldown',
-        error: `Vừa có câu nói, vui lòng chờ ${Math.ceil(waitMs / 1000)} giây rồi bấm lại.`,
+        error: `The MC just spoke. Wait ${Math.ceil(waitMs / 1000)} more second(s) and try again.`,
         retryAfterMs: waitMs
       };
     }
@@ -459,7 +459,7 @@ class McBrain {
     try {
       const result = await this.compose('speak_now', { priority });
       if (!result.spoken) {
-        return { ok: false, code: 'not_spoken', error: 'Không đọc được câu vừa tạo (có thể trùng câu trước). Hãy thử lại.', ...result };
+        return { ok: false, code: 'not_spoken', error: 'The new line could not be spoken (it may repeat the previous one). Try again.', ...result };
       }
       return { ok: true, ...result };
     } finally {
@@ -470,8 +470,8 @@ class McBrain {
   farewellNow() {
     this.noteActivity();
     const c = this.cfg();
-    if (!c.enabled) return Promise.resolve({ ok: false, error: 'MC đang tắt.' });
-    if (c.paused) return Promise.resolve({ ok: false, error: 'MC đang tạm dừng.' });
+    if (!c.enabled) return Promise.resolve({ ok: false, error: 'The MC is turned off.' });
+    if (c.paused) return Promise.resolve({ ok: false, error: 'The MC is paused.' });
     return this.compose('farewell', { priority: c.priorities.manual });
   }
 
@@ -488,7 +488,7 @@ class McBrain {
 
   welcomeNow() {
     this.noteActivity();
-    if (!this.cfg().enabled) return Promise.resolve({ ok: false, error: 'MC đang tắt.' });
+    if (!this.cfg().enabled) return Promise.resolve({ ok: false, error: 'The MC is turned off.' });
     return this.compose('welcome', {
       name: 'our first guests',
       priority: this.cfg().priorities.welcome

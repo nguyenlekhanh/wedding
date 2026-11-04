@@ -25,9 +25,25 @@
   overflow: visible;
   --mouth: 0.12;
   --eye: 1;
+  /* luxury American reception palette (JS overrides the operator colours) */
+  --mc-blazer: #161a2e;
+  --mc-blazer-dark: #0b0e1a;
+  --mc-blazer-lapel: #232a45;
+  --mc-blouse: #f2e7d5;
+  --mc-blouse-dark: #e4d3b6;
+  --mc-trousers: #1b2030;
+  --mc-trousers-dark: #10131d;
+  --mc-shoe: #141119;
+  --mc-jewel: #e6c67f;
+  --mc-tie: #c9a24a;
+  --mc-tie-dark: #a8842f;
+  --mc-hair: #c9a15c;
+  --mc-hair-light: #e6c88f;
+  --mc-skin: #f0c9a8;
+  --mc-skin-light: #f9dfc9;
 }
 
-/* warm pink stage light behind the host */
+/* warm champagne stage light behind the host */
 .mc-glow {
   position: absolute;
   left: 50%;
@@ -35,7 +51,7 @@
   width: 300px;
   height: 340px;
   transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse at 50% 55%, rgba(255, 190, 120, 0.32), rgba(255, 70, 120, 0.16), transparent 70%);
+  background: radial-gradient(ellipse at 50% 55%, rgba(255, 214, 150, 0.3), rgba(120, 150, 255, 0.14), transparent 70%);
   mix-blend-mode: screen;
   animation: mc-glow-pulse 3.4s ease-in-out infinite alternate;
 }
@@ -50,8 +66,8 @@
   left: 50%;
   bottom: 6px;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, rgba(38, 12, 20, 0.95), rgba(74, 18, 32, 0.95));
-  border: 2px solid #ffbe53;
+  background: linear-gradient(135deg, rgba(12, 16, 30, 0.95), rgba(28, 34, 56, 0.95));
+  border: 2px solid #d9c08a;
   border-radius: 16px;
   padding: 4px 16px;
   font-size: 15px;
@@ -162,13 +178,13 @@
 .mc-stage[data-state="speaking"] .mc-glow { animation-duration: 1.8s; }
 
 /* ---------------- emotions ---------------- */
-.mc-stage[data-emotion="happy"] .mc-mouth { fill: #a8324a; }
+.mc-stage[data-emotion="happy"] .mc-mouth { fill: #b8506a; }
 .mc-stage[data-emotion="happy"] .mc-cheek { opacity: 0.85; }
 
 .mc-stage[data-emotion="surprised"] .mc-svg { --eye: 1.22; }
 .mc-stage[data-emotion="surprised"] .mc-brow-left { transform: translateY(-4px); }
 .mc-stage[data-emotion="surprised"] .mc-brow-right { transform: translateY(-4px); }
-.mc-stage[data-emotion="surprised"] .mc-mouth { fill: #7d1f30; }
+.mc-stage[data-emotion="surprised"] .mc-mouth { fill: #8c3450; }
 
 .mc-stage[data-emotion="excited"] .mc-torso { animation: mc-excited 0.62s ease-in-out infinite alternate; }
 .mc-stage[data-emotion="excited"] .mc-sparkles { opacity: 1; animation: mc-twinkle 0.9s ease-in-out infinite alternate; }

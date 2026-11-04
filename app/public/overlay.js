@@ -707,7 +707,7 @@ setInterval(spawnBubbles, 950);
 // Ambient Guest Random Chat
 const ambientLines = [
   'A hundred years of happiness! 💕',
-  '1 2 3 CHEERS! 🍻',
+  'CHEEEEEEERS! 🍻',
   'Kiss! Kiss! Kiss! 💋',
   'The bride looks absolutely stunning! ✨',
   'The groom is looking sharp! 🤵',
