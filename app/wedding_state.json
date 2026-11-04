@@ -29,7 +29,7 @@
       "youtubeUrl": "https://youtu.be/QeGfHsdDeJw",
       "youtubeId": "QeGfHsdDeJw",
       "title": "Old Wedding Songs 2021 Wedding Songs For Walk",
-      "volume": 20,
+      "volume": 50,
       "playing": true
     },
     "thanksTemplate": "Thank you {name} for the {count} {gift} for bride {bride} and groom {groom}! Wishing you and your family good health and every happiness!",
@@ -147,6 +147,36 @@
     }
   ],
   "scores": {
+    "donor-1": {
+      "id": "donor-1",
+      "name": "Sam",
+      "total": 7400000,
+      "avatar": ""
+    },
+    "donor-2": {
+      "id": "donor-2",
+      "name": "Casey",
+      "total": 360000,
+      "avatar": ""
+    },
+    "donor-3": {
+      "id": "donor-3",
+      "name": "Ibeth",
+      "total": 120000,
+      "avatar": ""
+    },
+    "donor-4": {
+      "id": "donor-4",
+      "name": "Quinn",
+      "total": 60200,
+      "avatar": ""
+    },
+    "donor-5": {
+      "id": "donor-5",
+      "name": "Taylor",
+      "total": 60000,
+      "avatar": ""
+    },
     "tik-demo-giver-1793765242811": {
       "id": "tik-demo-giver-1793765242811",
       "name": "Quinn",

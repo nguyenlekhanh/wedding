@@ -44,14 +44,31 @@ fit();
 let ytPlayer = null;
 let isYtReady = false;
 
-window.onYouTubeIframeAPIReady = function() {
-  const slot = document.getElementById('yt-player-slot');
-  if (!slot) return;
-  const container = document.createElement('div');
-  container.id = 'yt-bgm-iframe';
-  slot.append(container);
+// Safe accessor: this module runs before `currentState` is initialised, so the
+// player bootstrap must never touch it directly (TDZ ReferenceError).
+function currentBgmConfig() {
+  try {
+    return (currentState && currentState.config && currentState.config.bgm) || {};
+  } catch (e) {
+    return {};
+  }
+}
 
-  const initialVideoId = currentState?.config?.bgm?.youtubeId || 'w4Z01V4uFz8';
+// Creates the real YouTube player exactly once. Returns true when a player
+// object exists (ready or still booting), false when it must be retried.
+function initYtPlayer() {
+  if (ytPlayer) return true;
+
+  const slot = document.getElementById('yt-player-slot');
+  if (!slot || !window.YT || typeof window.YT.Player !== 'function') return false;
+
+  if (!document.getElementById('yt-bgm-iframe')) {
+    const container = document.createElement('div');
+    container.id = 'yt-bgm-iframe';
+    slot.append(container);
+  }
+
+  const initialVideoId = currentBgmConfig().youtubeId || 'w4Z01V4uFz8';
   try {
     ytPlayer = new YT.Player('yt-bgm-iframe', {
       height: '100',
@@ -68,9 +85,9 @@ window.onYouTubeIframeAPIReady = function() {
       events: {
         onReady: (event) => {
           isYtReady = true;
-          const vol = currentState?.config?.bgm?.volume ?? 50;
-          event.target.setVolume(vol);
-          if (currentState?.config?.bgm?.enabled !== false && currentState?.config?.bgm?.playing !== false) {
+          const bgm = currentBgmConfig();
+          event.target.setVolume(bgm.volume ?? 50);
+          if (bgm.enabled !== false && bgm.playing !== false) {
             event.target.playVideo();
           }
         },
@@ -79,10 +96,31 @@ window.onYouTubeIframeAPIReady = function() {
         }
       }
     });
+    return true;
   } catch (e) {
     console.warn('Could not initialize YouTube player:', e);
+    ytPlayer = null;
+    return false;
   }
-};
+}
+
+window.onYouTubeIframeAPIReady = initYtPlayer;
+
+// The IFrame API script sits in <head> and can become ready BEFORE this module
+// runs, in which case the callback above never fires and no player exists (no
+// music, nothing to duck). Try immediately and keep a short bounded poll.
+(function bootYtPlayer() {
+  // Deferred on purpose: the rest of this module (state, ducking) is not
+  // initialised yet while the module body is still evaluating.
+  setTimeout(() => {
+    if (initYtPlayer()) return;
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      if (initYtPlayer() || tries > 120) clearInterval(timer);
+    }, 250);
+  }, 0);
+})();
 
 function updateBgmState(bgmConfig) {
   if (!bgmConfig) return;
@@ -101,8 +139,9 @@ function updateBgmState(bgmConfig) {
         }
       }
       if (bgmConfig.volume !== undefined) {
-        // While the MC speaks the BGM stays ducked, even if the admin edits volume mid-sentence.
-        ytPlayer.setVolume(mcIsSpeaking() ? 0 : Number(bgmConfig.volume));
+        // The ducking controller owns the volume: while the MC speaks this keeps
+        // the ducked level (never 0), otherwise it follows the admin's slider.
+        bgmDucker.sync(Number(bgmConfig.volume));
       }
       if (bgmConfig.enabled === false || bgmConfig.playing === false) {
         ytPlayer.pauseVideo();
@@ -803,14 +842,46 @@ function mcVolume() {
   return Math.min(1, Math.max(0, Number.isFinite(v) ? v : 0.95));
 }
 
-// Lower the YouTube BGM while the MC talks, then restore the admin's volume.
+// BGM ducking: the MC talks OVER the music.
+// A single controller owns the YouTube volume: it eases from the admin's level
+// (e.g. 20) down to the configured duck level (default 12) and back to the
+// exact previous value. Consecutive lines do not re-fade, a paused/disabled MC
+// restores immediately, and nothing in this path ever pauses, stops, mutes or
+// reloads the player — only setVolume() is used.
+import { createBgmDucker } from '/mc-duck.js';
+
+function mcDuckSettings() {
+  const overrides = window.__MC_DUCK__ || {};
+  const enabled = overrides.enabled !== false && currentState?.config?.ttsDuckBgm !== false;
+  const level = Number(overrides.volume);
+  return { enabled, volume: Number.isFinite(level) ? level : 12 };
+}
+
+function bgmAdminVolume() {
+  const v = Number(currentState?.config?.bgm?.volume);
+  return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 20;
+}
+
+const bgmDucker = createBgmDucker({
+  getVolume: () => {
+    try {
+      return (isYtReady && ytPlayer && ytPlayer.getVolume) ? ytPlayer.getVolume() : null;
+    } catch (e) {
+      return null;
+    }
+  },
+  // Volume only. Music is never paused, stopped, muted or reloaded here.
+  setVolume: value => {
+    if (!isYtReady || !ytPlayer || typeof ytPlayer.setVolume !== 'function') return;
+    try { ytPlayer.setVolume(value); } catch (e) {}
+  },
+  getAdminVolume: bgmAdminVolume,
+  getSettings: mcDuckSettings
+});
+
 function duckBgm(ducked) {
-  if (currentState?.config?.ttsDuckBgm === false) return;
-  if (!isYtReady || !ytPlayer || typeof ytPlayer.setVolume !== 'function') return;
-  try {
-    const base = Number(currentState?.config?.bgm?.volume ?? 20);
-    ytPlayer.setVolume(ducked ? 0 : base);
-  } catch (e) {}
+  if (ducked) bgmDucker.duck();
+  else bgmDucker.restore();
 }
 
 function clearMcQueue() {
@@ -909,7 +980,9 @@ window.__weddingMC = () => {
       volume: el.volume
     } : null,
     bgmVolume,
-    duckEnabled: currentState?.config?.ttsDuckBgm !== false
+    youtubeReady: isYtReady,
+    duckEnabled: currentState?.config?.ttsDuckBgm !== false,
+    duck: bgmDucker.state()
   };
 };
 

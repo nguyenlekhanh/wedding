@@ -26,12 +26,15 @@ const DEFAULTS = {
   providerId: null,          // null → AI manager default provider
   model: '',
   voice: '',                 // '' → inherit the global Kokoro voice
-  personality: 'playful',    // playful | elegant | funny | formal
-  language: 'en',            // en | vi
+  personality: 'american_warm', // american_warm | american_funny | american_classic
+  language: 'en',            // en (en-US) | vi
+  duckVolume: 12,            // BGM volume while the MC speaks (never 0)
+  duckEnabled: true,         // operator can disable music ducking entirely
   speed: 0.98,               // Kokoro speaking rate for MC lines
   frequency: 1,              // 0.3–2 multiplier for idle / chat chances
   maxChars: 180,
   cooldownMs: 6000,
+  manualCooldownMs: 5000,    // dashboard "MC NÓI NGAY" anti-spam window
   giftMergeWindowMs: 2500,
   idleIntervalMs: 45000,
   autoWelcome: true,
@@ -43,7 +46,7 @@ const DEFAULTS = {
 };
 
 const LANGS = ['en', 'vi'];
-const PERSONALITIES = ['playful', 'elegant', 'funny', 'formal'];
+const PERSONALITIES = ['american_warm', 'american_funny', 'american_classic'];
 const PRESETS = ['female', 'male'];
 
 const cloneDefaults = () => JSON.parse(JSON.stringify(DEFAULTS));
@@ -86,14 +89,20 @@ function normalize(input = {}, base = DEFAULTS) {
   out.providerId = input.providerId === undefined ? base.providerId : (str(input.providerId, 40) || null);
   out.model = input.model === undefined ? base.model : str(input.model, 120);
   out.voice = input.voice === undefined ? base.voice : str(input.voice, 60);
-  out.personality = PERSONALITIES.includes(input.personality) ? input.personality : base.personality;
+  // Legacy personalities (playful/elegant/funny/formal) migrate to the American host.
+  out.personality = PERSONALITIES.includes(input.personality)
+    ? input.personality
+    : (PERSONALITIES.includes(base.personality) ? base.personality : DEFAULTS.personality);
   out.language = LANGS.includes(input.language) ? input.language : base.language;
   out.speed = clamp(input.speed ?? base.speed, 0.7, 1.5, base.speed);
   out.frequency = clamp(input.frequency ?? base.frequency, 0.3, 2, base.frequency);
   out.maxChars = clamp(input.maxChars ?? base.maxChars, 60, 320, base.maxChars);
   out.cooldownMs = clamp(input.cooldownMs ?? base.cooldownMs, 1500, 120000, base.cooldownMs);
+  out.manualCooldownMs = clamp(input.manualCooldownMs ?? base.manualCooldownMs, 2000, 60000, base.manualCooldownMs);
   out.giftMergeWindowMs = clamp(input.giftMergeWindowMs ?? base.giftMergeWindowMs, 500, 15000, base.giftMergeWindowMs);
   out.idleIntervalMs = clamp(input.idleIntervalMs ?? base.idleIntervalMs, 15000, 600000, base.idleIntervalMs);
+  out.duckVolume = clamp(input.duckVolume ?? base.duckVolume, 1, 60, base.duckVolume);
+  out.duckEnabled = input.duckEnabled === undefined ? base.duckEnabled : Boolean(input.duckEnabled);
   out.autoWelcome = input.autoWelcome === undefined ? base.autoWelcome : Boolean(input.autoWelcome);
   out.autoGift = input.autoGift === undefined ? base.autoGift : Boolean(input.autoGift);
   out.autoCeremony = input.autoCeremony === undefined ? base.autoCeremony : Boolean(input.autoCeremony);

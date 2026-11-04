@@ -1053,6 +1053,14 @@ async function handleMcRoutes(req, res, pathname) {
       return true;
     }
 
+    if (pathname === '/api/mc/speak-now' && req.method === 'POST') {
+      const result = await mc.speakNow();
+      // 429 = cooldown / a higher-priority announcement is playing / one request in flight.
+      const status = result.ok ? 200 : (['cooldown', 'busy', 'busy_request'].includes(result.code) ? 429 : 400);
+      sendJson(res, status, result);
+      return true;
+    }
+
     if (pathname === '/api/mc/farewell' && req.method === 'POST') {
       const result = await mc.farewellNow();
       sendJson(res, 200, { ok: true, result });

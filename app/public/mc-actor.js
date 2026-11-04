@@ -210,7 +210,16 @@
     return 'rgb(' + f(c.r) + ',' + f(c.g) + ',' + f(c.b) + ')';
   }
 
+  // The overlay's BGM mixer reads these; the MC config owns the duck level.
+  function applyDuckConfig(cfg) {
+    window.__MC_DUCK__ = {
+      enabled: !cfg || cfg.duckEnabled !== false,
+      volume: Number(cfg && cfg.duckVolume)
+    };
+  }
+
   function applyConfig(next) {
+    applyDuckConfig(next);
     config = Object.assign({}, config, next || {});
     config.actor = Object.assign({}, MC_DEFAULTS.actor, (next && next.actor) || config.actor);
 

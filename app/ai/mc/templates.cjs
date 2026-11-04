@@ -11,44 +11,50 @@ function pick(list, seed) {
   return list[idx];
 }
 
+// American reception voice: short, spoken, warm, a little playful.
 const EN = {
   welcome: [
-    '{name} just walked into the hall — welcome to {bride} and {groom}\'s wedding!',
-    'A warm welcome to {name}! Come on in, the celebration is just getting started.',
-    'Look who arrived — {name}! Welcome to the happiest party of the year.'
+    'Hey, {name} just walked in — welcome to the party, everybody say hi!',
+    '{name} is here! Grab a drink and get comfortable, we are just getting started.',
+    'Look who made it — {name}! Glad you are here tonight.'
   ],
   gift: [
-    'Thank you {name} for the {gift}! The whole hall is cheering for you.',
-    'What a lovely gift from {name} — {count} {gift}! Blessings to you.',
-    '{name} just sent {gift}! A hundred years of happiness to everyone here.'
+    'Thank you {name} for the {gift} — that is love right there.',
+    'Big round of applause for {name} — {count} {gift} for the newlyweds!',
+    '{name} just sent {gift}. You are making this night, thank you!'
   ],
   gift_multi: [
-    'So many kind gifts — thank you {names}! The newlyweds are overjoyed.',
-    'Look at that generosity! Thank you {names} for blessing this wedding.'
+    'Look at this room — thank you {names}, you all are too kind.',
+    'Wow, {names} — the newlyweds are feeling the love tonight. Thank you!'
   ],
   ceremony: {
-    kiss: 'The bride and groom share a kiss — true love on full display!',
-    cheers: 'Glasses up, everyone! One, two, three — cheers!',
-    dance: 'The dance floor is open — let us see those moves!',
-    cake: 'The cake is cut — sweet wishes for a hundred years of happiness!',
-    champagne: 'The champagne tower is flowing — a toast to the happy couple!',
-    petal: 'Rose petals for the newlyweds — what a beautiful moment!',
-    marry: '{name} is the new groom! Congratulations to the happy couple!'
+    kiss: 'Sealed with a kiss — let us hear it for the happy couple!',
+    cheers: 'Glasses up, everybody — one, two, three, cheers!',
+    dance: 'The floor is officially open — get out there and show us something!',
+    cake: 'Time to cut the cake — and yes, that deserves a cheer!',
+    champagne: 'Pouring the champagne — make some noise for these two!',
+    petal: 'A shower of roses for the newlyweds — what a beautiful moment.',
+    marry: '{name} is the new groom — let us hear it for the happy couple!'
   },
   interaction: [
-    'I see you in the comments, {name} — thank you for joining the party!',
-    'Lovely words from {name}! Keep the wishes coming, everyone.',
-    'The chat is on fire tonight — thank you {name} for the love!'
+    'Good call, {name} — glad you are hanging with us tonight.',
+    'Appreciate you, {name}! Keep those wishes coming, everybody.',
+    '{name} in the chat — love that. Make some noise for them too!'
   ],
+  speak_now: [
+    'All right, let us hear some noise for {bride} and {groom} — make them feel it!',
+    'If you are watching, drop a wish in the comments — the newlyweds are reading every one.',
+    'Quick check: who is ready to dance tonight? Let me see those hands!',
+    'One more round of applause for the best-looking couple in the room!'  ],
   idle: [
-    'While the music plays, let us raise a glass to {bride} and {groom}.',
-    'What a beautiful evening — {guests} guests and counting!',
-    'If you are enjoying the party, drop a wish in the comments for the newlyweds.',
-    'The cake is waiting, the music is playing — this is a wedding to remember.'
+    'Take a look around — {guests} people celebrating {bride} and {groom} tonight.',
+    'Grab a drink, find your people, and let us keep this party moving.',
+    'If you are enjoying the night, drop a wish in the comments for the newlyweds.',
+    'The music is playing, the room looks great — this is a wedding to remember.'
   ],
   farewell: [
-    'Thank you for celebrating with {bride} and {groom} — good night, everyone!',
-    'The party is winding down, but the love keeps going. Safe travels, everyone!'
+    'Thank you for celebrating with {bride} and {groom} — good night, everybody, get home safe!',
+    'That is a wrap on an amazing night. Thank you all for coming out!'
   ]
 };
 
@@ -80,6 +86,12 @@ const VI = {
     'Tôi thấy {name} trong phần bình luận — cảm ơn bạn đã chung vui!',
     'Lời chúc thật dễ thương từ {name}! Cả nhà tiếp tục gửi lời chúc nhé.',
     'Phòng live đang rất sôi động — cảm ơn {name} rất nhiều!'
+  ],
+  speak_now: [
+    'Hội trường đang im ắng quá, cả nhà cùng gửi một tràng pháo tay chúc mừng {bride} và {groom} nào!',
+    'Nếu bạn đang xem, hãy để lại một lời chúc cho đôi uyên ương — cô dâu chú rể đang đọc từng lời đấy.',
+    'Bật mí nhỏ về cặp đôi này: đến giờ họ vẫn nắm tay y như buổi hẹn đầu tiên.',
+    'Cả nhà nâng ly nào — thêm một tràng cổ vũ cho cặp đôi hạnh phúc nhất hội trường!'
   ],
   idle: [
     'Trong lúc nhạc vang, cả nhà cùng nâng ly chúc mừng {bride} và {groom}.',

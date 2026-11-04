@@ -146,7 +146,7 @@ async function main() {
   }
 
   // 5. sanitising: markdown, URL, emoji never reach the voice
-  const dirty = `**Xin chào** https://evil.example.com/x 🎉 hãy nâng ly chúc mừng lần ${salt}!`;
+  const dirty = `**Hello** https://evil.example.com/x 🎉 ... ${salt}!`;
   await api('/api/mc/say', { method: 'POST', body: { text: dirty } });
   const cleanEvt = await waitFor((e) => e.event === 'tts' && e.data.mc && /nâng ly/.test(e.data.text), 20000);
   ok('Làm sạch thoại: bỏ markdown / URL / emoji',
@@ -165,10 +165,38 @@ async function main() {
     `spoken=${dupe.json?.spoken}, tts mới=${countSince(markDupe, (e) => e.event === 'tts')}`);
   ok('Bộ đếm chống trùng tăng', (await api('/api/mc/status')).json.runtime.stats.suppressed >= 1);
 
+  // 6b. dashboard "🎤 MC NÓI NGAY" — generate and speak immediately
+  await sleep(2400);
+  const idleConfigured = (await api('/api/mc/config')).json.config.idleIntervalMs;
+  const markNow = Date.now();
+  const nowRes = await api('/api/mc/speak-now', { method: 'POST' });
+  const nowEvt = await waitFor((e) => e.at >= markNow && e.event === 'tts' && e.data.mcKind === 'speak_now', 25000);
+  ok('POST /api/mc/speak-now trả 200 và tạo câu ngay', nowRes.status === 200 && nowRes.json.ok === true && !!nowEvt,
+    `${nowEvt ? nowEvt.at - markNow : '?'} ms`);
+  ok('Không phải chờ chu kỳ idle', !!nowEvt && (nowEvt.at - markNow) < idleConfigured,
+    `tts sau ${nowEvt ? nowEvt.at - markNow : '?'} ms, idle=${idleConfigured} ms`);
+  ok('Câu nói-ngay đã qua sanitizer + giới hạn độ dài',
+    !!nowEvt && nowEvt.data.text.length <= 120 && !/https?:|\*|🎉/.test(nowEvt.data.text),
+    nowEvt ? JSON.stringify(nowEvt.data.text) : 'không có tts');
+  ok('Ưu tiên thủ công 8 (dưới nghi thức 10, trên quà 5)', !!nowEvt && nowEvt.data.priority === 8,
+    nowEvt ? `priority=${nowEvt.data.priority}` : '');
+  ok('Cờ MC đầy đủ cho actor (mc, mcKind, emotion)',
+    !!nowEvt && nowEvt.data.mc === true && nowEvt.data.mcKind === 'speak_now' && !!nowEvt.data.emotion);
+  ok('Audio đi qua Kokoro (URL WAV tải được)', !!nowEvt && /^\/api\/tts\/audio\/[a-f0-9]{40}\.wav$/.test(nowEvt.data.url),
+    nowEvt ? nowEvt.data.url : '');
+
+  // spam guard: second click while the first line is still playing is refused
+  const markSpam = Date.now();
+  const spam = await api('/api/mc/speak-now', { method: 'POST' });
+  await sleep(1200);
+  ok('Bấm liên tiếp bị chặn (429, không sinh câu mới)',
+    spam.status === 429 && spam.json.ok === false && countSince(markSpam, (e) => e.event === 'tts') === 0,
+    `status=${spam.status} · ${spam.json.error || ''}`);
+
   // 7. rapid gift burst → merged into a single line
-  await sleep(2400); // clear the global cooldown
+  await sleep(6000); // clear cooldown AND the previous line's playback window
   const markBurst = Date.now();
-  const gifts = ['Lan', 'Minh', 'Hoa', 'Tuan'];
+  const gifts = ['Ibeth', 'Daniel', 'Taylor', 'Charles'];
   for (let i = 0; i < gifts.length; i += 1) {
     await api('/api/demo', {
       method: 'POST',
@@ -190,6 +218,16 @@ async function main() {
   });
   const crownEvt = await waitFor((e) => e.at >= markCrown && e.event === 'tts' && e.data.priority === 10, 25000);
   ok('Cướp rể / trao vương miện giữ ưu tiên 10', !!crownEvt, crownEvt ? `kind=${crownEvt.data.mcKind}` : 'không có');
+
+  // 8b. a manual request must not interrupt the crown announcement
+  const markBusy = Date.now();
+  const busyRes = await api('/api/mc/speak-now', { method: 'POST' });
+  await sleep(1000);
+  ok('Không chen ngang thông báo cướp rể (ưu tiên 10)',
+    busyRes.status === 429 && /ưu tiên cao hơn|quan trọng/i.test(busyRes.json.error || ''),
+    `status=${busyRes.status} · ${busyRes.json.error || ''}`);
+  ok('Không có câu nói-ngay nào chen vào nghi thức',
+    countSince(markBusy, (e) => e.event === 'tts' && e.data.mcKind === 'speak_now') === 0);
 
   // 9. prompt injection from a comment never reaches the MC
   const markInject = Date.now();
@@ -219,6 +257,13 @@ async function main() {
   ok('Thông báo tay cũng bị chặn khi tạm dừng',
     countSince(markPause, (e) => e.event === 'tts') === 0);
 
+  const pausedNow = await api('/api/mc/speak-now', { method: 'POST' });
+  await sleep(600);
+  ok('MC tạm dừng → từ chối “NÓI NGAY”',
+    pausedNow.status === 400 && /tạm dừng/i.test(pausedNow.json.error || '') &&
+    countSince(markPause, (e) => e.event === 'tts') === 0,
+    `status=${pausedNow.status} · ${pausedNow.json.error || ''}`);
+
   await api('/api/mc/resume', { method: 'POST' });
 
   // 11. disable → no automatic speech at all
@@ -230,6 +275,14 @@ async function main() {
   });
   await sleep(2500);
   ok('Tắt MC → không tự động nói', countSince(markOff, (e) => e.event === 'tts') === 0);
+
+  const offNow = await api('/api/mc/speak-now', { method: 'POST' });
+  await sleep(600);
+  ok('MC tắt → từ chối “NÓI NGAY”',
+    offNow.status === 400 && /tắt/i.test(offNow.json.error || '') &&
+    countSince(markOff, (e) => e.event === 'tts') === 0,
+    `status=${offNow.status} · ${offNow.json.error || ''}`);
+
   await api('/api/mc/config', { method: 'POST', body: { enabled: true } });
 
   // 12. provider failure → scripted fallback still speaks
@@ -302,6 +355,130 @@ async function main() {
   ok('Lời tạm biệt đi qua Kokoro kèm cờ farewell cho actor', !!farewellEvt,
     farewellEvt ? JSON.stringify(farewellEvt.data.text) : 'không có tts');
 
+  // 18. American reception defaults + music ducking
+  const mcCfgNow = (await api('/api/mc/config')).json.config;
+  ok('MC mặc định là host tiệc cưới Mỹ', mcCfgNow.personality === 'american_warm', mcCfgNow.personality);
+  ok('Ngôn ngữ mặc định en-US (en)', mcCfgNow.language === 'en', mcCfgNow.language);
+  ok('Ducking mặc định 12% và đang bật', mcCfgNow.duckVolume === 12 && mcCfgNow.duckEnabled === true,
+    `${mcCfgNow.duckVolume}% / ${mcCfgNow.duckEnabled}`);
+
+  const duck = await import('../../public/mc-duck.js');
+  const down = duck.fadeSteps(20, duck.duckTarget(20, 12), 650);
+  const up = duck.fadeSteps(down[down.length - 1], 20, 850);
+  ok('Nhạc 20 → 12, không bao giờ về 0',
+    duck.duckTarget(20, 12) === 12 && down[0] === 20 && down[down.length - 1] === 12 && !down.includes(0),
+    `steps=${down.length} [${down.slice(0, 3).join(',')}…${down[down.length - 1]}]`);
+  ok('Nhạc trở lại đúng 20 sau khi MC nói xong', up[up.length - 1] === 20 && !up.includes(0),
+    `steps=${up.length}`);
+  ok('Chuyển âm lượng mượt (mỗi bước ≤ 2%)',
+    down.length >= 8 && down.every((v, i, a) => i === 0 || Math.abs(v - a[i - 1]) <= 2));
+  ok('Không tự tăng nhạc khi admin để dưới 12', duck.duckTarget(5, 12) === 5);
+
+  const overlayJs = await (await fetch(BASE + '/overlay.js')).text();
+  ok('Overlay dùng bộ ducking chung, không còn đường nào đặt volume = 0',
+    /createBgmDucker/.test(overlayJs) && !/setVolume\([^)]*\?\s*0\b/.test(overlayJs) && /import \{ createBgmDucker \}/.test(overlayJs));
+  ok('Trang phục vụ /mc-duck.js cho overlay', (await fetch(BASE + '/mc-duck.js')).status === 200);
+
+  // Ducking controller driven with a fake YouTube player (no browser needed).
+  function duckHarness(o) {
+    o = o || {};
+    const settings = { enabled: o.enabled !== false, volume: o.duck === undefined ? 12 : o.duck };
+    const admin = { value: o.admin === undefined ? 20 : o.admin };
+    const player = { volume: o.start === undefined ? 20 : o.start, writes: [], min: null, max: null };
+    const timers = new Map();
+    let seq = 0;
+    const ducker = duck.createBgmDucker({
+      getVolume: () => player.volume,
+      setVolume: v => {
+        player.volume = v;
+        player.writes.push(v);
+        player.min = player.min === null ? v : Math.min(player.min, v);
+        player.max = player.max === null ? v : Math.max(player.max, v);
+      },
+      getAdminVolume: () => admin.value,
+      getSettings: () => settings,
+      setTimer: fn => { seq += 1; timers.set(seq, fn); return seq; },
+      clearTimer: id => timers.delete(id)
+    });
+    const tick = n => {
+      for (let i = 0; i < (n || 60); i += 1) {
+        for (const [id, fn] of Array.from(timers.entries())) if (timers.has(id)) fn();
+      }
+    };
+    return { ducker, player, settings, admin, tick };
+  }
+
+  const d20 = duckHarness({ start: 20, admin: 20 });
+  d20.ducker.duck();
+  d20.tick(60);
+  ok('Nhạc 20 → 12 khi MC nói', d20.player.volume === 12, `vol=${d20.player.volume} steps=${d20.player.writes.length}`);
+  d20.ducker.restore();
+  d20.tick(60);
+  ok('Nhạc trở lại đúng 20 khi MC nói xong', d20.player.volume === 20, `vol=${d20.player.volume}`);
+  ok('Không lúc nào nhạc bị tắt hẳn (min ≥ 1)', d20.player.min >= 1, `min=${d20.player.min}`);
+
+  const d50 = duckHarness({ start: 50, admin: 50 });
+  d50.ducker.duck();
+  d50.tick(60);
+  const mid50 = d50.player.volume;
+  d50.ducker.restore();
+  d50.tick(60);
+  ok('Nhạc 50 → 12 → 50', mid50 === 12 && d50.player.volume === 50, `${mid50} → ${d50.player.volume}`);
+
+  const d8 = duckHarness({ start: 8, admin: 8 });
+  d8.ducker.duck();
+  d8.tick(60);
+  const d8duck = d8.player.volume;
+  d8.ducker.restore();
+  d8.tick(60);
+  ok('Nhạc đang 8 thì giữ 8 (không tự tăng lên 12)', d8duck === 8 && d8.player.volume === 8 && d8.player.max === 8,
+    `duck=${d8duck} after=${d8.player.volume} max=${d8.player.max}`);
+
+  const dSeq = duckHarness({ start: 20, admin: 20 });
+  dSeq.ducker.duck();
+  dSeq.tick(4);
+  const beforeSeq = dSeq.player.writes.length;
+  dSeq.ducker.duck();
+  dSeq.ducker.duck();
+  dSeq.tick(12);
+  const jumpedBack = dSeq.player.writes.slice(beforeSeq).some(v => v >= 20);
+  ok('Nhiều câu MC liên tiếp không fade lại / không nhảy về 20', !jumpedBack && dSeq.ducker.state().active === true,
+    `writes=${dSeq.player.writes.length}`);
+
+  const dInt = duckHarness({ start: 20, admin: 20 });
+  dInt.ducker.duck();
+  dInt.tick(3);
+  const midInt = dInt.player.volume;
+  dInt.ducker.restore();
+  dInt.tick(60);
+  ok('MC bị ngắt giữa chừng vẫn trả nhạc về 20', midInt < 20 && dInt.player.volume === 20, `${midInt} → ${dInt.player.volume}`);
+
+  const dOff = duckHarness({ start: 20, admin: 20, enabled: false });
+  dOff.ducker.duck();
+  dOff.tick(60);
+  dOff.ducker.restore();
+  dOff.tick(60);
+  ok('Tắt ducking thì không đụng vào âm lượng YouTube', dOff.player.writes.length === 0 && dOff.player.volume === 20,
+    `writes=${dOff.player.writes.length}`);
+
+  const dSync = duckHarness({ start: 20, admin: 20 });
+  dSync.ducker.duck();
+  dSync.tick(60);
+  dSync.admin.value = 35;
+  dSync.ducker.sync(35);
+  dSync.tick(60);
+  const duringSync = dSync.player.volume;
+  dSync.ducker.restore();
+  dSync.tick(60);
+  ok('Admin đổi nhạc giữa lúc MC nói: vẫn duck 12, sau đó trả đúng 35', duringSync === 12 && dSync.player.volume === 35,
+    `${duringSync} → ${dSync.player.volume}`);
+
+  const duckSrc = await (await fetch(BASE + '/mc-duck.js')).text();
+  ok('Bộ ducking không bao giờ pause/stop/mute nhạc', !/(pauseVideo|stopVideo|\.mute\(|\.unMute\()/.test(duckSrc));
+  const panelSrc2 = await (await fetch(BASE + '/mc-panel.js')).text();
+  ok('Dashboard có âm lượng giảm nhạc, bật/tắt và mặc định Mỹ',
+    /mc-duck-volume/.test(panelSrc2) && /mc-duck-enabled/.test(panelSrc2) && /american_warm/.test(panelSrc2));
+
   // Restore a sane production configuration (tests shorten the cooldowns).
   await api('/api/mc/config', {
     method: 'POST',
@@ -309,9 +486,15 @@ async function main() {
       enabled: true, paused: false,
       actor: { preset: 'female', style: 'dress', accessory: 'veil', skin: '#f2c6a4', hair: '#3a2318', outfit: '#a51f3c' },
       language: 'en', maxChars: 180, cooldownMs: 6000, giftMergeWindowMs: 2500, idleIntervalMs: 45000,
+      personality: 'american_warm', duckVolume: 12, duckEnabled: true,
       autoWelcome: true, autoGift: true, autoCeremony: true, autoInteraction: true, idleHosting: true
     }
   });
+
+  const after = await api('/api/mc/config');
+  ok('Chu kỳ giữ nhịp tự động không bị thay đổi',
+    after.json.config.idleIntervalMs === 45000 && after.json.config.idleHosting === true,
+    `idle=${after.json.config.idleIntervalMs}ms hosting=${after.json.config.idleHosting}`);
 
   console.log('\n' + '='.repeat(60));
   console.log(`${results.length - failed}/${results.length} checks passed`);

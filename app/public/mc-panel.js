@@ -54,6 +54,11 @@
       '    <div class="form-group"><label>Dòng vừa đọc:</label><input type="text" id="mc-last-line" readonly placeholder="—"></div>',
       '    <div class="form-group"><label>Lỗi gần nhất:</label><input type="text" id="mc-last-error" readonly placeholder="Không có lỗi"></div>',
       '  </div>',
+      '  <div class="mc-now-bar">',
+      '    <button class="btn mc-btn-now" id="mc-btn-speaknow" type="button">🎤 MC NÓI NGAY</button>',
+      '    <span class="mc-now-hint">Tạo và đọc ngay một câu mới, không phải chờ chu kỳ giữ nhịp. Giới hạn 5 giây mỗi lần và không chen ngang thông báo nghi thức quan trọng.</span>',
+      '  </div>',
+      '  <div id="mc-now-result" class="ai-note"></div>',
       '  <div class="panel-footer">',
       '    <button class="btn btn-secondary" id="mc-btn-pause">⏸️ Tạm dừng MC</button>',
       '    <button class="btn btn-secondary" id="mc-btn-resume">▶️ Tiếp tục MC</button>',
@@ -80,13 +85,12 @@
       '    <div class="form-group"><label>Tốc độ đọc:</label><input type="number" id="mc-speed" min="0.7" max="1.5" step="0.02" value="0.98"></div>',
       '    <div class="form-group"><label>Nhà cung cấp AI:</label><select id="mc-provider"><option value="">Theo mặc định hệ thống</option></select></div>',
       '    <div class="form-group"><label>Model (trống = model của nhà cung cấp):</label><input type="text" id="mc-model" list="mc-model-list" placeholder="openrouter/free"><datalist id="mc-model-list"></datalist></div>',
-      '    <div class="form-group"><label>Tính cách:</label><select id="mc-personality">',
-      '      <option value="playful">Duyên dáng, vui tươi</option>',
-      '      <option value="elegant">Trang trọng, lịch thiệp</option>',
-      '      <option value="funny">Hài hước, tếu táo</option>',
-      '      <option value="formal">Nghiêm túc, ngắn gọn</option>',
+      '    <div class="form-group"><label>Tính cách MC (chuẩn tiệc cưới Mỹ):</label><select id="mc-personality">',
+      '      <option value="american_warm">Ấm áp, lôi cuốn (mặc định)</option>',
+      '      <option value="american_funny">Hài hước, tinh nghịch</option>',
+      '      <option value="american_classic">Thanh lịch, chững chạc</option>',
       '    </select></div>',
-      '    <div class="form-group"><label>Ngôn ngữ nói:</label><select id="mc-language"><option value="en">Tiếng Anh</option><option value="vi">Tiếng Việt</option></select></div>',
+      '    <div class="form-group"><label>Ngôn ngữ nói:</label><select id="mc-language"><option value="en">Tiếng Anh (Mỹ) – en-US</option><option value="vi">Tiếng Việt</option></select></div>',
       '    <div class="form-group"><label>Tần suất nói (0.3–2):</label><input type="number" id="mc-frequency" min="0.3" max="2" step="0.1" value="1"></div>',
       '    <div class="form-group"><label>Độ dài tối đa (ký tự):</label><input type="number" id="mc-maxchars" min="60" max="320" step="10" value="180"></div>',
       '  </div>',
@@ -109,6 +113,8 @@
       '    <div class="form-group"><label>Khoảng lặng giữa các câu (giây):</label><input type="number" id="mc-cooldown" min="1.5" max="120" step="0.5" value="6"></div>',
       '    <div class="form-group"><label>Gộp quà liên tiếp trong (giây):</label><input type="number" id="mc-merge" min="0.5" max="15" step="0.5" value="2.5"></div>',
       '    <div class="form-group"><label>Chu kỳ giữ nhịp (giây):</label><input type="number" id="mc-idle-interval" min="15" max="600" step="5" value="45"></div>',
+      '    <div class="form-group"><label>Giảm nhạc khi MC nói:</label><select id="mc-duck-enabled"><option value="true">Bật</option><option value="false">Tắt</option></select></div>',
+      '    <div class="form-group"><label>Âm lượng nhạc khi MC nói (%):</label><input type="number" id="mc-duck-volume" min="1" max="60" step="1" value="12"></div>',
       '  </div>',
       '  <div class="form-grid mc-priority-grid">',
       '    <div class="form-group"><label>Ưu tiên — chào khách:</label><input type="number" id="mc-p-welcome" min="1" max="10" value="6"></div>',
@@ -140,6 +146,7 @@
 
   function bind() {
     $('#mc-btn-save').addEventListener('click', save);
+    $('#mc-btn-speaknow').addEventListener('click', speakNow);
     $('#mc-btn-pause').addEventListener('click', function () { act('/api/mc/pause'); });
     $('#mc-btn-resume').addEventListener('click', function () { act('/api/mc/resume'); });
     $('#mc-btn-refresh').addEventListener('click', load);
@@ -194,6 +201,8 @@
     $('#mc-cooldown').value = (Number(c.cooldownMs) || 6000) / 1000;
     $('#mc-merge').value = (Number(c.giftMergeWindowMs) || 2500) / 1000;
     $('#mc-idle-interval').value = (Number(c.idleIntervalMs) || 45000) / 1000;
+    $('#mc-duck-enabled').value = String(c.duckEnabled !== false);
+    $('#mc-duck-volume').value = Number.isFinite(Number(c.duckVolume)) ? Number(c.duckVolume) : 12;
     var p = c.priorities || {};
     $('#mc-p-welcome').value = p.welcome || 6;
     $('#mc-p-gift').value = p.gift || 5;
@@ -255,6 +264,8 @@
       cooldownMs: (Number($('#mc-cooldown').value) || 6) * 1000,
       giftMergeWindowMs: (Number($('#mc-merge').value) || 2.5) * 1000,
       idleIntervalMs: (Number($('#mc-idle-interval').value) || 45) * 1000,
+      duckEnabled: $('#mc-duck-enabled').value === 'true',
+      duckVolume: Number($('#mc-duck-volume').value) || 12,
       priorities: {
         welcome: Number($('#mc-p-welcome').value) || 6,
         gift: Number($('#mc-p-gift').value) || 5,
@@ -293,6 +304,34 @@
       if (okText) notice(okText);
     } catch (e) {
       notice('❌ ' + e.message);
+    }
+  }
+
+  async function speakNow() {
+    var btn = $('#mc-btn-speaknow');
+    var out = $('#mc-now-result');
+    if (!btn || btn.disabled) return;
+
+    var original = btn.textContent;
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.textContent = '⏳ Đang tạo câu nói…';
+    if (out) { out.textContent = '🧠 MC đang nghĩ một câu mới…'; out.style.color = '#ffd88a'; }
+
+    try {
+      var r = await api('/api/mc/speak-now', { method: 'POST' });
+      var res = r.result || r;
+      if (out) {
+        out.textContent = '✅ MC: ' + (res.text || '') + (res.source === 'ai' ? '  •  AI' : '  •  mẫu câu dự phòng');
+        out.style.color = '#8ff0b0';
+      }
+      await load();
+    } catch (e) {
+      if (out) { out.textContent = '⚠️ ' + e.message; out.style.color = '#ff9f9f'; }
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.textContent = original;
     }
   }
 
