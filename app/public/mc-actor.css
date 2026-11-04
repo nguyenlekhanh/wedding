@@ -1,0 +1,230 @@
+/* ========================================================
+   AI WEDDING MC — 2D SVG stage actor
+   Lightweight DOM/SVG + CSS animation. No game engine, no canvas loop,
+   safe for OBS Browser Source at 1080x1920.
+   ======================================================== */
+
+.mc-stage {
+  position: absolute;
+  left: 44px;
+  top: 690px;
+  width: 320px;
+  height: 470px;
+  z-index: 26;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  transition: opacity 0.35s ease, transform 0.5s ease, filter 0.35s ease;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.55));
+}
+
+.mc-stage[hidden] { display: none; }
+
+.mc-stage .mc-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  --mouth: 0.12;
+  --eye: 1;
+}
+
+/* warm pink stage light behind the host */
+.mc-glow {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 300px;
+  height: 340px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at 50% 55%, rgba(255, 190, 120, 0.32), rgba(255, 70, 120, 0.16), transparent 70%);
+  mix-blend-mode: screen;
+  animation: mc-glow-pulse 3.4s ease-in-out infinite alternate;
+}
+
+@keyframes mc-glow-pulse {
+  from { opacity: 0.55; transform: translate(-50%, -50%) scale(0.97); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+}
+
+.mc-nameplate {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(38, 12, 20, 0.95), rgba(74, 18, 32, 0.95));
+  border: 2px solid #ffbe53;
+  border-radius: 16px;
+  padding: 4px 16px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: #fff3d6;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+
+.mc-nameplate .mc-live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff3d6e;
+  margin-right: 6px;
+  animation: mc-live-blink 1.4s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+@keyframes mc-live-blink {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; box-shadow: 0 0 8px #ff3d6e; }
+}
+
+.mc-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: 78%;
+  max-width: 300px;
+  transform: translate(-50%, 8px);
+  background: rgba(20, 8, 12, 0.92);
+  border: 1.5px solid rgba(255, 190, 83, 0.7);
+  border-radius: 14px;
+  padding: 8px 12px;
+  color: #fff6e4;
+  font-size: 15px;
+  line-height: 1.28;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.mc-bubble.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------------- idle motion ---------------- */
+.mc-torso {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: mc-breathe 4.2s ease-in-out infinite;
+}
+
+@keyframes mc-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.012); }
+}
+
+.mc-head {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: mc-head-sway 5.4s ease-in-out infinite;
+}
+
+@keyframes mc-head-sway {
+  0%, 100% { transform: rotate(-1.6deg) translateY(0); }
+  50% { transform: rotate(1.8deg) translateY(-2px); }
+}
+
+.mc-eye { transform-box: fill-box; transform-origin: 50% 50%; animation: mc-blink 6.4s infinite; }
+.mc-eye.right { animation-delay: 0.08s; }
+
+@keyframes mc-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  94.5% { transform: scaleY(0.08); }
+  97% { transform: scaleY(1); }
+}
+
+/* mouth opening is driven by JS (audio envelope) through --mouth */
+.mc-mouth {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  transform: scaleY(var(--mouth));
+  transition: transform 0.05s linear;
+}
+
+.mc-arm-mic { transform-box: fill-box; transform-origin: 12% 8%; }
+.mc-arm-free { transform-box: fill-box; transform-origin: 88% 8%; }
+.mc-arm-free.waving { animation: mc-wave 0.55s ease-in-out infinite alternate; }
+
+@keyframes mc-wave {
+  from { transform: rotate(-6deg); }
+  to { transform: rotate(18deg); }
+}
+
+.mc-sparkles { opacity: 0; transition: opacity 0.3s ease; }
+
+/* ---------------- speaking ---------------- */
+.mc-stage[data-state="speaking"] .mc-head { animation-duration: 1.6s; }
+.mc-stage[data-state="speaking"] .mc-torso { animation-duration: 2.4s; }
+.mc-stage[data-state="speaking"] .mc-arm-mic { animation: mc-mic-gesture 1.8s ease-in-out infinite alternate; }
+
+@keyframes mc-mic-gesture {
+  from { transform: rotate(0deg) translateY(0); }
+  to { transform: rotate(-3.5deg) translateY(-3px); }
+}
+
+.mc-stage[data-state="speaking"] .mc-glow { animation-duration: 1.8s; }
+
+/* ---------------- emotions ---------------- */
+.mc-stage[data-emotion="happy"] .mc-mouth { fill: #a8324a; }
+.mc-stage[data-emotion="happy"] .mc-cheek { opacity: 0.85; }
+
+.mc-stage[data-emotion="surprised"] .mc-svg { --eye: 1.22; }
+.mc-stage[data-emotion="surprised"] .mc-brow-left { transform: translateY(-4px); }
+.mc-stage[data-emotion="surprised"] .mc-brow-right { transform: translateY(-4px); }
+.mc-stage[data-emotion="surprised"] .mc-mouth { fill: #7d1f30; }
+
+.mc-stage[data-emotion="excited"] .mc-torso { animation: mc-excited 0.62s ease-in-out infinite alternate; }
+.mc-stage[data-emotion="excited"] .mc-sparkles { opacity: 1; animation: mc-twinkle 0.9s ease-in-out infinite alternate; }
+.mc-stage[data-emotion="excited"] .mc-glow { opacity: 1; }
+
+@keyframes mc-excited {
+  from { transform: translateY(0) scale(1); }
+  to { transform: translateY(-7px) scale(1.03); }
+}
+
+@keyframes mc-twinkle {
+  from { opacity: 0.25; }
+  to { opacity: 1; }
+}
+
+.mc-eye-white { transition: transform 0.2s ease; transform-box: fill-box; transform-origin: 50% 50%; }
+.mc-stage[data-emotion="surprised"] .mc-eye-white { transform: scale(var(--eye, 1)); }
+
+/* ---------------- welcome / farewell ---------------- */
+.mc-stage[data-state="enter"] { animation: mc-enter 0.9s cubic-bezier(0.22, 1.2, 0.36, 1) both; }
+@keyframes mc-enter {
+  from { opacity: 0; transform: translateX(-70px) scale(0.85); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.mc-stage[data-state="leave"] { animation: mc-leave 1s ease-in both; }
+@keyframes mc-leave {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-80px) scale(0.9); }
+}
+
+/* ---------------- farewell ---------------- */
+.mc-stage[data-state="farewell"] .mc-arm-free { animation: mc-wave 0.6s ease-in-out infinite alternate; }
+.mc-stage[data-state="farewell"] .mc-torso { animation: mc-bow 2.6s ease-in-out infinite; }
+.mc-stage[data-state="farewell"] .mc-head { animation: mc-head-bow 2.6s ease-in-out infinite; }
+
+@keyframes mc-bow {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(1.6deg) translateY(3px); }
+}
+
+@keyframes mc-head-bow {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(6deg) translateY(2px); }
+}
+
+/* ---------------- paused / disabled ---------------- */
+.mc-stage[data-state="paused"] { filter: grayscale(0.85) brightness(0.6); opacity: 0.75; }
+.mc-stage[data-state="paused"] .mc-live-dot { background: #8b8b8b; animation: none; }
+.mc-stage[data-state="paused"] .mc-glow { opacity: 0.15; }
+
+.mc-stage .mc-zzz { opacity: 0; }
+.mc-stage[data-state="paused"] .mc-zzz { opacity: 1; animation: mc-zzz 2.4s ease-in-out infinite; }
+
+@keyframes mc-zzz {
+  0% { opacity: 0; transform: translateY(4px); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-12px); }
+}

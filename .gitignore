@@ -42,3 +42,7 @@ app/ai/.master.key
 app/ai/ai_usage.json
 app/ai/ai_config.json.tmp
 app/ai/backup/
+
+# AI Wedding MC runtime config
+app/ai/mc_config.json
+app/ai/mc_config.json.tmp

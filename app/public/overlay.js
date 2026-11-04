@@ -825,6 +825,9 @@ function clearMcQueue() {
   duckBgm(false);
 }
 
+// The AI MC actor asks for silence when the operator pauses or disables it.
+window.addEventListener('wedding:clear-mc', () => clearMcQueue());
+
 function playNextMc() {
   if (mcCurrent) return;
   const item = mcQueue.shift();

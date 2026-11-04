@@ -25,8 +25,8 @@ const tts = new TtsService({
 // Default initial state with Marriage Auction & Funny Teasing Voice
 const defaultState = {
   config: {
-    groom: "Tuấn Anh",
-    bride: "Mai Vy",
+    groom: "Sam",
+    bride: "Jennifer",
     title: "WEDDING LIVE",
     slogan: "A Hundred Years of Happiness",
     date: "2026-11-03",
@@ -120,9 +120,9 @@ const defaultState = {
     { id: 'guest-19', name: 'Alexander', avatar: '', sprite: 1, table: 18, seat: 0, statusTag: '💃 Dancing all night' },
     { id: 'guest-20', name: 'Samuel', avatar: '', sprite: 2, table: 19, seat: 1, statusTag: '👑 Next in line' },
     { id: 'guest-21', name: 'Morgan', avatar: '', sprite: 5, table: 20, seat: 2, statusTag: '💐 Waiting for the bouquet' },
-    { id: 'guest-22', name: 'Hải Đăng', avatar: '', sprite: 0, table: 21, seat: 0, statusTag: '🍻 Drink it all' },
-    { id: 'guest-23', name: 'Trúc Ly', avatar: '', sprite: 4, table: 22, seat: 1, statusTag: '🎉 Absolutely radiant' },
-    { id: 'guest-24', name: 'Đức Quân', avatar: '', sprite: 1, table: 23, seat: 2, statusTag: '👑 Big Spender' }
+    { id: 'guest-22', name: 'Charles', avatar: '', sprite: 0, table: 21, seat: 0, statusTag: '🍻 Drink it all' },
+    { id: 'guest-23', name: 'Taylor', avatar: '', sprite: 4, table: 22, seat: 1, statusTag: '🎉 Absolutely radiant' },
+    { id: 'guest-24', name: 'Daniel', avatar: '', sprite: 1, table: 23, seat: 2, statusTag: '👑 Big Spender' }
   ],
   scores: {
     'donor-1': { id: 'donor-1', name: 'Sam', total: 7400000, avatar: '' },
@@ -207,10 +207,12 @@ function announce(text, priority = SPEECH_PRIORITY.gift, meta = {}) {
   }
 
   const id = `mc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  // meta.voice / meta.speed let the AI MC use its own voice and rate without
+  // changing the global TTS settings.
   return tts.speak({
     text: clean,
-    voice: state.config.ttsVoice || 'af_heart',
-    speed: Number(state.config.ttsSpeed) || Number(state.config.voiceRate) || 0.98
+    voice: meta.voice || state.config.ttsVoice || 'af_heart',
+    speed: Number(meta.speed) || Number(state.config.ttsSpeed) || Number(state.config.voiceRate) || 0.98
   }).then((result) => {
     broadcast('tts', {
       id,
@@ -281,6 +283,8 @@ function processJoinEvent(user) {
     state.stats.guests++;
   }
   broadcast('activity', { type: 'join', id, name: person.name, avatar: person.avatar });
+  // AI MC welcome line (fire and forget: never blocks the TikFinity processor).
+  try { void mc.onJoin({ name: person.name }); } catch (e) {}
   broadcast('state', state);
   persistState();
 }
@@ -325,6 +329,8 @@ function processChatEvent(chat) {
   if (triggeredAction) {
     broadcast('action', { action: triggeredAction, initiator: name });
   }
+  // The MC may host the ceremony moment or occasionally answer a comment.
+  try { void mc.onChat({ name, comment, triggeredAction }); } catch (e) {}
   broadcast('state', state);
   persistState();
 }
@@ -430,7 +436,13 @@ function processGiftEvent(giftData) {
   const speechPriority = becameGroom ? SPEECH_PRIORITY.marry : SPEECH_PRIORITY.gift;
   const speechMeta = { kind: becameGroom ? 'marry' : 'gift', name, gift, count };
   const textTask = becameGroom ? 'marry_crown' : 'gift_thankyou';
-  if (ai.isTextGenerationEnabled(textTask)) {
+  if (mc.isPaused()) {
+    // The operator paused the MC: it stays silent (instant, no queueing).
+  } else if (mc.isAutoEnabled(becameGroom ? 'ceremony' : 'gift')) {
+    // AI Wedding MC owns the line; it merges gift bursts and falls back to the
+    // scripted template when generation fails.
+    void mc.onGift({ name, gift, count, becameGroom, previousGroom, priority: speechPriority, fallback: funnyMessage });
+  } else if (ai.isTextGenerationEnabled(textTask)) {
     const settings = ai.getTextSettings();
     const aiTimeout = Number(settings.timeoutMs) || 5000;
     const controller = new AbortController();
@@ -950,6 +962,133 @@ async function handleAiRoutes(req, res, pathname, url) {
   }
 }
 
+// ========================================================
+// AI WEDDING MC (/api/mc/*)
+// A virtual host on the stage. It brings NO new AI or TTS engine: it composes
+// text with the existing provider manager and hands the line to announce(),
+// which is the existing Kokoro queue (priority, caching, BGM ducking).
+// ========================================================
+const mcStore = require('./ai/mc/config.cjs');
+const { McBrain } = require('./ai/mc/brain.cjs');
+mcStore.load();
+
+const mc = new McBrain({
+  announce: (text, priority, meta) => announce(text, priority, meta),
+  getState: () => state,
+  ai,
+  store: mcStore,
+  broadcast: (event, data) => broadcast(event, data)
+});
+
+// Idle hosting is driven by a slow tick; the brain itself enforces the interval.
+setInterval(() => { try { mc.tickIdle(); } catch (e) {} }, 10000).unref?.();
+
+function mcProviderList() {
+  try {
+    const list = ai.listProviders();
+    return {
+      providers: (list.providers || []).map((p) => ({ id: p.id, name: p.name, type: p.type, enabled: p.enabled, model: p.model })),
+      defaultProviderId: list.defaultProviderId || null
+    };
+  } catch (e) {
+    return { providers: [], defaultProviderId: null };
+  }
+}
+
+async function handleMcRoutes(req, res, pathname) {
+  if (!isSameOrigin(req)) {
+    sendJson(res, 403, { ok: false, error: 'Yêu cầu khác nguồn đã bị từ chối.' });
+    return true;
+  }
+  const isWrite = req.method !== 'GET';
+  if (!aiRateAllow(req, isWrite ? 'mc:write' : 'mc:read', isWrite ? 90 : 300)) {
+    sendJson(res, 429, { ok: false, error: 'Quá nhiều yêu cầu MC. Vui lòng thử lại sau 1 phút.' });
+    return true;
+  }
+
+  try {
+    if (pathname === '/api/mc/config' && req.method === 'GET') {
+      sendJson(res, 200, { ok: true, ...mc.snapshot(), ...mcProviderList(), text: ai.getTextSettings() });
+      return true;
+    }
+
+    if (pathname === '/api/mc/config' && (req.method === 'POST' || req.method === 'PUT')) {
+      const body = await readBodyLimited(req, 16 * 1024);
+      const cfg = mcStore.update(body);
+      broadcast('mc-config', cfg);
+      sendJson(res, 200, { ok: true, ...mc.snapshot() });
+      return true;
+    }
+
+    if (pathname === '/api/mc/pause' && req.method === 'POST') {
+      mcStore.update({ paused: true });
+      broadcast('mc-config', mcStore.get());
+      // The overlay clears its own MC queue as soon as it sees paused: true.
+      sendJson(res, 200, { ok: true, ...mc.snapshot() });
+      return true;
+    }
+
+    if (pathname === '/api/mc/resume' && req.method === 'POST') {
+      mcStore.update({ paused: false, enabled: true });
+      broadcast('mc-config', mcStore.get());
+      sendJson(res, 200, { ok: true, ...mc.snapshot() });
+      return true;
+    }
+
+    if (pathname === '/api/mc/status' && req.method === 'GET') {
+      sendJson(res, 200, { ok: true, ...mc.snapshot() });
+      return true;
+    }
+
+    if (pathname === '/api/mc/say' && req.method === 'POST') {
+      const body = await readBodyLimited(req, 8 * 1024);
+      const result = mc.manualSay(body.text || body.message || '');
+      sendJson(res, result.ok ? 200 : 400, { ok: result.ok, ...result });
+      return true;
+    }
+
+    if (pathname === '/api/mc/welcome' && req.method === 'POST') {
+      const result = await mc.welcomeNow();
+      sendJson(res, 200, { ok: true, result });
+      return true;
+    }
+
+    if (pathname === '/api/mc/farewell' && req.method === 'POST') {
+      const result = await mc.farewellNow();
+      sendJson(res, 200, { ok: true, result });
+      return true;
+    }
+
+    if (pathname === '/api/mc/test-ai' && req.method === 'POST') {
+      const body = await readBodyLimited(req, 8 * 1024);
+      const result = await mc.preview(body.kind || 'test');
+      sendJson(res, 200, { ok: true, result });
+      return true;
+    }
+
+    if (pathname === '/api/mc/test-voice' && req.method === 'POST') {
+      // Reuses the existing TTS queue — no second speech engine.
+      const body = await readBodyLimited(req, 8 * 1024);
+      const cfg = mcStore.get();
+      const text = String(body.text || 'Xin chào, tôi là MC của tiệc cưới hôm nay.').slice(0, 300);
+      const result = await announce(text, mcStore.get().priorities.manual, {
+        kind: 'mc-test',
+        voice: cfg.voice || undefined,
+        speed: cfg.speed
+      });
+      sendJson(res, 200, { ok: true, queued: !!result, text });
+      return true;
+    }
+
+    sendJson(res, 404, { ok: false, error: 'Không tìm thấy API MC.' });
+    return true;
+  } catch (err) {
+    const code = err && err.code ? err.code : 'unknown';
+    sendJson(res, 400, { ok: false, code, error: err && err.message ? err.message : 'Lỗi không xác định' });
+    return true;
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -980,6 +1119,11 @@ const server = http.createServer(async (req, res) => {
     if (await handleAiRoutes(req, res, pathname, url)) return;
   }
 
+  // 0b. AI Wedding MC API
+  if (pathname.startsWith('/api/mc/')) {
+    if (await handleMcRoutes(req, res, pathname)) return;
+  }
+
   // 1. SSE Events Stream
   if (pathname === '/api/events') {
     res.writeHead(200, {
@@ -989,6 +1133,8 @@ const server = http.createServer(async (req, res) => {
     });
     res.write(`event: state\ndata: ${JSON.stringify(state)}\n\n`);
     res.write(`event: status\ndata: ${JSON.stringify(state.status || { state: 'offline', message: 'Chưa kết nối TikFinity' })}\n\n`);
+    // Overlay needs the MC config (actor preset, enabled/paused) on every refresh.
+    res.write(`event: mc-config\ndata: ${JSON.stringify(mcStore.get())}\n\n`);
     clients.add(res);
     req.on('close', () => clients.delete(res));
     return;
@@ -1037,8 +1183,12 @@ const server = http.createServer(async (req, res) => {
     const data = await readJson();
     broadcast('action', data);
     // A manually triggered crown transfer is announced at top priority.
-    if (data && data.action === 'marry') {
-      announce(data.text || 'A new groom has taken the crown!', SPEECH_PRIORITY.marry, { kind: 'marry' });
+    if (data && data.action === 'marry' && !mc.isPaused()) {
+      if (mc.isAutoEnabled('ceremony')) void mc.onCeremony('marry', data.initiator || data.newGroom);
+      else announce(data.text || 'A new groom has taken the crown!', SPEECH_PRIORITY.marry, { kind: 'marry' });
+    } else if (data && data.action && data.action !== 'marry' && !mc.isPaused()) {
+      // Dashboard-triggered rituals are hosted by the MC when that is enabled.
+      try { void mc.onCeremony(data.action, data.initiator); } catch (e) {}
     }
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ ok: true, action: data }));

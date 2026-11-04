@@ -10,7 +10,7 @@
       "timeoutMs": 30000,
       "enabled": true,
       "createdAt": "2026-11-04T03:21:20.483Z",
-      "updatedAt": "2026-11-04T03:21:20.492Z"
+      "updatedAt": "2026-11-04T04:04:57.141Z"
     },
     {
       "id": "pv_mw1jv82ibcgr",
@@ -21,7 +21,7 @@
       "timeoutMs": 60000,
       "enabled": true,
       "createdAt": "2026-11-04T03:21:20.538Z",
-      "updatedAt": "2026-11-04T03:28:23.976Z"
+      "updatedAt": "2026-11-04T04:04:57.147Z"
     },
     {
       "id": "pv_mw1jv82kuhka",
@@ -32,13 +32,13 @@
       "timeoutMs": 30000,
       "enabled": true,
       "createdAt": "2026-11-04T03:21:20.540Z",
-      "updatedAt": "2026-11-04T03:21:20.540Z"
+      "updatedAt": "2026-11-04T04:04:57.150Z"
     }
   ],
-  "defaultProviderId": "pv_mw1jv817elpu",
+  "defaultProviderId": null,
   "fallback": {
-    "enabled": true,
-    "providerId": "pv_mw1jv82ibcgr",
+    "enabled": false,
+    "providerId": null,
     "model": "llama3.2:latest",
     "maxAttempts": 2,
     "timeoutMs": 20000

@@ -44,6 +44,10 @@
           <span class="nav-icon">🤖</span>
           <span>AI Providers & Cấu Hình</span>
         </button>
+        <button class="nav-item" data-tab="tab-mc">
+          <span class="nav-icon">🎤</span>
+          <span>AI Wedding MC</span>
+        </button>
         <button class="nav-item" data-tab="tab-bgm">
           <span class="nav-icon">🎵</span>
           <span>Nhạc Nền Cưới (YouTube)</span>
@@ -154,8 +158,8 @@
             <div class="stat-card">
               <div class="stat-icon">👑</div>
               <div class="stat-data">
-                <b id="card-top-giver">HOÀNG LONG</b>
-                <span>Top 1 mừng cưới</span>
+                <b id="card-top-giver">Sam</b>
+                <span>Top 1</span>
               </div>
             </div>
           </div>
@@ -258,11 +262,11 @@
             <div class="form-grid">
               <div class="form-group">
                 <label>🤵 Tên Chú Rể:</label>
-                <input type="text" id="cfg-groom" value="Tuấn Anh">
+                <input type="text" id="cfg-groom" value="Sam">
               </div>
               <div class="form-group">
                 <label>👰 Tên Cô Dâu:</label>
-                <input type="text" id="cfg-bride" value="Mai Vy">
+                <input type="text" id="cfg-bride" value="Jennifer">
               </div>
               <div class="form-group">
                 <label>💒 Tiêu đề Tiệc Cưới:</label>
@@ -667,6 +671,9 @@
             <p class="ai-note">Nhật ký chỉ lưu thông tin định tuyến (nhà cung cấp, model, thời gian, mã lỗi) — không lưu nội dung lời chúc hay API key.</p>
           </div>
         </section>
+
+        <!-- ================= AI WEDDING MC ================= -->
+        <section class="tab-pane" id="tab-mc"></section>
       </div>
     </main>
 
@@ -687,5 +694,7 @@
 
   <script src="/panel.js"></script>
   <script src="/ai-panel.js"></script>
+  <link rel="stylesheet" href="/mc-panel.css">
+  <script src="/mc-panel.js"></script>
 </body>
 </html>

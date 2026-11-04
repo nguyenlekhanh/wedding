@@ -100,9 +100,9 @@
     }
   },
   "stats": {
-    "guests": 8,
+    "guests": 4,
     "outside": 21,
-    "envelopes": 7,
+    "envelopes": 3,
     "wishes": 0
   },
   "goals": {
@@ -112,23 +112,23 @@
       "label": "Rose rain"
     },
     "cake": {
-      "current": 30800,
+      "current": 10600,
       "target": 100000,
       "label": "Cake cutting"
     }
   },
   "people": [
     {
-      "id": "tik-demo-giver-1793760639450",
-      "name": "Sam",
+      "id": "tik-demo-giver-1793765242811",
+      "name": "Quinn",
       "avatar": "",
-      "sprite": 5,
+      "sprite": 0,
       "table": 0,
       "seat": 0,
       "statusTag": "👑 Big Spender"
     },
     {
-      "id": "tik-demo-giver-1793760655762",
+      "id": "tik-demo-giver-1793765261675",
       "name": "Michael",
       "avatar": "",
       "sprite": 1,
@@ -137,114 +137,38 @@
       "statusTag": "👑 Big Spender"
     },
     {
-      "id": "tik-demo-giver-1793760670956",
-      "name": "Quinn",
-      "avatar": "",
-      "sprite": 4,
-      "table": 1,
-      "seat": 0,
-      "statusTag": "👑 Big Spender"
-    },
-    {
-      "id": "tik-demo-giver-1793760690226",
-      "name": "Taylor",
-      "avatar": "",
-      "sprite": 0,
-      "table": 1,
-      "seat": 1,
-      "statusTag": "👑 Big Spender"
-    },
-    {
-      "id": "tik-demo-giver-1793760708604",
+      "id": "tik-demo-giver-1793765279172",
       "name": "Sam",
       "avatar": "",
-      "sprite": 4,
-      "table": 2,
-      "seat": 0,
-      "statusTag": "👑 Big Spender"
-    },
-    {
-      "id": "tik-demo-giver-1793760717746",
-      "name": "Casey",
-      "avatar": "",
-      "sprite": 1,
-      "table": 2,
-      "seat": 1,
-      "statusTag": "👑 Big Spender"
-    },
-    {
-      "id": "tik-demo-giver-1793760728055",
-      "name": "Daniel",
-      "avatar": "",
-      "sprite": 0,
-      "table": 3,
+      "sprite": 2,
+      "table": 1,
       "seat": 0,
       "statusTag": "👑 Big Spender"
     }
   ],
   "scores": {
-    "tik-demo-giver-1793760639450": {
-      "id": "tik-demo-giver-1793760639450",
-      "name": "Sam",
+    "tik-demo-giver-1793765242811": {
+      "id": "tik-demo-giver-1793765242811",
+      "name": "Quinn",
       "total": 1,
       "avatar": ""
     },
-    "tik-demo-giver-1793760655762": {
-      "id": "tik-demo-giver-1793760655762",
+    "tik-demo-giver-1793765261675": {
+      "id": "tik-demo-giver-1793765261675",
       "name": "Michael",
       "total": 5,
       "avatar": ""
     },
-    "tik-demo-giver-1793760670956": {
-      "id": "tik-demo-giver-1793760670956",
-      "name": "Quinn",
-      "total": 100,
-      "avatar": ""
-    },
-    "tik-demo-giver-1793760690226": {
-      "id": "tik-demo-giver-1793760690226",
-      "name": "Taylor",
-      "total": 100,
-      "avatar": ""
-    },
-    "tik-demo-giver-1793760708604": {
-      "id": "tik-demo-giver-1793760708604",
+    "tik-demo-giver-1793765279172": {
+      "id": "tik-demo-giver-1793765279172",
       "name": "Sam",
       "total": 100,
-      "avatar": ""
-    },
-    "tik-demo-giver-1793760717746": {
-      "id": "tik-demo-giver-1793760717746",
-      "name": "Casey",
-      "total": 1,
-      "avatar": ""
-    },
-    "tik-demo-giver-1793760728055": {
-      "id": "tik-demo-giver-1793760728055",
-      "name": "Daniel",
-      "total": 1,
       "avatar": ""
     }
   },
   "recentGivers": [
     {
-      "id": "tik-demo-giver-1793760728055",
-      "name": "Daniel",
-      "gift": "Wedding Gift Money",
-      "count": 1,
-      "diamonds": 1,
-      "total": 1
-    },
-    {
-      "id": "tik-demo-giver-1793760717746",
-      "name": "Casey",
-      "gift": "Wedding Gift Money",
-      "count": 1,
-      "diamonds": 1,
-      "total": 1
-    },
-    {
-      "id": "tik-demo-giver-1793760708604",
+      "id": "tik-demo-giver-1793765279172",
       "name": "Sam",
       "gift": "Diamond Wedding Ring",
       "count": 1,
@@ -252,23 +176,7 @@
       "total": 100
     },
     {
-      "id": "tik-demo-giver-1793760690226",
-      "name": "Taylor",
-      "gift": "Diamond Wedding Ring",
-      "count": 1,
-      "diamonds": 100,
-      "total": 100
-    },
-    {
-      "id": "tik-demo-giver-1793760670956",
-      "name": "Quinn",
-      "gift": "Diamond Wedding Ring",
-      "count": 1,
-      "diamonds": 100,
-      "total": 100
-    },
-    {
-      "id": "tik-demo-giver-1793760655762",
+      "id": "tik-demo-giver-1793765261675",
       "name": "Michael",
       "gift": "A Gift of Gold",
       "count": 1,
@@ -276,8 +184,8 @@
       "total": 5
     },
     {
-      "id": "tik-demo-giver-1793760639450",
-      "name": "Sam",
+      "id": "tik-demo-giver-1793765242811",
+      "name": "Quinn",
       "gift": "Wedding Gift Money",
       "count": 1,
       "diamonds": 1,

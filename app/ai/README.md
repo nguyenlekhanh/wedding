@@ -157,3 +157,49 @@ attempt capping, cancellation, masking, SSRF, cross-origin, persistence, usage-l
 hygiene and wedding regressions (7 ceremonies, TTS, SSE, overlay).
 
 `app/ai/tests/mock-ollama.mjs` provides deterministic failure modes.
+
+## AI Wedding MC (`ai/mc/`)
+
+The virtual stage host. It borrows both existing engines instead of adding new ones:
+text comes from this provider manager (`manager.generateText`), speech goes through
+`announce()` → Kokoro queue in `server.cjs` (priority, cache, BGM ducking).
+
+```
+TikFinity event ──► processJoin/Chat/GiftEvent ──► McBrain (ai/mc/brain.cjs)
+                                                     │  gate: enabled / paused / cooldown / busy / duplicate
+                                                     │  merge gift bursts (giftMergeWindowMs)
+                                                     ▼
+                                          manager.generateText({ provider, model })
+                                                     │  sanitize → plain spoken line, ≤ maxChars
+                                                     ▼
+                                          announce(text, priority, meta) ──► Kokoro WAV ──► SSE tts
+                                                                                        │
+                                                                  overlay: #mc-audio + mc-actor.js (lip sync)
+```
+
+| File | Role |
+|---|---|
+| `ai/mc/config.cjs` | MC settings in `app/ai/mc_config.json` (gitignored), clamped on every write |
+| `ai/mc/context.cjs` | bounded fact sheet: couple, guests, goals, recent givers, last lines |
+| `ai/mc/sanitize.cjs` | plain-dialogue output filter + guest-comment defusing (prompt injection) |
+| `ai/mc/templates.cjs` | scripted EN/VI fallbacks, used when AI is missing/slow/failing |
+| `ai/mc/brain.cjs` | behaviours, anti-spam gates, merging, statistics |
+| `public/mc-actor.js` | SVG stage actor, expressions, gestures, WAV-envelope lip sync |
+| `public/mc-panel.js` | dashboard tab “🎤 AI Wedding MC” |
+
+API (same-origin, rate limited):
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/mc/config` | config + runtime status + providers + TTS settings |
+| POST | `/api/mc/config` | patch config (clamped) and push `mc-config` to the overlay |
+| POST | `/api/mc/pause` \| `/resume` | instant silence / resume |
+| POST | `/api/mc/say` | manual announcement through the normal queue |
+| POST | `/api/mc/welcome` | speak the welcome line now |
+| POST | `/api/mc/test-ai` | generate a line without speaking |
+| POST | `/api/mc/test-voice` | Kokoro preview through `announce()` |
+
+Safety: the model only receives facts and guest text as data, output is stripped of
+markdown/URLs/emoji and capped, generated text can never call an endpoint, and the
+event processors never await generation (fire-and-forget). Paused or disabled means
+silence, including lines already in flight.
