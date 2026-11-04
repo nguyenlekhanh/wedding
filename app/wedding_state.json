@@ -153,9 +153,9 @@
     }
   },
   "stats": {
-    "guests": 4,
+    "guests": 5,
     "outside": 21,
-    "envelopes": 3,
+    "envelopes": 4,
     "wishes": 0
   },
   "goals": {
@@ -165,7 +165,7 @@
       "label": "Rose rain"
     },
     "cake": {
-      "current": 10600,
+      "current": 10700,
       "target": 100000,
       "label": "Cake cutting"
     }
@@ -197,6 +197,281 @@
       "table": 1,
       "seat": 0,
       "statusTag": "👑 Big Spender"
+    },
+    {
+      "id": "tik-demo-giver-1793817386679",
+      "name": "Taylor",
+      "avatar": "",
+      "sprite": 3,
+      "table": 1,
+      "seat": 1,
+      "statusTag": "👑 Big Spender"
+    }
+  ],
+  "simulatedGuests": [
+    {
+      "id": "sim-mw2gj0p2-d7yf",
+      "name": "Guest 07",
+      "asset": "/assets/guest_1.png",
+      "seat": 8,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:38.438Z",
+      "enteredAt": "2026-11-04T18:35:38.438Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:42.828Z"
+    },
+    {
+      "id": "sim-mw2gj0p2-eoxn",
+      "name": "Guest 08",
+      "asset": "/assets/guest_2.png",
+      "seat": 9,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:38.438Z",
+      "enteredAt": "2026-11-04T18:35:38.438Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:43.026Z"
+    },
+    {
+      "id": "sim-mw2gj0p3-kmbo",
+      "name": "Guest 11",
+      "asset": "/assets/guest_6.png",
+      "seat": 12,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:38.439Z",
+      "enteredAt": "2026-11-04T18:35:38.439Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:43.633Z"
+    },
+    {
+      "id": "sim-mw2gj0p3-erig",
+      "name": "Guest 12",
+      "asset": "/assets/guest_3.png",
+      "seat": 13,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:38.439Z",
+      "enteredAt": "2026-11-04T18:35:38.439Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:43.644Z"
+    },
+    {
+      "id": "sim-mw2gj0p3-qh8h",
+      "name": "Guest 13",
+      "asset": "/assets/guest_2.png",
+      "seat": 14,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:38.439Z",
+      "enteredAt": "2026-11-04T18:35:38.439Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:44.064Z"
+    },
+    {
+      "id": "sim-mw2gj0p3-cgoz",
+      "name": "Guest 14",
+      "asset": "/assets/guest_1.png",
+      "seat": 15,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:38.439Z",
+      "enteredAt": "2026-11-04T18:35:38.439Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:43.095Z"
+    },
+    {
+      "id": "sim-mw2gj0p3-h8e7",
+      "name": "Guest 15",
+      "asset": "/assets/guest_6.png",
+      "seat": 16,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:38.439Z",
+      "enteredAt": "2026-11-04T18:35:38.439Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:43.183Z"
+    },
+    {
+      "id": "sim-mw2gj0p3-6qig",
+      "name": "Guest 16",
+      "asset": "/assets/guest_3.png",
+      "seat": 17,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:38.439Z",
+      "enteredAt": "2026-11-04T18:35:38.439Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:43.636Z"
+    },
+    {
+      "id": "sim-mw2gj1f2-1ngr",
+      "name": "Guest 17",
+      "asset": "/assets/guest_4.png",
+      "seat": 18,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:39.374Z",
+      "enteredAt": "2026-11-04T18:35:39.374Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:43.639Z"
+    },
+    {
+      "id": "sim-mw2gj1f2-qd1e",
+      "name": "Guest 18",
+      "asset": "/assets/guest_5.png",
+      "seat": 19,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:39.374Z",
+      "enteredAt": "2026-11-04T18:35:39.374Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:43.921Z"
+    },
+    {
+      "id": "sim-mw2gj1f2-iiqc",
+      "name": "Guest 19",
+      "asset": "/assets/guest_6.png",
+      "seat": 20,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:39.374Z",
+      "enteredAt": "2026-11-04T18:35:39.374Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:44.234Z"
+    },
+    {
+      "id": "sim-mw2gj1f2-wwcp",
+      "name": "Guest 20",
+      "asset": "/assets/guest_2.png",
+      "seat": 21,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:39.374Z",
+      "enteredAt": "2026-11-04T18:35:39.374Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:43.631Z"
+    },
+    {
+      "id": "sim-mw2gj1f2-zkaa",
+      "name": "Guest 21",
+      "asset": "/assets/guest_1.png",
+      "seat": 22,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:39.374Z",
+      "enteredAt": "2026-11-04T18:35:39.374Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:43.641Z"
+    },
+    {
+      "id": "sim-mw2gj1f2-tils",
+      "name": "Guest 22",
+      "asset": "/assets/guest_5.png",
+      "seat": 23,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:39.374Z",
+      "enteredAt": "2026-11-04T18:35:39.375Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:44.062Z"
+    },
+    {
+      "id": "sim-mw2gj1f3-3guy",
+      "name": "Guest 23",
+      "asset": "/assets/guest_3.png",
+      "seat": 0,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:39.375Z",
+      "enteredAt": "2026-11-04T18:35:39.375Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:44.933Z"
+    },
+    {
+      "id": "sim-mw2gj1f3-rzlo",
+      "name": "Guest 24",
+      "asset": "/assets/guest_4.png",
+      "seat": 1,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:39.375Z",
+      "enteredAt": "2026-11-04T18:35:39.375Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:44.734Z"
+    },
+    {
+      "id": "sim-mw2gj769-hdo7",
+      "name": "Guest 25",
+      "asset": "/assets/guest_1.png",
+      "seat": 2,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:46.833Z",
+      "enteredAt": "2026-11-04T18:35:46.833Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:51.592Z"
+    },
+    {
+      "id": "sim-mw2gjbhe-7hc1",
+      "name": "Guest 26",
+      "asset": "/assets/guest_5.png",
+      "seat": 7,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:52.418Z",
+      "enteredAt": "2026-11-04T18:35:52.418Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:35:56.578Z"
+    },
+    {
+      "id": "sim-mw2gjf2j-qt5n",
+      "name": "Guest 27",
+      "asset": "/assets/guest_6.png",
+      "seat": 5,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:35:57.067Z",
+      "enteredAt": "2026-11-04T18:35:57.067Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:36:01.412Z"
+    },
+    {
+      "id": "sim-mw2gjjkw-duh9",
+      "name": "Guest 28",
+      "asset": "/assets/guest_2.png",
+      "seat": 4,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:36:02.912Z",
+      "enteredAt": "2026-11-04T18:36:02.912Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:36:07.639Z"
+    },
+    {
+      "id": "sim-mw2gjnly-0nrz",
+      "name": "Guest 29",
+      "asset": "/assets/guest_1.png",
+      "seat": 6,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:36:08.134Z",
+      "enteredAt": "2026-11-04T18:36:08.134Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:36:12.906Z"
+    },
+    {
+      "id": "sim-mw2gjrbq-6art",
+      "name": "Guest 30",
+      "asset": "/assets/guest_3.png",
+      "seat": 11,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:36:12.950Z",
+      "enteredAt": "2026-11-04T18:36:12.950Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:36:16.939Z"
+    },
+    {
+      "id": "sim-mw2gjubm-t4m4",
+      "name": "Guest 31",
+      "asset": "/assets/guest_6.png",
+      "seat": 10,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:36:16.834Z",
+      "enteredAt": "2026-11-04T18:36:16.834Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:36:20.893Z"
+    },
+    {
+      "id": "sim-mw2gmtkz-6q8n",
+      "name": "Guest 32",
+      "asset": "/assets/guest_5.png",
+      "seat": 3,
+      "state": "seated_idle",
+      "arrivedAt": "2026-11-04T18:38:35.843Z",
+      "enteredAt": "2026-11-04T18:38:35.843Z",
+      "simulated": true,
+      "seatedAt": "2026-11-04T18:38:40.772Z"
     }
   ],
   "scores": {
@@ -247,9 +522,23 @@
       "name": "Sam",
       "total": 100,
       "avatar": ""
+    },
+    "tik-demo-giver-1793817386679": {
+      "id": "tik-demo-giver-1793817386679",
+      "name": "Taylor",
+      "total": 1,
+      "avatar": ""
     }
   },
   "recentGivers": [
+    {
+      "id": "tik-demo-giver-1793817386679",
+      "name": "Taylor",
+      "gift": "Wedding Gift Money",
+      "count": 1,
+      "diamonds": 1,
+      "total": 1
+    },
     {
       "id": "tik-demo-giver-1793765279172",
       "name": "Sam",
@@ -281,5 +570,7 @@
     "username": "",
     "roomId": "",
     "mode": "tikfinity"
-  }
+  },
+  "guestPending": 0,
+  "guestCounter": 32
 }

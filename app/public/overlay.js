@@ -504,6 +504,9 @@ function renderState(state) {
   // Stage lighting is CSS-only too: this only forwards the operator's settings.
   document.dispatchEvent(new CustomEvent('wedding:lighting', { detail: cfg.stageLighting || {} }));
 
+  // Simulated guests keep their own layer and animation state; forward the list.
+  document.dispatchEvent(new CustomEvent('wedding:guest-arrivals', { detail: state.simulatedGuests || [] }));
+
   renderGuests(state.people || []);
   renderRegistry(state.scores || {});
 }
@@ -1084,6 +1087,23 @@ realtime.addEventListener('focus', e => {
     const d = JSON.parse(e.data);
     queueOffering(d);
   } catch (err) {}
+});
+
+// Admin guest simulator: spawn / reset events for the guest-arrivals module.
+realtime.addEventListener('guest-arrival', e => {
+  try {
+    document.dispatchEvent(new CustomEvent('wedding:guest-arrival', { detail: JSON.parse(e.data) }));
+  } catch (err) {}
+});
+
+realtime.addEventListener('guest-leaving', e => {
+  try {
+    document.dispatchEvent(new CustomEvent('wedding:guest-leaving', { detail: JSON.parse(e.data) }));
+  } catch (err) {}
+});
+
+realtime.addEventListener('guest-arrivals-reset', () => {
+  document.dispatchEvent(new CustomEvent('wedding:guest-arrivals-reset'));
 });
 
 // Kokoro MC audio is ready (server-generated WAV)

@@ -149,6 +149,9 @@ const defaultState = {
     { id: 'guest-23', name: 'Taylor', avatar: '', sprite: 4, table: 22, seat: 1, statusTag: '🎉 Absolutely radiant' },
     { id: 'guest-24', name: 'Daniel', avatar: '', sprite: 1, table: 23, seat: 2, statusTag: '👑 Big Spender' }
   ],
+  // Admin-simulated wedding guests. Deliberately separate from `people`, `stats`,
+  // `scores` and every TikTok/TikFinity path: nothing here is a real viewer.
+  simulatedGuests: [],
   scores: {
     'donor-1': { id: 'donor-1', name: 'Sam', total: 7400000, avatar: '' },
     'donor-2': { id: 'donor-2', name: 'Casey', total: 360000, avatar: '' },
@@ -190,6 +193,195 @@ try {
   }
 } catch (e) {
   console.error("Error loading wedding state, using default:", e.message);
+}
+if (!Array.isArray(state.simulatedGuests)) state.simulatedGuests = [];
+// A guest mid-exit when the server stopped is gone, and a fresh boot always
+// starts with an empty arrival queue.
+state.simulatedGuests = state.simulatedGuests.filter(guest => guest && guest.state !== 'leaving');
+state.guestPending = 0;
+if (!Number.isInteger(state.guestCounter)) state.guestCounter = state.simulatedGuests.length;
+
+// ---------------------------------------------------------------
+// SIMULATED WEDDING GUESTS (admin-only visual simulation)
+// Guests enter through the aisle, walk to a free banquet seat and sit down.
+// They never touch real viewers, gifts, statistics, TikFinity or the MC.
+// ---------------------------------------------------------------
+const GUEST_ASSET_COUNT = 6;
+// The simulator mirrors the overlay's 24 banquet chairs (the geometry lives in
+// /guest-arrivals.js); the server only tracks which of them are taken.
+const GUEST_SEAT_COUNT = 24;
+// If the overlay is closed mid-exit, a leaving guest is cleaned up anyway.
+const GUEST_LEAVE_TIMEOUT_MS = 9000;
+// Add clicks that cannot be served yet (every chair held by an arriving guest)
+// wait here instead of being dropped.
+let pendingGuestRequests = 0;
+
+function simulatedGuests() {
+  if (!Array.isArray(state.simulatedGuests)) state.simulatedGuests = [];
+  return state.simulatedGuests;
+}
+
+function realGuestSeats() {
+  const taken = new Set();
+  for (const person of state.people || []) {
+    const seat = Number(person.table);
+    if (Number.isInteger(seat) && seat >= 0 && seat < GUEST_SEAT_COUNT) taken.add(seat);
+  }
+  return taken;
+}
+
+function guestOccupiesSeat(guest) {
+  return !guest || guest.state !== 'leaving';
+}
+
+function guestArrivalCounts() {
+  const counts = { seatedIdle: 0, entering: 0, leaving: 0 };
+  for (const guest of simulatedGuests()) {
+    if (guest.state === 'leaving') counts.leaving += 1;
+    else if (guest.state === 'seated_idle') counts.seatedIdle += 1;
+    else counts.entering += 1;
+  }
+  return counts;
+}
+
+function guestSeatSummary() {
+  const guests = simulatedGuests();
+  const taken = new Set(guests.filter(guestOccupiesSeat).map(g => Number(g.seat)));
+  const realTaken = realGuestSeats();
+  // A guest who is walking out no longer holds a chair, so the released seat can
+  // be handed to the newcomer in the same click. Chairs with no real viewer are
+  // preferred, and the four extra counters keep the dashboard honest.
+  const availableSeats = Array.from({ length: GUEST_SEAT_COUNT }, (_, seat) => seat)
+    .filter(seat => !taken.has(seat))
+    .sort((a, b) => Number(realTaken.has(a)) - Number(realTaken.has(b)));
+  const counts = guestArrivalCounts();
+  state.guestPending = pendingGuestRequests;
+  return Object.assign({
+    seatsTotal: GUEST_SEAT_COUNT,
+    seated: counts.seatedIdle,
+    total: guests.length,
+    available: availableSeats.length,
+    availableSeats,
+    pending: pendingGuestRequests
+  }, counts);
+}
+
+// Prefer the least-used character so the six assets rotate instead of repeating.
+// `banned` carries the evicted guest's asset so a replacement never looks alike.
+function pickGuestAsset(guests, banned) {
+  const blocked = new Set((banned || []).filter(Boolean));
+  const all = Array.from({ length: GUEST_ASSET_COUNT }, (_, index) => `/assets/guest_${index + 1}.png`);
+  const counts = new Array(GUEST_ASSET_COUNT).fill(0);
+  for (const guest of guests) {
+    const match = /guest_(\d+)\.png$/.exec(String(guest.asset || ''));
+    const index = match ? Number(match[1]) - 1 : -1;
+    if (index >= 0 && index < GUEST_ASSET_COUNT) counts[index] += 1;
+  }
+  let candidates = all
+    .map((asset, index) => ({ asset, value: counts[index] }))
+    .filter(entry => !blocked.has(entry.asset));
+  if (!candidates.length) candidates = all.map((asset, index) => ({ asset, value: counts[index] }));
+  const min = Math.min.apply(null, candidates.map(entry => entry.value));
+  const best = candidates.filter(entry => entry.value === min);
+  return best[Math.floor(Math.random() * best.length)].asset;
+}
+
+function nextGuestNumber() {
+  state.guestCounter = (Number(state.guestCounter) || 0) + 1;
+  return state.guestCounter;
+}
+
+function createSimulatedGuest(seat, bannedAssets) {
+  const guests = simulatedGuests();
+  const newest = guests[guests.length - 1];
+  const banned = (bannedAssets || []).slice();
+  // Never spawn the same character asset twice in a row.
+  if (newest && newest.asset) banned.push(newest.asset);
+  const guest = {
+    id: `sim-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    name: `Guest ${String(nextGuestNumber()).padStart(2, '0')}`,
+    asset: pickGuestAsset(guests, banned),
+    seat,
+    state: 'entering',
+    arrivedAt: new Date().toISOString(),
+    enteredAt: new Date().toISOString(),
+    simulated: true
+  };
+  guests.push(guest);
+  return guest;
+}
+
+// The guest who has been seated the longest leaves first. The newest arrival is
+// never chosen while an older seated guest is available.
+function selectDepartingGuest(guests) {
+  const seated = guests.filter(guest => guest.state === 'seated_idle');
+  if (!seated.length) return null;
+  const newest = guests.reduce((latest, guest) => {
+    if (!latest) return guest;
+    return String(guest.arrivedAt || '') > String(latest.arrivedAt || '') ? guest : latest;
+  }, null);
+  let pool = newest && seated.length > 1 ? seated.filter(guest => guest.id !== newest.id) : seated;
+  if (!pool.length) pool = seated;
+  pool.sort((a, b) => String(a.seatedAt || a.arrivedAt || '').localeCompare(String(b.seatedAt || b.arrivedAt || '')));
+  return pool[0];
+}
+
+function startGuestDeparture(guest) {
+  guest.state = 'leaving';
+  guest.leavingAt = new Date().toISOString();
+}
+
+// One click = exactly one arrival. With all 24 chairs taken, the oldest seated
+// guest stands up and walks out so the newcomer gets that same chair: the overlay
+// animates the exit, and at no point are 25 guests seated.
+function processGuestAdditions(count, queueUnserved) {
+  const guests = simulatedGuests();
+  const added = [];
+  const leaving = [];
+  let unserved = 0;
+  for (let i = 0; i < count; i += 1) {
+    const { availableSeats } = guestSeatSummary();
+    let seat = availableSeats[0];
+    let departing = null;
+    if (seat === undefined) {
+      departing = selectDepartingGuest(guests);
+      if (!departing) {
+        unserved = count - i;
+        break;
+      }
+      startGuestDeparture(departing);
+      leaving.push(departing);
+      seat = Number(departing.seat);
+    }
+    added.push(createSimulatedGuest(seat, departing ? [departing.asset] : []));
+  }
+  // Only a single "add one" click waits in the queue; a bulk button press simply
+  // fills the free chairs it can and reports the rest instead of queueing phantom
+  // replacements.
+  const shouldQueue = queueUnserved === undefined ? count === 1 : queueUnserved;
+  if (unserved && shouldQueue) pendingGuestRequests += unserved;
+  return { added, leaving, pending: shouldQueue ? unserved : 0 };
+}
+
+// Every chair held by an arriving guest means an add click waits here until the
+// next guest sits down; then the replacement is processed in order.
+function flushPendingGuestAdds() {
+  if (pendingGuestRequests <= 0) return { added: [], leaving: [], pending: 0 };
+  const requested = pendingGuestRequests;
+  pendingGuestRequests = 0;
+  return processGuestAdditions(requested, true);
+}
+
+function pruneDepartedGuests() {
+  const guests = simulatedGuests();
+  const now = Date.now();
+  const kept = guests.filter(guest => {
+    if (guest.state !== 'leaving') return true;
+    const at = Date.parse(guest.leavingAt || guest.arrivedAt || '');
+    return Number.isFinite(at) && now - at < GUEST_LEAVE_TIMEOUT_MS;
+  });
+  if (kept.length !== guests.length) state.simulatedGuests = kept;
+  return kept;
 }
 
 function persistState() {
@@ -1360,6 +1552,108 @@ const server = http.createServer(async (req, res) => {
     broadcast('dancers', state.config.dancers);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ ok: true, dancers: state.config.dancers }));
+    return;
+  }
+
+  // 5c. Simulated guest arrivals (admin simulator only)
+  // The seat geometry lives in /guest-arrivals.js next to the overlay's own
+  // banquet seats; the server only needs an order and the occupancy bookkeeping.
+  if (pathname === '/api/guests' && req.method === 'GET') {
+    pruneDepartedGuests();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(Object.assign({ ok: true, guests: simulatedGuests() }, guestSeatSummary())));
+    return;
+  }
+
+  if (pathname === '/api/guests/simulate' && (req.method === 'POST' || req.method === 'PUT')) {
+    const data = await readJson();
+    const requested = Math.max(1, Math.min(GUEST_SEAT_COUNT, Number(data && data.count) || 1));
+    pruneDepartedGuests();
+    const change = processGuestAdditions(requested);
+
+    persistState();
+    const summary = guestSeatSummary();
+    // Departures are broadcast first so the overlay starts the stand-up-and-walk-out
+    // before the newcomer steps in: the chair is only ever held by one guest at a
+    // time and a 25th seated guest is impossible.
+    for (const guest of change.leaving) broadcast('guest-leaving', { guest, summary });
+    for (const guest of change.added) broadcast('guest-arrival', { guest, summary });
+    broadcast('state', state);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(Object.assign({
+      ok: true,
+      requested,
+      added: change.added,
+      departed: change.leaving,
+      replaced: change.leaving.length,
+      guests: simulatedGuests()
+    }, summary)));
+    return;
+  }
+
+  if (pathname === '/api/guests/seated' && req.method === 'POST') {
+    const data = await readJson();
+    const id = String((data && data.id) || '');
+    const guest = simulatedGuests().find(g => g.id === id);
+    if (!guest) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Không tìm thấy khách mô phỏng.' }));
+      return;
+    }
+    guest.state = 'seated_idle';
+    guest.seatedAt = new Date().toISOString();
+    pruneDepartedGuests();
+    // A chair just became permanently taken, but a queued click may still ask for
+    // a replacement: process it now, in the order the clicks arrived.
+    const change = flushPendingGuestAdds();
+    persistState();
+    const summary = guestSeatSummary();
+    broadcast('guest-seated', { id: guest.id, seat: guest.seat, state: guest.state });
+    for (const leavingGuest of change.leaving) broadcast('guest-leaving', { guest: leavingGuest, summary });
+    for (const addedGuest of change.added) broadcast('guest-arrival', { guest: addedGuest, summary });
+    // The dashboard panel renders from `state`, so keep it in sync as well.
+    broadcast('state', state);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(Object.assign({
+      ok: true,
+      guest,
+      added: change.added,
+      departed: change.leaving,
+      guests: simulatedGuests()
+    }, summary)));
+    return;
+  }
+
+  // The overlay reports a finished exit animation so the guest is dropped from
+  // the hall (and the queue can move on) without waiting for the safety timeout.
+  if (pathname === '/api/guests/left' && req.method === 'POST') {
+    const data = await readJson();
+    const id = String((data && data.id) || '');
+    const guests = simulatedGuests();
+    const index = guests.findIndex(guest => guest.id === id);
+    if (index < 0) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Không tìm thấy khách mô phỏng.' }));
+      return;
+    }
+    guests.splice(index, 1);
+    pruneDepartedGuests();
+    persistState();
+    broadcast('guest-left', { id });
+    broadcast('state', state);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(Object.assign({ ok: true, removed: id, guests: simulatedGuests() }, guestSeatSummary())));
+    return;
+  }
+
+  if (pathname === '/api/guests/reset' && (req.method === 'POST' || req.method === 'PUT')) {
+    state.simulatedGuests = [];
+    pendingGuestRequests = 0;
+    persistState();
+    broadcast('guest-arrivals-reset', { at: new Date().toISOString() });
+    broadcast('state', state);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(Object.assign({ ok: true, guests: [] }, guestSeatSummary())));
     return;
   }
 

@@ -760,6 +760,237 @@ async function main() {
   ok('Dashboard lighting controls call the lighting API',
     /\/api\/stage-lighting/.test(adminPanelJs) && /renderStageLighting/.test(adminPanelJs));
 
+  // 24. Admin guest arrival simulator (independent from real TikTok data)
+  await api('/api/guests/reset', { method: 'POST' });
+  const guestStart = (await api('/api/guests')).json;
+  ok('Guest simulator starts with 24 seats and no simulated guests',
+    guestStart.seatsTotal === 24 && Array.isArray(guestStart.guests) &&
+    guestStart.guests.length === 0 && guestStart.available === 24 &&
+    guestStart.entering === 0,
+    JSON.stringify({ seats: guestStart.seatsTotal, available: guestStart.available }));
+
+  const beforeSim = (await api('/api/state')).json;
+  const oneGuest = (await api('/api/guests/simulate', { method: 'POST', body: { count: 1 } })).json;
+  const guest = (oneGuest.added || [])[0];
+  ok('Simulating one guest adds a simulated guest on a stage seat',
+    !!guest && guest.simulated === true && guest.seat >= 0 && guest.seat < 24 &&
+    /\/assets\/guest_[1-6]\.png$/.test(guest.asset) && guest.state === 'entering' &&
+    !Number.isNaN(Date.parse(guest.arrivedAt)), JSON.stringify(guest));
+  ok('The first click walks in at once and reserves exactly one seat',
+    oneGuest.added.length === 1 && oneGuest.guests.length === 1 &&
+    oneGuest.entering === 1 && oneGuest.available === 23,
+    JSON.stringify({ entering: oneGuest.entering, available: oneGuest.available }));
+
+  const afterSim = (await api('/api/state')).json;
+  ok('Simulated guests never touch real viewer statistics',
+    afterSim.stats.guests === beforeSim.stats.guests &&
+    afterSim.stats.envelopes === beforeSim.stats.envelopes &&
+    JSON.stringify(afterSim.people) === JSON.stringify(beforeSim.people) &&
+    JSON.stringify(afterSim.scores) === JSON.stringify(beforeSim.scores) &&
+    JSON.stringify(afterSim.recentGivers) === JSON.stringify(beforeSim.recentGivers));
+
+  await api('/api/guests/reset', { method: 'POST' });
+  const tenGuests = (await api('/api/guests/simulate', { method: 'POST', body: { count: 10 } })).json;
+  ok('Ten guests take ten distinct seats, the rest of the hall stays free',
+    tenGuests.added.length === 10 && new Set(tenGuests.added.map(g => g.seat)).size === 10 &&
+    tenGuests.entering === 10 && tenGuests.available === 14,
+    JSON.stringify({ entering: tenGuests.entering, available: tenGuests.available }));
+
+  // Rapid clicks must never drop a request or reuse a seat.
+  await api('/api/guests/reset', { method: 'POST' });
+  const rapid = await Promise.all([1, 2, 3, 4, 5].map(() =>
+    api('/api/guests/simulate', { method: 'POST', body: { count: 1 } })));
+  const rapidGuests = (await api('/api/guests')).json;
+  ok('Rapid repeated clicks never drop a request or reuse a seat',
+    rapid.every(r => r.status === 200) && rapidGuests.guests.length === 5 &&
+    new Set(rapidGuests.guests.map(g => g.id)).size === 5 &&
+    new Set(rapidGuests.guests.map(g => g.seat)).size === 5,
+    JSON.stringify({ total: rapidGuests.guests.length, entering: rapidGuests.entering }));
+
+  await api('/api/guests/reset', { method: 'POST' });
+  const sixGuests = (await api('/api/guests/simulate', { method: 'POST', body: { count: 6 } })).json;
+  ok('Character assets rotate instead of repeating',
+    new Set(sixGuests.guests.map(g => g.asset)).size === 6,
+    JSON.stringify(sixGuests.guests.map(g => g.asset)));
+
+  await api('/api/guests/reset', { method: 'POST' });
+  const half = (await api('/api/guests/simulate', { method: 'POST', body: { count: 12 } })).json;
+  ok('Twelve guests fill twelve unique seats',
+    half.guests.length === 12 && new Set(half.guests.map(g => g.seat)).size === 12 && half.available === 12,
+    JSON.stringify({ total: half.guests.length, available: half.available }));
+
+  const fullHall = (await api('/api/guests/simulate', { method: 'POST', body: { count: 24 } })).json;
+  const filling = fullHall.guests.filter(g => g.state !== 'leaving');
+  ok('The hall fills to exactly 24 unique simulated seats',
+    filling.length === 24 && new Set(filling.map(g => g.seat)).size === 24 &&
+    fullHall.available === 0 && fullHall.seatsTotal === 24,
+    JSON.stringify({ total: fullHall.guests.length, available: fullHall.available }));
+
+  let seatedRes = null;
+  for (const seatedGuest of filling) {
+    seatedRes = (await api('/api/guests/seated', { method: 'POST', body: { id: seatedGuest.id } })).json;
+  }
+  const seatedHall = (await api('/api/guests')).json;
+  ok('Guests move to the seated idle state and all 24 chairs are taken',
+    seatedRes.guest.state === 'seated_idle' && !!Date.parse(seatedRes.guest.seatedAt) &&
+    seatedHall.seated === 24 && seatedHall.available === 0 && seatedHall.leaving === 0,
+    JSON.stringify({ seated: seatedHall.seated, available: seatedHall.available }));
+
+  // 24 -> 24: one click must rotate a guest instead of being refused.
+  const fullAdd = (await api('/api/guests/simulate', { method: 'POST', body: { count: 1 } })).json;
+  const departed = (fullAdd.departed || [])[0];
+  const newcomer = (fullAdd.added || [])[0];
+  ok('Adding a guest at 24/24 replaces the longest-seated guest instead of refusing',
+    fullAdd.ok === true && fullAdd.added.length === 1 && fullAdd.departed.length === 1 &&
+    departed.state === 'leaving' && departed.id !== newcomer.id,
+    JSON.stringify({ added: newcomer && newcomer.name, leaving: departed && departed.name }));
+  ok('The newcomer takes the released seat with a different character asset',
+    newcomer.seat === departed.seat && newcomer.asset !== departed.asset &&
+    newcomer.state === 'entering' && /\/assets\/guest_[1-6]\.png$/.test(newcomer.asset),
+    JSON.stringify({ seat: newcomer.seat, asset: newcomer.asset, oldAsset: departed.asset }));
+  ok('A replacement never seats a 25th guest',
+    fullAdd.seated + fullAdd.entering === 24 && fullAdd.leaving === 1 &&
+    fullAdd.available === 0,
+    JSON.stringify({ seated: fullAdd.seated, entering: fullAdd.entering, leaving: fullAdd.leaving }));
+  const olderSeated = fullAdd.guests.filter(g => g.state === 'seated_idle' && g.id !== departed.id);
+  ok('The leaving guest is the longest-seated, never the newest arrival',
+    olderSeated.length > 0 &&
+    olderSeated.every(g => String(g.seatedAt) >= String(departed.seatedAt || departed.arrivedAt)),
+    JSON.stringify({ departed: departed.name, seatedAt: departed.seatedAt }));
+
+  const leftRes = await api('/api/guests/left', { method: 'POST', body: { id: departed.id } });
+  ok('A guest is removed from the hall once its exit animation finishes',
+    leftRes.status === 200 && leftRes.json.ok === true &&
+    !leftRes.json.guests.some(g => g.id === departed.id),
+    JSON.stringify({ removed: departed.id }));
+
+  // Ten rapid clicks at 24/24: every one becomes a replacement, never a refusal.
+  await api('/api/guests/reset', { method: 'POST' });
+  const seeded = (await api('/api/guests/simulate', { method: 'POST', body: { count: 24 } })).json;
+  for (const seededGuest of seeded.guests) {
+    await api('/api/guests/seated', { method: 'POST', body: { id: seededGuest.id } });
+  }
+  const clickResults = [];
+  for (let i = 0; i < 10; i += 1) {
+    clickResults.push(await api('/api/guests/simulate', { method: 'POST', body: { count: 1 } }));
+  }
+  const afterClicks = (await api('/api/guests')).json;
+  const stillOccupying = afterClicks.guests.filter(g => g.state !== 'leaving');
+  ok('Ten clicks at 24/24 all become arrivals, no click is dropped',
+    clickResults.every(r => r.status === 200 && r.json.ok === true && r.json.added.length === 1) &&
+    clickResults.every(r => r.json.departed.length === 1),
+    JSON.stringify(clickResults.map(r => ({ added: r.json.added.length, departed: r.json.departed.length }))));
+  ok('Repeated replacements never duplicate a seat or exceed 24 guests',
+    stillOccupying.length === 24 && new Set(stillOccupying.map(g => g.seat)).size === 24 &&
+    afterClicks.seated + afterClicks.entering === 24 && afterClicks.pending === 0,
+    JSON.stringify({ occupied: stillOccupying.length, seated: afterClicks.seated, entering: afterClicks.entering }));
+  ok('Every replacement picks a different character asset',
+    clickResults.every(r => r.json.added[0].asset !== r.json.departed[0].asset) &&
+    new Set(clickResults.map(r => r.json.added[0].asset)).size >= 2,
+    JSON.stringify(clickResults.map(r => r.json.added[0].asset)));
+
+  for (const arrivingGuest of stillOccupying.filter(g => g.state !== 'seated_idle')) {
+    await api('/api/guests/seated', { method: 'POST', body: { id: arrivingGuest.id } });
+  }
+  const settled = (await api('/api/guests')).json;
+  ok('The queue settles back to exactly 24 seated guests',
+    settled.seated === 24 && settled.entering === 0 && settled.available === 0 && settled.pending === 0,
+    JSON.stringify({ seated: settled.seated, entering: settled.entering, pending: settled.pending }));
+
+  const stateFileText = fs.readFileSync('wedding_state.json', 'utf8');
+  ok('Simulated guests persist to the wedding state file',
+    /"simulatedGuests"/.test(stateFileText) && /"simulated": true/.test(stateFileText));
+
+  const resetGuests = (await api('/api/guests/reset', { method: 'POST' })).json;
+  ok('Resetting removes every simulated guest and frees all 24 seats',
+    resetGuests.guests.length === 0 && resetGuests.available === 24 && resetGuests.pending === 0);
+
+  const refill = (await api('/api/guests/simulate', { method: 'POST', body: { count: 10 } })).json;
+  ok('The hall can be refilled after a reset',
+    refill.guests.length === 10 && refill.available === 14 &&
+    new Set(refill.guests.map(g => g.seat)).size === 10,
+    JSON.stringify({ total: refill.guests.length, available: refill.available }));
+
+  const guestHtml = await (await fetch(BASE + '/overlay.html')).text();
+  const guestJs = await (await fetch(BASE + '/guest-arrivals.js')).text();
+  const guestCss = await (await fetch(BASE + '/guest-arrivals.css')).text();
+  ok('Overlay loads the guest-arrival component and its own layer',
+    /guest-arrivals\.css/.test(guestHtml) && /guest-arrivals\.js/.test(guestHtml) &&
+    /id="guest-arrivals"/.test(guestHtml));
+  ok('Arrival goes through the five animation states',
+    ['entering', 'walking', 'approaching_seat', 'sitting', 'seated_idle'].every(s => guestJs.includes(s)) &&
+    ['walking', 'approaching_seat', 'sitting', 'seated_idle']
+      .every(s => guestCss.includes(`[data-state='${s}']`)));
+  ok('Guest layer is decorative only and sits above the lighting',
+    /#guest-arrivals[\s\S]{0,120}pointer-events: none/.test(guestCss) && /z-index: 18/.test(guestCss));
+  ok('Walking and sitting are lightweight CSS keyframes',
+    /@keyframes ga-step/.test(guestCss) && /@keyframes ga-seated-breathe/.test(guestCss) &&
+    !/requestAnimationFrame/.test(guestJs) && !/webgl|THREE\./i.test(guestJs));
+  ok('No leftover 50-guest chairs or idle gestures remain',
+    !/ga-chair/.test(guestJs) && !/ga-chair/.test(guestCss) &&
+    !/ga-idle-/.test(guestJs) && !/ga-idle-/.test(guestCss));
+  ok('A departing guest stands up, turns and walks out instead of vanishing',
+    ['standing', 'turning', 'leaving_walk'].every(s => guestJs.includes(s)) &&
+    ['standing', 'turning', 'leaving_walk'].every(s => guestCss.includes(`[data-state='${s}']`)) &&
+    /exitPathFor/.test(guestJs) && /\/api\/guests\/left/.test(guestJs) &&
+    /ga-fade-out/.test(guestCss));
+  ok('Guest arrivals stay independent from gifts, MC, BGM and TikFinity',
+    !/\/api\/(demo|action|tikfinity|mc|bgm)/.test(guestJs) && !/announce\(/.test(guestJs));
+
+  // 24-seat geometry: the simulator reuses the overlay's banquet chairs, clear of
+  // the couple, the MC, the two aisle dancers and the centre aisle.
+  const readSeats = (src, limit) => {
+    const pattern = /\{\s*x:\s*(\d+),\s*y:\s*(\d+),\s*scale:\s*([\d.]+)\s*\}/g;
+    const seats = [];
+    let match;
+    while ((match = pattern.exec(src)) && seats.length < limit) {
+      seats.push({ x: Number(match[1]), y: Number(match[2]), scale: Number(match[3]) });
+    }
+    return seats;
+  };
+  const seatsSim = readSeats(guestJs, 24);
+  const spriteBox = seat => ({
+    l: seat.x - 67.5 * seat.scale,
+    r: seat.x + 67.5 * seat.scale,
+    t: seat.y - 175 * seat.scale,
+    b: seat.y
+  });
+  const hits = (a, b) => !(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t);
+  const coupleBox = { l: 413, t: 792, r: 668, b: 1129 };
+  const overlaySeats = readSeats(await (await fetch(BASE + '/overlay.js')).text(), 24);
+  const seatKey = s => `${s.x},${s.y},${s.scale.toFixed(2)}`;
+  ok('Simulated guests sit on the stage\'s real chair positions',
+    seatsSim.length === 24 && overlaySeats.length === 24 &&
+    seatsSim.map(seatKey).join('|') === overlaySeats.map(seatKey).join('|'),
+    `${overlaySeats.length} overlay seats vs ${seatsSim.length} module seats`);
+  // These are the shipped 24 banquet chairs: inside the frame, on the tables and
+  // clear of the couple. The extra clearance zones only existed for the 50-seat
+  // expansion and are gone again.
+  ok('Seats stay inside the frame, off the centre aisle and clear of the couple',
+    seatsSim.every(s => {
+      const box = spriteBox(s);
+      return box.l >= 0 && box.r <= 1080 && box.t >= 0 && box.b <= 1920 &&
+        !hits(box, coupleBox) && (box.r < 430 || box.l > 650);
+    }));
+
+  const adminGuestHtml = await (await fetch(BASE + '/index.html')).text();
+  const adminGuestJs = await (await fetch(BASE + '/panel.js')).text();
+  ok('Dashboard shows seated, entering, leaving and pending counters',
+    adminGuestHtml.includes('id="tab-guests"') && adminGuestHtml.includes('btn-sim-guest-1') &&
+    adminGuestHtml.includes('btn-sim-guest-5') && adminGuestHtml.includes('btn-sim-guest-10') &&
+    adminGuestHtml.includes('btn-reset-sim-guests') && adminGuestHtml.includes('sim-guests-seated') &&
+    adminGuestHtml.includes('sim-guests-entering') && adminGuestHtml.includes('sim-guests-leaving') &&
+    adminGuestHtml.includes('sim-queue-pending') && adminGuestHtml.includes('sim-arrivals-list'));
+  ok('The add button is never disabled and no full-room block remains',
+    /SIM_GUEST_SEATS = 24/.test(adminGuestJs) &&
+    !/SIM_GUEST_CAPACITY_MESSAGE/.test(adminGuestJs) &&
+    !/btn\.disabled = full/.test(adminGuestJs) && !/sức chứa tối đa/.test(adminGuestJs) &&
+    /guestPending/.test(adminGuestJs) &&
+    !/sức chứa tối đa/i.test(adminGuestHtml));
+  ok('Dashboard calls the simulator API and reports rotations',
+    /\/api\/guests\/simulate/.test(adminGuestJs) && /renderGuestArrivals/.test(adminGuestJs) &&
+    /data\.departed/.test(adminGuestJs) && /data\.pending/.test(adminGuestJs));
+
   // Restore a sane production configuration (tests shorten the cooldowns).
   await api('/api/mc/config', {
     method: 'POST',

@@ -1,0 +1,192 @@
+/* ========================================================
+   SIMULATED GUEST ARRIVALS (admin simulator)
+   Decorative overlay only: never intercepts clicks, never
+   covers the couple, MC, dancers or the gift procession.
+   ======================================================== */
+#guest-arrivals {
+  position: absolute;
+  inset: 0;
+  z-index: 18;
+  pointer-events: none;
+}
+
+.ga-guest {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 135px;
+  height: 175px;
+  transform-origin: 50% 100%;
+  will-change: transform;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.55));
+  opacity: 0;
+  animation: ga-fade-in 0.45s ease-out forwards;
+}
+
+.ga-guest.ga-no-anim {
+  animation: none;
+  opacity: 1;
+}
+
+.ga-guest.ga-leaving {
+  animation: ga-fade-out 0.34s ease-in forwards;
+}
+
+@keyframes ga-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ga-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.ga-body {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 100%;
+}
+
+.ga-sprite {
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  transition: transform 0.65s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/* Walking: a light step bob on an inner wrapper, so the character itself is
+   never stretched or distorted. */
+.ga-guest[data-state='walking'] .ga-body,
+.ga-guest[data-state='entering'] .ga-body,
+.ga-guest[data-state='approaching_seat'] .ga-body,
+.ga-guest[data-state='leaving_walk'] .ga-body {
+  animation: ga-step 0.58s ease-in-out infinite;
+}
+
+@keyframes ga-step {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-5px) rotate(1deg); }
+}
+
+/* Sitting down: the character lowers into the chair. */
+.ga-guest[data-state='sitting'] .ga-body {
+  animation: none;
+}
+
+.ga-guest[data-state='sitting'] .ga-sprite {
+  transform: translateY(8px) scale(0.99, 0.94);
+}
+
+/* Seated idle: a very slow breathing motion, no distortion. */
+.ga-guest[data-state='seated_idle'] .ga-sprite {
+  transform: translateY(4px) scale(1, 0.97);
+}
+
+.ga-guest[data-state='seated_idle'] .ga-body {
+  animation: ga-seated-breathe 6s ease-in-out infinite;
+}
+
+@keyframes ga-seated-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* Standing up before leaving: the character rises out of the chair. */
+.ga-guest[data-state='standing'] .ga-body {
+  animation: none;
+}
+
+.ga-guest[data-state='standing'] .ga-sprite {
+  animation: ga-stand-up 0.54s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes ga-stand-up {
+  from { transform: translateY(8px) scale(0.99, 0.94); }
+  to { transform: translateY(0) scale(1, 1); }
+}
+
+/* Turning toward the aisle: a body turn, never an instant disappearance. */
+.ga-guest[data-state='turning'] .ga-body {
+  animation: none;
+  transition: transform 0.42s ease-in-out;
+  transform: scaleX(0.88) rotate(-4deg);
+}
+
+.ga-guest[data-state='turning'] .ga-sprite {
+  transform: translateY(0) scale(1, 1);
+}
+
+.ga-guest[data-state='leaving_walk'] .ga-sprite {
+  transform: translateY(0) scale(1, 1);
+}
+
+.ga-guest.ga-turned .ga-badge,
+.ga-guest.ga-departing .ga-badge {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Soft contact shadow under the character's feet. */
+.ga-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 84px;
+  height: 15px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 72%);
+  filter: blur(2px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.ga-guest[data-state='sitting'] .ga-shadow,
+.ga-guest[data-state='seated_idle'] .ga-shadow,
+.ga-guest[data-state='standing'] .ga-shadow {
+  opacity: 0.75;
+  transform: translateX(-50%) scale(1.06, 0.9);
+}
+
+/* Small gold name tag so the operator can identify the simulated guest. */
+.ga-badge {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff4cf 0%, #f0cc78 100%);
+  border: 1px solid #8a5c14;
+  color: #3a2105;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.55);
+}
+
+.ga-guest[data-state='seated_idle'] .ga-badge {
+  opacity: 0.92;
+}
+
+/* Operators with reduced-motion enabled still get the rotation, just seated. */
+@media (prefers-reduced-motion: reduce) {
+  .ga-guest,
+  .ga-guest .ga-body,
+  .ga-guest .ga-sprite,
+  .ga-guest .ga-shadow {
+    animation: none !important;
+    transition: none !important;
+  }
+  .ga-guest {
+    opacity: 1;
+  }
+}

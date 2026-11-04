@@ -60,6 +60,10 @@
           <span class="nav-icon">🎆</span>
           <span>Stage Lighting</span>
         </button>
+        <button class="nav-item" data-tab="tab-guests">
+          <span class="nav-icon">🎟️</span>
+          <span>Mô Phỏng Khách Mời</span>
+        </button>
         <button class="nav-item" data-tab="tab-tikfinity">
           <span class="nav-icon">🔗</span>
           <span>Kết Nối TikTok / TikFinity</span>
@@ -606,6 +610,65 @@
               <span class="hint-text" id="sl-status">Đang tải cài đặt…</span>
               <button class="btn btn-secondary" id="btn-reset-sl">↺ Về Mặc Định</button>
               <button class="btn btn-primary" id="btn-save-sl">💾 Lưu Ánh Sáng</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB: GUEST ARRIVAL SIMULATOR ================= -->
+        <section class="tab-pane" id="tab-guests">
+          <div class="section-heading">
+            <small>SÂN KHẤU CƯỚI • MÔ PHỎNG KHÁCH MỜI BƯỚC VÀO TIỆC</small>
+            <h2>🎟️ Guest Arrival Simulator</h2>
+            <p>Mô phỏng khách mời bước vào hội trường, đi dọc thảm đỏ tới ghế rồi ngồi xuống. Hội trường luôn có đúng 24 ghế: khi đã đủ chỗ, khách ngồi lâu nhất đứng dậy rời tiệc để nhường ghế cho khách mới, nên nút thêm khách luôn bấm được. Hoàn toàn tách biệt với người xem TikTok thật, quà tặng thật và TikFinity.</p>
+          </div>
+
+          <div class="card-panel">
+            <div class="panel-header">
+              <h3>🎟️ Mô phỏng khách mời vào tiệc</h3>
+              <small>24 ghế cố định • khách luân chuyển liên tục</small>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+              <button class="btn btn-primary" id="btn-sim-guest-1">➕ Thêm 1 khách</button>
+              <button class="btn btn-secondary" id="btn-sim-guest-5">👥 Thêm 5 khách</button>
+              <button class="btn btn-secondary" id="btn-sim-guest-10">👥 Thêm 10 khách</button>
+              <button class="btn btn-danger" id="btn-reset-sim-guests">↺ Xóa toàn bộ khách</button>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon">🪑</div>
+                <div class="stat-data">
+                  <b id="sim-guests-seated">0/24</b>
+                  <span>Khách đã ngồi</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">🚶</div>
+                <div class="stat-data">
+                  <b id="sim-guests-entering">0</b>
+                  <span>Khách đang vào</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">👋</div>
+                <div class="stat-data">
+                  <b id="sim-guests-leaving">0</b>
+                  <span>Khách đang rời</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-data">
+                  <b id="sim-queue-pending">0</b>
+                  <span>Khách chờ ghế</span>
+                </div>
+              </div>
+            </div>
+            <div class="form-group full-width" style="margin-top:16px;">
+              <label>Hoạt động gần đây:</label>
+              <ul id="sim-arrivals-list" class="hint-text" style="margin:6px 0 0 18px;line-height:1.9;">
+                <li>Chưa có khách mô phỏng nào vào tiệc.</li>
+              </ul>
+              <small class="hint-text" id="sim-guests-status">Khách mô phỏng không làm tăng số người xem thật, không kích hoạt quà tặng hay MC.</small>
             </div>
           </div>
         </section>

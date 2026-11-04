@@ -530,6 +530,118 @@ $('#btn-reset-sl')?.addEventListener('click', async () => {
   if (saved) alert('Đã khôi phục cài đặt ánh sáng mặc định!');
 });
 
+// Simulated guest arrivals — continuous rotation, admin-only (Vietnamese labels on purpose)
+let lastAdminState = null;
+const SIM_GUEST_SEATS = 24;
+const SIM_GUEST_ADD_BUTTONS = ['#btn-sim-guest-1', '#btn-sim-guest-5', '#btn-sim-guest-10'];
+
+function simGuestTime(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function simGuestCounts(guests) {
+  const counts = { seated: 0, entering: 0, leaving: 0 };
+  for (const guest of guests) {
+    if (guest.state === 'leaving') counts.leaving += 1;
+    else if (guest.state === 'seated_idle') counts.seated += 1;
+    else counts.entering += 1;
+  }
+  return counts;
+}
+
+function renderGuestArrivals(state) {
+  if (!state) return;
+  lastAdminState = state;
+  const guests = Array.isArray(state.simulatedGuests) ? state.simulatedGuests : [];
+  const counts = simGuestCounts(guests);
+
+  // Seated guests are always shown against the fixed 24-chair hall.
+  if ($('#sim-guests-seated')) $('#sim-guests-seated').textContent = `${counts.seated}/${SIM_GUEST_SEATS}`;
+  if ($('#sim-guests-entering')) $('#sim-guests-entering').textContent = String(counts.entering);
+  if ($('#sim-guests-leaving')) $('#sim-guests-leaving').textContent = String(counts.leaving);
+  if ($('#sim-queue-pending')) $('#sim-queue-pending').textContent = String(Number(state.guestPending) || 0);
+
+  // The add buttons stay clickable at 24/24: a click rotates a guest out instead of
+  // being refused, so no "room is full" state ever blocks the operator.
+  SIM_GUEST_ADD_BUTTONS.forEach(selector => {
+    const btn = $(selector);
+    if (!btn) return;
+    btn.disabled = false;
+    btn.setAttribute('aria-disabled', 'false');
+  });
+
+  const list = $('#sim-arrivals-list');
+  if (list) {
+    list.replaceChildren();
+    if (!guests.length) {
+      const li = document.createElement('li');
+      li.textContent = 'Chưa có khách mô phỏng nào vào tiệc.';
+      list.append(li);
+    } else {
+      guests.slice()
+        .sort((a, b) => String(b.arrivedAt).localeCompare(String(a.arrivedAt)))
+        .slice(0, 6)
+        .forEach(g => {
+          const li = document.createElement('li');
+          const stateLabel = g.state === 'leaving'
+            ? 'đang rời tiệc'
+            : (g.state === 'seated_idle' ? 'đã ngồi' : 'đang vào');
+          li.textContent = `${g.name || 'Khách'} • Ghế #${Number(g.seat) + 1} • ${stateLabel} • ${simGuestTime(g.arrivedAt)}`;
+          list.append(li);
+        });
+    }
+  }
+}
+
+async function simGuestsRequest(path, payload = {}) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+async function simulateGuests(count) {
+  const status = $('#sim-guests-status');
+  try {
+    const data = await simGuestsRequest('/api/guests/simulate', { count });
+    if (lastAdminState) {
+      renderGuestArrivals({ ...lastAdminState, simulatedGuests: data.guests, guestPending: data.pending });
+    }
+    if (status) {
+      const parts = [];
+      if (data.added && data.added.length) parts.push(`Đã thêm ${data.added.length} khách`);
+      if (data.departed && data.departed.length) parts.push(`${data.departed.length} khách ngồi lâu nhất đứng dậy rời tiệc`);
+      parts.push(`${data.seated}/${SIM_GUEST_SEATS} chỗ đã có người`);
+      if (data.pending) parts.push(`${data.pending} khách đang chờ ghế trống`);
+      status.textContent = parts.join(' • ');
+    }
+  } catch (err) {
+    if (status) status.textContent = '⚠️ ' + err.message;
+    alert('⚠️ ' + err.message);
+  }
+}
+
+$('#btn-sim-guest-1')?.addEventListener('click', () => simulateGuests(1));
+$('#btn-sim-guest-5')?.addEventListener('click', () => simulateGuests(5));
+$('#btn-sim-guest-10')?.addEventListener('click', () => simulateGuests(10));
+
+$('#btn-reset-sim-guests')?.addEventListener('click', async () => {
+  if (!confirm('Xóa toàn bộ khách mô phỏng khỏi sân khấu? Khách thật và dữ liệu TikTok không bị ảnh hưởng.')) return;
+  try {
+    await simGuestsRequest('/api/guests/reset');
+    if (lastAdminState) renderGuestArrivals({ ...lastAdminState, simulatedGuests: [], guestPending: 0 });
+    if ($('#sim-guests-status')) $('#sim-guests-status').textContent = 'Đã xóa toàn bộ khách mô phỏng khỏi sân khấu.';
+  } catch (err) {
+    alert('⚠️ ' + err.message);
+  }
+});
+
 // Render State into Admin Panel
 function renderAdminState(state) {
   const cfg = state.config || {};
@@ -546,6 +658,9 @@ function renderAdminState(state) {
   if ($('#card-top-giver')) {
     $('#card-top-giver').textContent = topDonors[0]?.name || 'Chưa có';
   }
+
+  // Simulated guests have their own counters (never the real TikTok stats).
+  renderGuestArrivals(state);
 
   // Registry table
   const tbody = $('#table-registry tbody');
