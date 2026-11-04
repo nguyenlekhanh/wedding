@@ -69,6 +69,19 @@ const defaultState = {
       scale: 1,
       intensity: 1
     },
+    // Continuous American wedding-reception stage lighting.
+    stageLighting: {
+      enabled: true,
+      intensity: 65,
+      colorSpeed: 1,
+      spotSpeed: 1,
+      spotBrightness: 60,
+      spotCount: 3,
+      beams: true,
+      floor: true,
+      sparkles: true,
+      lowPerf: false
+    },
     thanksTemplate: "Thank you {name} for the {count} {gift} for bride {bride} and groom {groom}! Wishing you and your family good health and every happiness!",
     funnyJokes: [
       "Oh wow, can you believe it! Big spender {name} just sent {count} {gift}! Handsome and generous — no wonder the bride is swooning!",
@@ -1049,6 +1062,9 @@ try {
   if (!state.config.dancers) {
     state.config.dancers = { ...defaultState.config.dancers };
   }
+  if (!state.config.stageLighting) {
+    state.config.stageLighting = { ...defaultState.config.stageLighting };
+  }
   persistState();
 } catch (e) {
   console.error('[BGM] Could not migrate the track list:', e.message);
@@ -1292,6 +1308,34 @@ const server = http.createServer(async (req, res) => {
     }
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ ok: true, action: data }));
+    return;
+  }
+
+  // 5a. Dynamic stage lighting (continuous CSS ambience)
+  if (pathname === '/api/stage-lighting' && (req.method === 'POST' || req.method === 'PUT')) {
+    const data = await readJson();
+    const num = (value, min, max, fallback) => {
+      const n = Number(value);
+      return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback;
+    };
+    const current = state.config.stageLighting || {};
+    state.config.stageLighting = {
+      enabled: data.enabled === undefined ? current.enabled !== false : Boolean(data.enabled),
+      intensity: data.intensity === undefined ? num(current.intensity, 0, 100, 65) : num(data.intensity, 0, 100, 65),
+      colorSpeed: data.colorSpeed === undefined ? num(current.colorSpeed, 0.3, 2.5, 1) : num(data.colorSpeed, 0.3, 2.5, 1),
+      spotSpeed: data.spotSpeed === undefined ? num(current.spotSpeed, 0.3, 2.5, 1) : num(data.spotSpeed, 0.3, 2.5, 1),
+      spotBrightness: data.spotBrightness === undefined ? num(current.spotBrightness, 0, 100, 60) : num(data.spotBrightness, 0, 100, 60),
+      spotCount: Math.round(data.spotCount === undefined ? num(current.spotCount, 1, 3, 3) : num(data.spotCount, 1, 3, 3)),
+      beams: data.beams === undefined ? current.beams !== false : Boolean(data.beams),
+      floor: data.floor === undefined ? current.floor !== false : Boolean(data.floor),
+      sparkles: data.sparkles === undefined ? current.sparkles !== false : Boolean(data.sparkles),
+      lowPerf: data.lowPerf === undefined ? current.lowPerf === true : Boolean(data.lowPerf)
+    };
+    persistState();
+    broadcast('state', state);
+    broadcast('stage-lighting', state.config.stageLighting);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, stageLighting: state.config.stageLighting }));
     return;
   }
 

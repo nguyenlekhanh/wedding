@@ -1,0 +1,245 @@
+/* ========================================================
+   DYNAMIC AMERICAN WEDDING STAGE LIGHTING
+   Champagne gold / warm gold / soft amber / ivory / blush / rose gold.
+   Five CSS layers, GPU transforms, no filters on the whole stage.
+   Sits above the venue photo, below the couple, MC, dancers and guests.
+   ======================================================== */
+
+#stage-lighting {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  overflow: hidden;
+  --sl-intensity: 0.65;
+  --sl-color-dur: 30s;
+  --sl-spot-dur: 20s;
+  --sl-spot-bright: 0.6;
+}
+
+#stage-lighting[data-enabled="false"] {
+  display: none;
+}
+
+/* ---------- A. colour cycling wash (crossfading layers, never a hard cut) ---------- */
+
+.sl-wash {
+  position: absolute;
+  inset: -12%;
+  opacity: 0;
+  filter: blur(36px);
+  mix-blend-mode: screen;
+  animation: sl-wash-fade var(--sl-color-dur) ease-in-out infinite;
+}
+
+.sl-wash--a {
+  background:
+    radial-gradient(58% 42% at 28% 16%, rgba(247, 227, 181, 0.55), transparent 70%),
+    radial-gradient(46% 38% at 76% 28%, rgba(255, 250, 240, 0.34), transparent 72%);
+  animation-duration: calc(var(--sl-color-dur) * 1);
+}
+
+.sl-wash--b {
+  background:
+    radial-gradient(54% 40% at 70% 12%, rgba(246, 211, 216, 0.5), transparent 70%),
+    radial-gradient(48% 44% at 24% 34%, rgba(232, 180, 160, 0.42), transparent 72%);
+  animation-duration: calc(var(--sl-color-dur) * 1.35);
+  animation-delay: calc(var(--sl-color-dur) * -0.45);
+}
+
+.sl-wash--c {
+  background:
+    radial-gradient(60% 48% at 50% 8%, rgba(240, 194, 122, 0.45), transparent 72%),
+    radial-gradient(40% 34% at 88% 40%, rgba(255, 236, 200, 0.3), transparent 74%);
+  animation-duration: calc(var(--sl-color-dur) * 1.7);
+  animation-delay: calc(var(--sl-color-dur) * -0.9);
+}
+
+@keyframes sl-wash-fade {
+  0%, 100% { opacity: calc(var(--sl-intensity) * 0.28); }
+  50% { opacity: calc(var(--sl-intensity) * 0.92); }
+}
+
+/* ---------- B. sweeping spotlights ---------- */
+
+.sl-spot {
+  position: absolute;
+  top: -10%;
+  left: 0;
+  width: 46%;
+  height: 76%;
+  opacity: var(--sl-spot-bright);
+  transform-origin: 50% 0;
+  mix-blend-mode: screen;
+  filter: blur(24px);
+  background: conic-gradient(from 180deg at 50% 0%,
+    transparent 0deg,
+    rgba(255, 241, 214, 0.5) 11deg,
+    rgba(255, 234, 197, 0.2) 25deg,
+    transparent 34deg);
+  animation: sl-sweep calc(var(--sl-spot-dur) * 1.2) ease-in-out infinite alternate;
+}
+
+.sl-spot--1 { left: 2%; animation-delay: calc(var(--sl-spot-dur) * -0.2); }
+.sl-spot--2 { left: 29%; animation-duration: calc(var(--sl-spot-dur) * 1.45); animation-delay: calc(var(--sl-spot-dur) * -0.7); }
+.sl-spot--3 { left: 56%; animation-duration: calc(var(--sl-spot-dur) * 1.7); animation-delay: calc(var(--sl-spot-dur) * -1.1); }
+
+#stage-lighting[data-spot-count="1"] .sl-spot--2,
+#stage-lighting[data-spot-count="1"] .sl-spot--3,
+#stage-lighting[data-spot-count="2"] .sl-spot--3 {
+  display: none;
+}
+
+@keyframes sl-sweep {
+  from { transform: translateX(-24%) rotate(-11deg); }
+  to { transform: translateX(24%) rotate(11deg); }
+}
+
+/* ---------- C. diagonal light beams ---------- */
+
+.sl-beams {
+  position: absolute;
+  inset: 0;
+}
+
+#stage-lighting[data-beams="false"] .sl-beams {
+  display: none;
+}
+
+.sl-beam {
+  position: absolute;
+  top: -22%;
+  width: 108px;
+  height: 132%;
+  background: linear-gradient(180deg, rgba(255, 238, 198, 0.3), rgba(255, 238, 198, 0) 68%);
+  filter: blur(16px);
+  mix-blend-mode: screen;
+  transform-origin: 50% 0;
+  animation: sl-beam-drift calc(var(--sl-spot-dur) * 2.4) ease-in-out infinite alternate;
+}
+
+.sl-beam--1 { left: 6%; animation-duration: calc(var(--sl-spot-dur) * 2.1); }
+.sl-beam--2 { left: 42%; animation-duration: calc(var(--sl-spot-dur) * 2.7); animation-delay: calc(var(--sl-spot-dur) * -0.8); }
+.sl-beam--3 { left: 74%; animation-duration: calc(var(--sl-spot-dur) * 2.35); animation-delay: calc(var(--sl-spot-dur) * -1.4); }
+
+@keyframes sl-beam-drift {
+  from { transform: rotate(14deg) translateY(-2%); opacity: calc(var(--sl-intensity) * 0.5); }
+  to { transform: rotate(-13deg) translateY(2%); opacity: calc(var(--sl-intensity) * 0.95); }
+}
+
+/* ---------- D. aisle floor reflection ---------- */
+
+.sl-floor {
+  position: absolute;
+  left: 50%;
+  bottom: 5%;
+  width: 64%;
+  height: 34%;
+  transform: translateX(-50%);
+}
+
+#stage-lighting[data-floor="false"] .sl-floor {
+  display: none;
+}
+
+.sl-floor-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(50% 60% at 50% 58%, rgba(255, 226, 174, 0.34), transparent 72%);
+  filter: blur(20px);
+  animation: sl-floor-pulse calc(var(--sl-color-dur) * 1.6) ease-in-out infinite;
+}
+
+.sl-floor-sweep {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 36%, rgba(255, 242, 210, 0.26) 50%, transparent 64%);
+  background-size: 220% 100%;
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  animation: sl-floor-sweep calc(var(--sl-spot-dur) * 1.15) linear infinite;
+}
+
+@keyframes sl-floor-pulse {
+  0%, 100% { opacity: calc(var(--sl-intensity) * 0.4); }
+  50% { opacity: calc(var(--sl-intensity) * 0.95); }
+}
+
+@keyframes sl-floor-sweep {
+  from { background-position: 165% 0; }
+  to { background-position: -65% 0; }
+}
+
+/* ---------- E. ambient golden sparkles ---------- */
+
+.sl-sparkles {
+  position: absolute;
+  inset: 0;
+}
+
+#stage-lighting[data-sparkles="false"] .sl-sparkles {
+  display: none;
+}
+
+.sl-sparkle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 246, 222, 0.95), rgba(247, 215, 154, 0.35) 60%, transparent 70%);
+  opacity: 0;
+  animation: sl-twinkle var(--sl-dur, 12s) ease-in-out infinite;
+  animation-delay: var(--sl-delay, 0s);
+}
+
+@keyframes sl-twinkle {
+  0%, 100% { opacity: 0; transform: translateY(0) scale(0.7); }
+  35% { opacity: calc(var(--sl-intensity) * 0.9); transform: translateY(-10px) scale(1); }
+  70% { opacity: calc(var(--sl-intensity) * 0.35); transform: translateY(-22px) scale(0.9); }
+}
+
+/* ---------- low-performance mode: fewer layers, softer blur ---------- */
+
+#stage-lighting[data-lowperf="true"] .sl-sparkles,
+#stage-lighting[data-lowperf="true"] .sl-beam--3 {
+  display: none;
+}
+
+#stage-lighting[data-lowperf="true"] .sl-wash {
+  filter: blur(24px);
+}
+
+#stage-lighting[data-lowperf="true"] .sl-spot {
+  filter: blur(16px);
+}
+
+#stage-lighting[data-lowperf="true"] .sl-beam {
+  filter: blur(10px);
+}
+
+#stage-lighting[data-lowperf="true"] .sl-floor-glow {
+  filter: blur(12px);
+}
+
+#stage-lighting[data-lowperf="true"] .sl-floor-sweep {
+  animation: none;
+  opacity: 0.35;
+}
+
+/* ---------- reduced motion: keep the ambience, stop the travel ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .sl-spot,
+  .sl-beam,
+  .sl-floor-sweep,
+  .sl-sparkle {
+    animation: none;
+  }
+
+  .sl-spot { opacity: calc(var(--sl-spot-bright) * 0.7); }
+  .sl-beam { opacity: calc(var(--sl-intensity) * 0.5); }
+  .sl-sparkle { opacity: calc(var(--sl-intensity) * 0.45); }
+
+  .sl-wash,
+  .sl-floor-glow {
+    animation-duration: calc(var(--sl-color-dur) * 2.4);
+  }
+}

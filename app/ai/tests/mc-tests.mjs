@@ -215,7 +215,7 @@ async function main() {
   const markCrown = Date.now();
   await api('/api/demo', {
     method: 'POST',
-    body: { type: 'gift', id: `mc-crown-${markCrown}`, name: 'Dai Gia', gift: 'Wedding Ring', count: 1, diamonds: 50 }
+    body: { type: 'gift', id: `mc-crown-${markCrown}`, name: 'Tiffany', gift: 'Wedding Ring', count: 1, diamonds: 50 }
   });
   const crownEvt = await waitFor((e) => e.at >= markCrown && e.event === 'tts' && e.data.priority === 10, 25000);
   ok('Crown transfer keeps priority 10', !!crownEvt, crownEvt ? `kind=${crownEvt.data.mcKind}` : 'none');
@@ -691,6 +691,74 @@ async function main() {
     adminDancers.includes('id="tab-dancers"') && adminDancers.includes('cfg-dancers-speed') &&
     adminDancers.includes('cfg-dancers-scale') && adminDancers.includes('cfg-dancers-intensity') &&
     adminDancers.includes('btn-save-dancers'));
+
+  // 23. Dynamic stage lighting
+  const lightingDefaults = (await api('/api/state')).json.config.stageLighting;
+  ok('Stage lighting defaults are on, 3 spotlights, medium intensity',
+    !!lightingDefaults && lightingDefaults.enabled === true && Number(lightingDefaults.intensity) === 65 &&
+    Number(lightingDefaults.spotCount) === 3 && lightingDefaults.beams === true &&
+    lightingDefaults.floor === true && lightingDefaults.sparkles === true && lightingDefaults.lowPerf === false,
+    JSON.stringify(lightingDefaults));
+
+  const lightingCss = await (await fetch(BASE + '/stage-lighting.css')).text();
+  const lightingJs = await (await fetch(BASE + '/stage-lighting.js')).text();
+  const lightingHtml = await (await fetch(BASE + '/overlay.html')).text();
+  ok('Overlay loads the stage-lighting component',
+    /stage-lighting\.css/.test(lightingHtml) && /stage-lighting\.js/.test(lightingHtml));
+  ok('Five independent lighting layers exist',
+    ['sl-wash', 'sl-spot', 'sl-beam', 'sl-floor', 'sl-sparkle'].every((c) => lightingCss.includes('.' + c)) &&
+    ['sl-wash-fade', 'sl-sweep', 'sl-beam-drift', 'sl-floor-pulse', 'sl-floor-sweep', 'sl-twinkle']
+      .every((k) => lightingCss.includes('@keyframes ' + k)));
+  ok('Lighting is pure CSS (no WebGL, canvas or rAF loop)',
+    !/requestAnimationFrame\s*\(/.test(lightingJs) && !/THREE\.|getContext\(\s*['"]webgl/i.test(lightingJs) &&
+    !/<canvas/i.test(lightingJs));
+  ok('Lighting never intercepts input and sits below the characters',
+    /#stage-lighting[\s\S]{0,260}pointer-events: none/.test(lightingCss) && /z-index: 12/.test(lightingCss));
+  ok('Lighting supports reduced motion and a low-performance mode',
+    /@media \(prefers-reduced-motion: reduce\)/.test(lightingCss) && /data-lowperf="true"/.test(lightingCss));
+  ok('Colour cycling crossfades instead of hard-cutting',
+    /sl-wash-fade/.test(lightingCss) && /animation-delay: calc\(var\(--sl-color-dur\)/.test(lightingCss));
+  ok('Overlay forwards lighting settings to the component',
+    /wedding:lighting/.test(overlayJs));
+
+  const savedLighting = (await api('/api/stage-lighting', {
+    method: 'POST',
+    body: { intensity: 82, colorSpeed: 1.8, spotSpeed: 0.7, spotBrightness: 75, spotCount: 2, beams: false, lowPerf: true }
+  })).json.stageLighting;
+  ok('Stage lighting controls save independently',
+    savedLighting.intensity === 82 && savedLighting.colorSpeed === 1.8 && savedLighting.spotSpeed === 0.7 &&
+    savedLighting.spotBrightness === 75 && savedLighting.spotCount === 2 &&
+    savedLighting.beams === false && savedLighting.lowPerf === true, JSON.stringify(savedLighting));
+
+  const clampedLighting = (await api('/api/stage-lighting', {
+    method: 'POST',
+    body: { intensity: 500, colorSpeed: 9, spotSpeed: 0, spotBrightness: -40, spotCount: 9 }
+  })).json.stageLighting;
+  ok('Lighting values are clamped to safe ranges',
+    clampedLighting.intensity === 100 && clampedLighting.colorSpeed === 2.5 && clampedLighting.spotSpeed === 0.3 &&
+    clampedLighting.spotBrightness === 0 && clampedLighting.spotCount === 3, JSON.stringify(clampedLighting));
+
+  const disabledLighting = (await api('/api/stage-lighting', { method: 'POST', body: { enabled: false } })).json.stageLighting;
+  ok('Stage lighting can be disabled', disabledLighting.enabled === false);
+  ok('Lighting settings persist to the state file', /"stageLighting"/.test(fs.readFileSync('wedding_state.json', 'utf8')));
+
+  await api('/api/stage-lighting', {
+    method: 'POST',
+    body: {
+      enabled: true, intensity: 65, colorSpeed: 1, spotSpeed: 1, spotBrightness: 60,
+      spotCount: 3, beams: true, floor: true, sparkles: true, lowPerf: false
+    }
+  });
+
+  const adminLighting = await (await fetch(BASE + '/index.html')).text();
+  ok('Dashboard has the Stage Lighting tab and controls',
+    adminLighting.includes('id="tab-lighting"') && adminLighting.includes('cfg-sl-intensity') &&
+    adminLighting.includes('cfg-sl-color-speed') && adminLighting.includes('cfg-sl-spot-speed') &&
+    adminLighting.includes('cfg-sl-spot-count') && adminLighting.includes('btn-save-sl') &&
+    adminLighting.includes('btn-reset-sl'));
+  const adminPanelJs = await (await fetch(BASE + '/panel.js')).text();
+  ok('Dashboard lighting controls call the lighting API',
+    /\/api\/stage-lighting/.test(adminPanelJs) && /renderStageLighting/.test(adminPanelJs));
 
   // Restore a sane production configuration (tests shorten the cooldowns).
   await api('/api/mc/config', {

@@ -65,6 +65,26 @@
       ],
       "activeTrack": 3
     },
+    "dancers": {
+      "enabled": true,
+      "left": true,
+      "right": true,
+      "speed": 1,
+      "scale": 1,
+      "intensity": 1
+    },
+    "stageLighting": {
+      "enabled": true,
+      "intensity": 65,
+      "colorSpeed": 1,
+      "spotSpeed": 1,
+      "spotBrightness": 60,
+      "spotCount": 3,
+      "beams": true,
+      "floor": true,
+      "sparkles": true,
+      "lowPerf": false
+    },
     "thanksTemplate": "Thank you {name} for the {count} {gift} for bride {bride} and groom {groom}! Wishing you and your family good health and every happiness!",
     "funnyJokes": [
       "Oh wow, can you believe it! Big spender {name} just sent {count} {gift}! Handsome and generous — no wonder the bride is swooning!",

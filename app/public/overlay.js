@@ -501,6 +501,9 @@ function renderState(state) {
   // is pure CSS and runs from the moment the layer is attached.
   document.dispatchEvent(new CustomEvent('wedding:dancers', { detail: cfg.dancers || {} }));
 
+  // Stage lighting is CSS-only too: this only forwards the operator's settings.
+  document.dispatchEvent(new CustomEvent('wedding:lighting', { detail: cfg.stageLighting || {} }));
+
   renderGuests(state.people || []);
   renderRegistry(state.scores || {});
 }

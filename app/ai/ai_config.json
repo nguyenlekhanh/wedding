@@ -10,7 +10,7 @@
       "timeoutMs": 30000,
       "enabled": true,
       "createdAt": "2026-11-04T03:21:20.483Z",
-      "updatedAt": "2026-11-04T06:47:02.479Z"
+      "updatedAt": "2026-11-04T07:04:53.169Z"
     },
     {
       "id": "pv_mw1jv82ibcgr",
@@ -21,7 +21,7 @@
       "timeoutMs": 60000,
       "enabled": true,
       "createdAt": "2026-11-04T03:21:20.538Z",
-      "updatedAt": "2026-11-04T06:47:02.485Z"
+      "updatedAt": "2026-11-04T07:04:53.173Z"
     },
     {
       "id": "pv_mw1jv82kuhka",
@@ -32,7 +32,7 @@
       "timeoutMs": 30000,
       "enabled": true,
       "createdAt": "2026-11-04T03:21:20.540Z",
-      "updatedAt": "2026-11-04T06:47:02.489Z"
+      "updatedAt": "2026-11-04T07:04:53.175Z"
     }
   ],
   "defaultProviderId": null,

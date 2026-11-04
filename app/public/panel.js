@@ -459,6 +459,77 @@ $('#btn-save-dancers')?.addEventListener('click', async () => {
   }
 });
 
+// Stage lighting — continuous ambience settings (Vietnamese labels on purpose)
+function renderStageLighting(lighting) {
+  if (!lighting) return;
+  const setValue = (selector, value) => {
+    const el = $(selector);
+    if (el && document.activeElement !== el) el.value = String(value);
+  };
+  setValue('#cfg-sl-enabled', lighting.enabled !== false);
+  setValue('#cfg-sl-intensity', lighting.intensity ?? 65);
+  setValue('#cfg-sl-color-speed', lighting.colorSpeed ?? 1);
+  setValue('#cfg-sl-spot-speed', lighting.spotSpeed ?? 1);
+  setValue('#cfg-sl-brightness', lighting.spotBrightness ?? 60);
+  setValue('#cfg-sl-spot-count', lighting.spotCount ?? 3);
+  setValue('#cfg-sl-beams', lighting.beams !== false);
+  setValue('#cfg-sl-floor', lighting.floor !== false);
+  setValue('#cfg-sl-sparkles', lighting.sparkles !== false);
+  setValue('#cfg-sl-lowperf', lighting.lowPerf === true);
+
+  const status = $('#sl-status');
+  if (status) {
+    status.textContent = lighting.enabled === false
+      ? 'Đèn sân khấu đang tắt.'
+      : `Đang bật • cường độ ${lighting.intensity ?? 65}% • ${lighting.spotCount ?? 3} spotlight • đổi màu ${Number(lighting.colorSpeed || 1).toFixed(1)}× • quét ${Number(lighting.spotSpeed || 1).toFixed(1)}×${lighting.lowPerf === true ? ' • chế độ máy yếu' : ''}`;
+  }
+}
+
+function stageLightingPayload() {
+  return {
+    enabled: $('#cfg-sl-enabled')?.value === 'true',
+    intensity: Number($('#cfg-sl-intensity')?.value) || 0,
+    colorSpeed: Number($('#cfg-sl-color-speed')?.value) || 1,
+    spotSpeed: Number($('#cfg-sl-spot-speed')?.value) || 1,
+    spotBrightness: Number($('#cfg-sl-brightness')?.value) || 0,
+    spotCount: Number($('#cfg-sl-spot-count')?.value) || 3,
+    beams: $('#cfg-sl-beams')?.value === 'true',
+    floor: $('#cfg-sl-floor')?.value === 'true',
+    sparkles: $('#cfg-sl-sparkles')?.value === 'true',
+    lowPerf: $('#cfg-sl-lowperf')?.value === 'true'
+  };
+}
+
+async function saveStageLighting(payload) {
+  try {
+    const res = await fetch('/api/stage-lighting', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+    renderStageLighting(data.stageLighting);
+    return data.stageLighting;
+  } catch (e) {
+    alert('Lỗi: ' + e.message);
+    return null;
+  }
+}
+
+$('#btn-save-sl')?.addEventListener('click', async () => {
+  const saved = await saveStageLighting(stageLightingPayload());
+  if (saved) alert('Đã lưu cài đặt ánh sáng sân khấu!');
+});
+
+$('#btn-reset-sl')?.addEventListener('click', async () => {
+  const saved = await saveStageLighting({
+    enabled: true, intensity: 65, colorSpeed: 1, spotSpeed: 1, spotBrightness: 60,
+    spotCount: 3, beams: true, floor: true, sparkles: true, lowPerf: false
+  });
+  if (saved) alert('Đã khôi phục cài đặt ánh sáng mặc định!');
+});
+
 // Render State into Admin Panel
 function renderAdminState(state) {
   const cfg = state.config || {};
@@ -520,6 +591,7 @@ function renderAdminState(state) {
     if ($('#cfg-tts-voice') && cfg.ttsVoice) $('#cfg-tts-voice').value = cfg.ttsVoice;
     if (cfg.bgm) renderBgm(cfg.bgm);
     if (cfg.dancers) renderDancers(cfg.dancers);
+    if (cfg.stageLighting) renderStageLighting(cfg.stageLighting);
   }
 }
 
